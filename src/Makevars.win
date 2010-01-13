@@ -1,0 +1,49 @@
+# Emacs please make this -*- mode: makefile; tab-width: 8 -*-
+#
+# Makefile.win for Rcpp
+#
+# Copyright (C) 2008    Dirk Eddelbuettel <edd@debian.org>
+#
+# Contributions from an older Makefile.win are
+# (C) Dominick Samperi and Uwe Ligges and gratefully acknowledged
+
+PKG_CPPFLAGS=-I$(LIB_GSL)/include
+PKG_LIBS=-L$(LIB_GSL)/lib -lgsl -lgslcblas
+
+RCPPFLAGS	= `${R_HOME}/bin/R CMD config --cppflags`
+RLDFLAGS	= `${R_HOME}/bin/R CMD config --ldflags`
+
+## the 'package' library contains both Rcpp.{cpp,h} and the RcppExample used to demonstrate the package
+## it is loaded via library(Rcpp) but is not used for compiling / linking against
+PKGLIB 		= mvRcpp.dll
+PKGOBJ 		= mvRcpp.o
+PKGLDFLAGS 	= -s $(RLDFLAGS)
+
+## the 'user' library contains only Rcpp.{cpp,h} and is what users need for their projects
+## we place it inside the inst/ directory so that it gets installed 
+## use 'Rscript -e 'cat(system.file("lib", "Rcpp.a", package="Rcpp", "\n")'  to get location
+USERDIR		= ../inst/lib
+USERLIB		= $(USERDIR)/libMvRcpp.a
+USEROBJ		= mvRcpp.o
+
+CXXFLAGS 	= -I. $(RCPPFLAGS) -Wall -O2
+RM 		= rm -f
+
+.PHONY: 	all clean
+
+all: 		$(USERLIB) $(PKGLIB)
+
+clean:
+		${RM} $(PKGOBJ) $(PKGLIB)
+
+$(PKGLIB): 	$(PKGOBJ)
+		$(CXX) -shared -o $(PKGLIB) $(PKGOBJ) $(PKGLDFLAGS)
+
+$(USERLIB):	$(USEROBJ)
+		-mkdir -p $(USERDIR) 2>/dev/null
+		ar r $(USERLIB) $(USEROBJ)
+		ranlib $(USERLIB)
+		cp -vax mvRcpp.h $(USERDIR)
+
+
+

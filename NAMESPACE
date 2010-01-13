@@ -1,0 +1,35 @@
+useDynLib(mvabund)
+
+export(RcppVersion,
+       as.mvabund,
+       anova.manylm, 
+       boxplot.mvabund, 
+       boxplot.mvformula,
+       best.r.sq,
+       deviance.manylm,
+       extend.x.formula, 
+       formulaUnimva, 
+       is.mvabund,
+       is.mvformula,
+       logLik.manylm,
+       mvabund, 
+       mvformula,
+       manylm, 
+       print.anova.manylm, 
+       print.summary.manylm, 
+       print.mvformula,
+       plotMvaFactor, 
+       plotFormulafeature, 
+       plot.mvabund,
+       plot.manylm,
+       plot.mvformula,
+       ridgeParamEst, 
+       summary.manylm,
+       unabund       
+       )
+
+exportClasses(mvabund, mvformula)
+
+exportMethods(meanvar.plot)
+
+import(graphics)

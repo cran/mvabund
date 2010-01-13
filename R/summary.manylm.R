@@ -1,0 +1,227 @@
+################################################################################
+## summary.manylm.c conducts a hypotheses test comparing multivariate linear models 
+################################################################################
+# no weighing considered
+
+summary.manylm <- function(object, nBoot=object$nBoot,resample=object$resample, test=object$test, cor.type=object$cor.type, shrink.param=object$shrink.param, p.uni="none", studentize=TRUE, R2="h", show.cor = FALSE, show.est=FALSE, show.residuals=FALSE, symbolic.cor = FALSE, tol=1.0e-10, ... ) 
+{
+  # ld.perm and filename for debug use only
+  # ld.perm=TRUE load bootID from file
+   ld.perm = FALSE
+   filename = NULL
+
+    if(!any(class(object)=="manylm"))
+       stop("The function 'summary.manylm' can only be used for a manylm object.")
+
+    ######## Construct Summary Input Arguments ########
+    nRows = nrow(object$y)
+    nVars = ncol(object$y)
+    nParam = ncol(object$x)
+    Y <- matrix(as.integer(object$y), nrow=nRows, ncol=nVars)
+    X <- as.matrix(object$x, "numeric")
+    if(substr(p.uni,1,1) == "n"){
+       pu <- 0
+       calc.pj <- FALSE
+    } else if(substr(p.uni,1,1) == "u"){
+       pu <- 1
+       calc.pj <- TRUE 
+    } else if(substr(p.uni,1,1)=="a"){
+       pu <- 2
+       calc.pj <- TRUE
+    } else if(substr(p.uni,1,1) == "s"){
+       pu <- 3
+       calc.pj <- TRUE
+    } else
+      stop("'p.uni' not defined. Choose one of 'single', 'adjusted', 'unadjusted', 'none'.")
+
+    # the following values need to be converted to integer types 
+    if (cor.type == "I") corr <- 1
+    else if (cor.type == "R") corr <- 0
+    else if (cor.type == "shrink") corr <- 2
+    else stop("No such correlation type.") 
+    
+    #if (resample=="case") resam <- 0
+    # To exclude case resampling
+    if (resample=="case") stop("Sorry, case resampling is not yet available.")
+    else if (resample == "residual") resam <- 1
+    else if (resample == "score") resam <- 2
+    else if (resample == "perm.resid") resam <- 3
+    else stop("No such resampling method.") 
+ 
+    if (test=="LR") testype <- 0
+    else if (test == "F") testype <- 1 
+    else stop("No such test method.") 
+ 
+    # estimate ridge parameter if cor.type is not "shrink" when fitting the model
+    w <- object$weights
+    if (is.null(w)){
+       ### Fit the multivariate LM.
+       w   <- rep(1, times=nRows)
+    }
+   else {
+       if (!is.numeric(w))  stop("'weights' must be a numeric vector")
+       if (any(w < 0)) stop("negative 'weights' not allowed")
+   }
+
+   if (cor.type=="shrink" | is.null(shrink.param)) {
+       shrink.param <- ridgeParamEst(dat=Y, X=X, weights=w, only.ridge=TRUE, doPlot=FALSE, tol=tol)$ridgeParameter
+       if(shrink.param == 0) cor.type <- "I"      
+       if (abs(shrink.param)>1)
+        stop("the absolute 'shrink.param' should be between 0 and 1")
+   }
+   else if (cor.type == "I") 
+      shrink.param <- 1 
+   else if (cor.type == "R")
+      shrink.param <- 0
+   else
+      stop ("no such correlation option")
+
+    if (ld.perm) {
+       if (is.null(filename)) {
+          paths <- .find.package("mvabund")
+          if (resample == "score")
+             filename <- file.path(getwd(), "data", "scores.dat")
+          else if (resample == "perm.resid")
+             filename <- file.path(getwd(), "data", "permID.dat")
+          else
+             filename <- file.path(getwd(), "data", "bootID.dat")
+       }
+       bootID <- as.matrix(read.table(filename), nrow=nBoot, ncol=nRows)
+       rep <- 1
+     }
+    else {
+       bootID <- c(FALSE)
+       rep <- 0
+    }
+    if (studentize) st <- 1
+    else st <- 0
+    if (substr(R2,1,1) == "h") {
+       rsq <- 0
+       R2name <- c("Hooper's R-squared")
+    }
+    else if (substr(R2, 1, 1) == "v") {
+       rsq <- 1
+       R2name <- c("Vector's R-squared")
+    }
+    else 
+       stop ("No such R2 method.")   
+
+    # construct for param list      
+    params <- list(tol=tol, nboot=nBoot, cor_type=corr, shrink_param=shrink.param, test_type=testype, resamp=resam, reprand=rep, studentize=st, punit=pu, rsquare=rsq)
+
+    ######## Call Summary Rcpp #########
+    val <- .Call("RtoSmryCpp", params, Y, X, bootID, PACKAGE="mvabund")
+
+    ######## Collect Summary Values ########
+    smry  <- list()
+    rankX <- object$rank
+
+    # residual statistics  (from the previous R codes)
+    r <- as.matrix(object$residuals)
+    rss <- t(r)%*% r
+    rdf <- nRows - rankX   # residual rdf
+    resvar <- rss/rdf 
+    genVar <- det(resvar) 
+
+    if (is.null(object$terms))
+       stop("invalid 'lm' object:  no 'terms'")
+    Qr <- object$qr
+    if (is.null(Qr)) Qr <- qr(object$x)
+    p1 <- 1:rankX
+    R  <- chol2inv(Qr$qr[p1, p1, drop = FALSE])   # = inv X'X   pxp matrix 
+    genVarB <- genVar*(c(R)[1+0:(rankX-1)*(rankX+1)])
+    est <- object$coefficients[Qr$pivot[p1], , drop=FALSE]
+    est <- cbind(genVarB, est)
+    dimnames(est)[[2]][1] <-  c("Gen. Var")
+
+   # residual correlations
+    if (show.cor)  {
+        nrowR <- nrow(R)
+        correlation <- matrix(NA,nrow=nrowR*nrow(resvar),ncol= nrowR*nrow(resvar))
+        se <- c(outer(sqrt(c(R)[1+0:(rankX-1)*(rankX+1)]),sqrt(c(resvar)[1+0:(nVars-1)*(nVars+1)] ) ))
+        for (i in 1:nrow(resvar))
+        for (j in 1:nrow(resvar))
+            correlation[((1:nrowR)+nrowR*(i-1)),((1:nrowR) + nrowR*(j-1))]<-(R*resvar[i,j])
+        correlation <- correlation / outer(se, se)
+        corrnames <- rep(paste("b_", 1:rankX, sep=""), times=nVars)
+        corrnames <- paste(corrnames, rep(1:nVars, each=rankX), sep="")
+        colnames(correlation) <- rownames(correlation) <- corrnames 
+    }
+    else
+        correlation <- NULL
+    dimnames(R) <- dimnames(X)[c(2,2)]
+
+    # test statistics
+    if(!is.null(test)) {    
+       testname <- paste(test,"value")
+       pname <- paste("Pr(>",test,")", sep="")
+    } else {
+       testname <- "no test"
+       pname    <- ""
+    }
+    responseNames <- colnames(object$y)
+    explanNames <- colnames(X)
+    # significance
+    significance <- cbind(val$signific, val$Psignific)
+    dimnames(significance) <- list(NULL, c(testname, pname)) 
+    xnames <- colnames(X) 
+    dimnames(significance)[[1]] <- xnames
+    # unitvariate tests
+    if (calc.pj & !is.null(test)){
+       unit_signic <- t(val$unitsign)
+       unit_signic.p <- t(val$Punitsign)
+       rownames(unit_signic) <- rownames(unit_signic.p) <- c(responseNames)
+       colnames(unit_signic) <- colnames(unit_signic.p) <- c(explanNames)
+    }
+    else {
+       unit_signic <- NULL
+       unit_signic.p <- NULL
+    }
+
+    # overall statistics 
+    df.int  <- if (attr(object$terms, "intercept")) 1 else 0
+    overaltest <- c(val$multstat, val$Pmultstat, numdf = rankX - df.int, dendf = rdf)
+    names(overaltest) <- c(testname, pname, "num df", "den df")
+    if (calc.pj) {
+        unit_overaltest <- cbind(val$unitmult, val$Punitmult)
+        dimnames(unit_overaltest) <- list(responseNames, c(testname, pname)) 
+    } 
+    else unit_overaltest <- NULL
+
+    # resampling flags
+    smry$p.uni <- p.uni
+    smry$test  <- test
+    smry$cor.type <- cor.type
+    smry$resample <- resample
+    # display flags
+    smry$show.est <- show.est
+    smry$show.cor <- show.cor
+    smry$show.residuals <- show.residuals
+    smry$symbolic.cor <- symbolic.cor
+    # parameter values
+    smry$shrink.param <- shrink.param
+    smry$nBoot <- nBoot 
+    smry$n.bootsdone <- val$nSamp
+    smry$n.iter.sign <- nBoot - val$nSamp
+    smry$aliased <- c(is.na(object$coef)[,1])
+    # residual stats
+    smry$residuals <- r
+    smry$df <- c(rankX, rdf, NCOL(Qr$qr))
+    smry$genVar <- genVar 
+    smry$est <- est 
+    smry$cov.unscaled <- R
+    smry$correlation <- correlation
+    # test stats
+    smry$coefficients <- significance
+    smry$uni.test <- unit_signic
+    smry$uni.p <- unit_signic.p
+    smry$R2 <- R2name
+    smry$r.squared <- c(val$R2)
+    smry$statistic <- overaltest
+    smry$statistic.j <- unit_overaltest
+
+    class(smry) <- "summary.manylm"
+    return(smry)
+}
+setGeneric("summary")
+setMethod("summary", "manylm", summary.manylm)
