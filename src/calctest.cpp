@@ -1,3 +1,15 @@
+// Utility functions called by anova and summary
+// testStatCalc() - calculates test statistics (2 options)
+// calcSS() - calculates sample covariance matrix
+// calcDet() - calculates determinant of a matrix 
+// is_sym_matrix() - logic, returns 1 if a matrix is symmetric otherwise 0
+// subX() - get submatrix Xi consisting columns (defined by ref) of X
+// calcAdjustP() - calculate adjusted P-values 
+// rcalc() - applies ridge regularization
+//
+// Author: Yi Wang (yi dot wang at computer dot org)
+// 16-Nov-2009
+
 #include "resampTest.h"
 
 int testStatCalc(mv_mat *H0, mv_mat *H1, mv_Method *mmRef, const int ifcalcH1det, double *stat, gsl_vector *statj)
@@ -260,7 +272,8 @@ int subX(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi)
 
 int calcAdjustP(const int punit, const int nVars, gsl_vector *bStatj, double *sj, double *pj, gsl_permutation *sortid)
 {
-    size_t k, sid=0, sid0=0;
+    size_t sid=0, sid0=0;
+    int k;
     double maxstat;
     double *bj = gsl_vector_ptr (bStatj, 0);
     

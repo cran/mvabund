@@ -1,3 +1,8 @@
+// Resampling-based hypothesis test for comparing multivariate linear models
+// Author: Yi Wang (yi dot wang at computer dot org)
+// 16-Nov-2009
+
+
 #include "resampTest.h"
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
@@ -148,7 +153,7 @@ int AnovaTest::resampTest(void)
 {
 //    printf("Start resampling test ...\n");
     size_t i, j, p, id;
-    int maxiter=mmRef->nboot; 
+    size_t maxiter=mmRef->nboot; 
     double hii, score;
 
     gsl_matrix *bX, *bY;

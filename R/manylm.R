@@ -1,8 +1,9 @@
-################################################################################
-## print.manylm prints the manylm object in a nice way                         #
-## so far this is identical with the print.lm method                           #
-## maybe we want to add some more specific things later on                     #
-################################################################################
+############################################################################
+# print.manylm prints the manylm object in a nice way                      #
+# so far this is identical with the print.lm method                        #
+# maybe we want to add some more specific things later on                  #
+# 05-Jan-2010
+###############################################################################
 print.manylm <-
 function (x, digits = max(3, getOption("digits") - 3), ...)
 {
@@ -126,14 +127,15 @@ else {
    if (cor.type=="shrink") {
       if (is.null(shrink.param)) {
          shrink.param <- ridgeParamEst(dat=abundances, X=X, weights=w, only.ridge=TRUE, doPlot=FALSE, tol=tol)$ridgeParameter
-         if(shrink.param == 0) 
-            cor.type <- "I"
+         # to simplify later computation
+         if(shrink.param == 0) cor.type <- "I"
+         if(shrink.param == 1) cor.type <- "R"
        } 
       else if (abs(shrink.param)>1)
         stop("the absolute 'shrink.param' should be between 0 and 1")
    }
    else if (cor.type == "I") {
-      shrink.param <- 1 
+      shrink.param <- NULL 
    }
    else if (cor.type == "R") {
       if (nrow(abundances)<=ncol(abundances))
@@ -141,7 +143,7 @@ else {
       if(nrow(abundances) < 2*ncol(abundances)) 
           warning("the calculated p-values might be unreliable as the number of cases 
                    is not much larger than the number of variables") 
-      shrink.param <- 0
+      shrink.param <- NULL
    }
 
 }

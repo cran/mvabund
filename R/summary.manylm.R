@@ -1,7 +1,8 @@
-################################################################################
-## summary.manylm.c conducts a hypotheses test comparing multivariate linear models 
-################################################################################
-# no weighing considered
+###############################################################################
+# R user interface to summary test of a multivarivate linear model
+# Author: Yi Wang (yi dot wang at computer dot org)
+# 05-Jan-2010
+###############################################################################
 
 summary.manylm <- function(object, nBoot=object$nBoot,resample=object$resample, test=object$test, cor.type=object$cor.type, shrink.param=object$shrink.param, p.uni="none", studentize=TRUE, R2="h", show.cor = FALSE, show.est=FALSE, show.residuals=FALSE, symbolic.cor = FALSE, tol=1.0e-10, ... ) 
 {
@@ -63,18 +64,18 @@ summary.manylm <- function(object, nBoot=object$nBoot,resample=object$resample, 
        if (any(w < 0)) stop("negative 'weights' not allowed")
    }
 
-   if (cor.type=="shrink" | is.null(shrink.param)) {
+   if (cor.type=="shrink" & is.null(shrink.param)) {
        shrink.param <- ridgeParamEst(dat=Y, X=X, weights=w, only.ridge=TRUE, doPlot=FALSE, tol=tol)$ridgeParameter
-       if(shrink.param == 0) cor.type <- "I"      
+       # to simplify later computation
+       if (shrink.param == 0) cor.type <- "I"
+       if (shrink.param == 1) cor.type <- "R"
        if (abs(shrink.param)>1)
-        stop("the absolute 'shrink.param' should be between 0 and 1")
+          stop("the absolute 'shrink.param' should be between 0 and 1")
    }
    else if (cor.type == "I") 
       shrink.param <- 1 
    else if (cor.type == "R")
-      shrink.param <- 0
-   else
-      stop ("no such correlation option")
+      shrink.param <- 0 
 
     if (ld.perm) {
        if (is.null(filename)) {

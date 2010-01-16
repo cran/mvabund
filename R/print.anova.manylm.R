@@ -1,3 +1,7 @@
+# Pring anova objects
+# Author: Yi Wang 
+# 05-Jan-2010
+
 print.anova.manylm <- function( x, digits = max(getOption("digits") - 3, 3), signif.stars = getOption("show.signif.stars"),  dig.tst = max(1, min(5, digits - 1)), eps.Pvalue = .Machine$double.eps, ...) 
 {
     anova   <- x

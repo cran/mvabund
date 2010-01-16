@@ -1,13 +1,14 @@
-#include "mvRcpp.h"
+// Interface between R and anova.cpp 
+//
+// Author: Yi Wang (yi dot wang at computer dot org)
+// 16-Nov-2009
+
+#include "Rcpp.h"
 extern "C"{
 #include "resampTest.h"
 #include "time.h"
 }
 
-// params for methods, Matrices X, Y, Res, Coef are from the lm model
-// nlist is numerical list including model.rdf, testStats, etc.
-// df_Hats is a dataframe with concatenated matrices 
-// Mat_isXvarIn is used for anova
 RcppExport SEXP RtoAnovaCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,  
                              SEXP INsexp, SEXP bIDsexp )//, 
 //			     SEXP nl_stats)

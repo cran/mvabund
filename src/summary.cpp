@@ -1,3 +1,8 @@
+// calculates a summary of a multivariate linear model
+// Author: Yi Wang (yi dot wang at computer dot org)
+// 16-Nov-2009
+
+
 #include "resampTest.h"
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
@@ -229,7 +234,7 @@ int Summary::resampTest(void)
 {
   //  printf("Start resampling test ...\n");
     size_t i, j, id;
-    int maxiter= mmRef->nboot; 
+    size_t maxiter= mmRef->nboot; 
 //    printf("maxiter=%d\n", maxiter);
     double hii, score;
 
