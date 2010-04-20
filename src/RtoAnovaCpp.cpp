@@ -110,7 +110,7 @@ RcppExport SEXP RtoAnovaCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
 
     // resampling test
     anova.resampTest();
- //   anova.display();
+//    anova.display();
 
 //    clk_end = clock();
 //    float dif = (float)(clk_end - clk_start)/(float)(CLOCKS_PER_SEC);

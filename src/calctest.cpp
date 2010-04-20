@@ -90,7 +90,7 @@ int testStatCalc(mv_mat *H0, mv_mat *H1, mv_Method *mmRef, const int ifcalcH1det
 
 int calcSS(gsl_matrix *Y, mv_mat *Hat, mv_Method *mmRef, const int ifcalcHat, const int ifcalcCoef, const int ifcalcSS)
 {
-    size_t i, j, k; 
+    size_t j; 
     size_t nP=Hat->X->size2;
     size_t nRows=Hat->mat->size1;
     size_t nVars=Hat->SS->size1;
