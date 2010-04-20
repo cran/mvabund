@@ -1,3 +1,7 @@
+// Header file for anova and summary
+// Author: Yi Wang (yi dot wang at unsw dot edu dot au)
+// Last modified: 20-April-2010
+
 #ifndef _RESAMPTEST_H
 #define _RESAMPTEST_H
 
@@ -44,11 +48,6 @@
 #define MIN(a, b) ((a)<(b)?(a):(b))
 #define MAX(a, b) ((a)>(b)?(a):(b))
 
-// sinmuation
-//#define NSIMU 10
-//#define RHO 0.5
-//#define NABUND 12
-
 typedef struct MethodStruc {
     double tol;
     int nboot;
@@ -89,9 +88,6 @@ int is_sym_matrix(const gsl_matrix *mat);
 int subX(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi);
 int calcAdjustP(const int punit, const int nVars, gsl_vector *bStatj, double *sj, double *pj, gsl_permutation *sortid);
 int rcalc(gsl_matrix *Res, double, int, gsl_matrix *SS);
-
-// SimuP.cpp
-//int SimuP(mv_Method *mm, gsl_matrix *X, gsl_matrix *Xin, gsl_matrix *Y, P_val *P);
 
 // anova.cpp
 class AnovaTest

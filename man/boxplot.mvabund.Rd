@@ -190,7 +190,7 @@ for the analysis of multivariate abundances}, , .
 }
 % \note{  }
 \author{
-Ulrike Naumann and David Warton <David.Warton@unsw.edu.au>.
+Ulrike Naumann, Stephen Wright and David Warton <David.Warton@unsw.edu.au>.
 }
 \seealso{
 \code{\link{plot.mvabund}}.

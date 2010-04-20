@@ -134,7 +134,7 @@ Warton D.I. (2008). Raw data graphing: an informative but under-utilized tool fo
 }
 
 \author{
-Ulrike Naumann and David Warton <David.Warton@unsw.edu.au>.
+Ulrike Naumann, Stephen Wright and David Warton <David.Warton@unsw.edu.au>.
 }
 
 \seealso{

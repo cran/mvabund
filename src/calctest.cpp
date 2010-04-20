@@ -1,22 +1,15 @@
-// Utility functions called by anova and summary
-// testStatCalc() - calculates test statistics (2 options)
-// calcSS() - calculates sample covariance matrix
-// calcDet() - calculates determinant of a matrix 
-// is_sym_matrix() - logic, returns 1 if a matrix is symmetric otherwise 0
-// subX() - get submatrix Xi consisting columns (defined by ref) of X
-// calcAdjustP() - calculate adjusted P-values 
-// rcalc() - applies ridge regularization
-//
-// Author: Yi Wang (yi dot wang at computer dot org)
-// 16-Nov-2009
+// Calculate test statistics and other utilities for manylm
+// Author: Yi Wang (yi dot wang at unsw dot edu dot au
+// Last modified: 20-04-2010
 
 #include "resampTest.h"
 
 int testStatCalc(mv_mat *H0, mv_mat *H1, mv_Method *mmRef, const int ifcalcH1det, double *stat, gsl_vector *statj)
 {
-	size_t j;
+	size_t i, j;
         size_t nVars=H0->SS->size1;
         size_t nRows=H0->mat->size1;
+	int s;
 	double ss0j, ss1j, sum;
         double logDetSS0, logDetSS1;
 
@@ -63,8 +56,6 @@ int testStatCalc(mv_mat *H0, mv_mat *H1, mv_Method *mmRef, const int ifcalcH1det
                gsl_matrix *LU=gsl_matrix_alloc(nVars, nVars);
                gsl_matrix_memcpy(LU, H1->SS); 
                gsl_matrix_memcpy(Sa, H0->SS);
-               size_t i, j;
-	       int s;
                for (i=0;i<nVars; i++)
                for (j=i+1; j<nVars; j++){ 
                    gsl_matrix_set(LU, i, j, gsl_matrix_get(H1->SS, j, i));
@@ -99,7 +90,7 @@ int testStatCalc(mv_mat *H0, mv_mat *H1, mv_Method *mmRef, const int ifcalcH1det
 
 int calcSS(gsl_matrix *Y, mv_mat *Hat, mv_Method *mmRef, const int ifcalcHat, const int ifcalcCoef, const int ifcalcSS)
 {
-    size_t j; 
+    size_t i, j, k; 
     size_t nP=Hat->X->size2;
     size_t nRows=Hat->mat->size1;
     size_t nVars=Hat->SS->size1;
@@ -204,7 +195,7 @@ int calcSS(gsl_matrix *Y, mv_mat *Hat, mv_Method *mmRef, const int ifcalcHat, co
 double calcDet(gsl_matrix *SS)
 {
      // SS is a nVars x nVars real symmetric matric
-     int nVars = SS->size1;
+     size_t nVars = SS->size1;
      double result;
 /*     // det(A) = prod(eig(A))
      gsl_eigen_symm_workspace *ws = gsl_eigen_symm_alloc(nVars);
@@ -225,7 +216,8 @@ double calcDet(gsl_matrix *SS)
      // fill SS
      gsl_matrix *LU=gsl_matrix_alloc(nVars, nVars);
      gsl_matrix_memcpy(LU, SS); 
-     int i, j, s;
+     size_t i, j;
+     int s;
      for (i=0;i<nVars; i++)
      for (j=i+1; j<nVars; j++)
          gsl_matrix_set(LU, i, j, gsl_matrix_get(LU, j, i));
@@ -262,7 +254,7 @@ int subX(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi)
     size_t nParam=ref->size;
 
     for (j=0; j<nParam; j++)
-    if ( gsl_vector_get(ref, j) == TRUE ){
+    if ( gsl_vector_get(ref, j) > TOL ){
          gsl_vector_view col = gsl_matrix_column (X, j);
          gsl_matrix_set_col(Xi, k, &col.vector);
          k++;
@@ -272,8 +264,7 @@ int subX(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi)
 
 int calcAdjustP(const int punit, const int nVars, gsl_vector *bStatj, double *sj, double *pj, gsl_permutation *sortid)
 {
-    size_t sid=0, sid0=0;
-    int k;
+    int k, sid=0, sid0=0;
     double maxstat;
     double *bj = gsl_vector_ptr (bStatj, 0);
     
@@ -293,7 +284,7 @@ int calcAdjustP(const int punit, const int nVars, gsl_vector *bStatj, double *sj
        // successive maxima
        //gsl_permutation_fprintf(stdout, sortid, " %u");
        for (k=0; k<nVars; k++){
-           sid = gsl_permutation_get(sortid, nVars-1-k);	 
+           sid = gsl_permutation_get(sortid, nVars-1-k);
 	   //printf("%d ", (size_t)sid);
            if ( k>0 ) {
 //	      printf("%d ", (size_t)sid0);
@@ -304,11 +295,27 @@ int calcAdjustP(const int punit, const int nVars, gsl_vector *bStatj, double *sj
 	   if (*(bj+sid) >= *(sj+sid))
 	      *(pj+sid)=*(pj+sid)+1;
 	   sid0 = sid;   
-        }   
+    }  }
+/*    else if (punit == STEPUP) {
+       // successive minima
+       for (k=0; k<nVars; k++){
+           sid = gsl_permutation_get(sortid, k);
+	   if ( k>0 ) {
+	      *(bj+sid)=MIN(*(bj+sid), *(bj+sid0));
+	   }
+//           printf("%.3f ", (double)*(bj+sid));
+	   //printf("%d ", (size_t)sid);
+	   if (*(bj+sid) >= *(sj+sid))
+	      *(pj+sid)=*(pj+sid)+1;
+	   sid0 = sid;   
+    }  }
+    else if (punit == NOMONO) {
     }
+//    printf("\n");
+*/
     return 0;
-}
 
+}
 
 int rcalc( gsl_matrix *Res, double shrink_param, int corr, gsl_matrix *SS)
 {
@@ -329,7 +336,7 @@ int rcalc( gsl_matrix *Res, double shrink_param, int corr, gsl_matrix *SS)
         if ( corr == IDENTITY ) {
             gsl_blas_ddot (&rj.vector, &rj.vector, &dd); 
             if ( dd < 1e-10 ) dd = 0.5*M_1_PI;
-               gsl_matrix_set(SS, j, j, dd);
+            gsl_matrix_set(SS, j, j, dd);
         }
     } 
    // compute the covariance matrix SS= (res'*res)/Rows-1
@@ -338,7 +345,13 @@ int rcalc( gsl_matrix *Res, double shrink_param, int corr, gsl_matrix *SS)
         gsl_matrix_scale ( SS, 1.0/(double)(nRows-1) );
         if ( corr == SHRINK ) {
            gsl_vector_view dj=gsl_matrix_diagonal (SS);
-           gsl_vector_scale (&dj.vector, 1.0/shrink_param);
+	   for (j=0; j<nVars; j++) {
+	       dd = gsl_vector_get (&dj.vector, j);	       
+	       if ( dd < 1e-10 ) // account for zero variances
+	          gsl_vector_set (&dj.vector, j, 1.0/shrink_param); 
+	       else  
+	          gsl_vector_set (&dj.vector, j, dd/shrink_param); 
+	   }    
         }
     } 
  

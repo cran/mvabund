@@ -99,6 +99,7 @@ void AnovaTest::releaseTest()
 
     gsl_matrix_free(statj);
     gsl_matrix_free(Pstatj);
+// The above commented out s.t. the results are passed out to R
 
     size_t i;
     for ( i=0; i<nModels; i++ ){

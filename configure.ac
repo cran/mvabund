@@ -47,22 +47,10 @@ else
 fi
 
 ## Use Rscript to query Rcpp for compiler and linker flags
-##
-## look for Rscript, but use the one found via R_HOME to allow for multiple installations
-AC_DEFUN(AC_PROG_RSCRIPT, [AC_CHECK_PROG(RSCRIPT,Rscript,yes)])
-AC_PROG_RSCRIPT
-if test x"${RSCRIPT}" == x"yes" ; then
-     : ${R_HOME=`R RHOME`}
-     if test -z "${R_HOME}"; then
-     	 AC_MSG_ERROR([Could not determine R_HOME.])   
-     fi
-     ## Rcpp compile flag providing header directory containing Rcpp.h
-     RCPP_CXXFLAGS=`${R_HOME}/bin/Rscript -e 'Rcpp:::CxxFlags()'`
-     ## link flag providing libary as well as path to library, and optionally rpath
-     RCPP_LDFLAGS=`${R_HOME}/bin/Rscript -e 'Rcpp:::LdFlags()'`
-else
-    AC_MSG_ERROR([Rscript not found, is R installed?])
-fi
+# Rcpp compile flag providing header directory containing Rcpp.h
+RCPP_CXXFLAGS=`${R_HOME}/bin/Rscript -e 'Rcpp:::CxxFlags()'`
+## link flag providing libary as well as path to library, and optionally rpath
+RCPP_LDFLAGS=`${R_HOME}/bin/Rscript -e 'Rcpp:::LdFlags()'`
 
 # Now substitute these variables in src/Makevars.in to create src/Makevars
 AC_SUBST(GSL_CFLAGS)

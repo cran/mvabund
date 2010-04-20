@@ -1,6 +1,6 @@
 // calculates a summary of a multivariate linear model
 // Author: Yi Wang (yi dot wang at computer dot org)
-// 16-Nov-2009
+// Last modified on 20-April-2010
 
 
 #include "resampTest.h"
@@ -108,6 +108,7 @@ void Summary::releaseSummary()
     free(Pmultstat);
     gsl_matrix_free(unitstat);
     gsl_matrix_free(Punitstat);
+// The above commented out s.t. the results are passed out to Rcpp wrapper
 
     size_t i;
     for ( i=0; i<nParam+2; i++ ){
@@ -149,7 +150,7 @@ void Summary::display(void)
     if ( mmRef->punit!=NONE) {
        // Significance univariate tests
        printf("Univariate Tests for significance:\n");
-       nk = (int)floor(nParam/WRAP);    
+       nk = (int)floor((double)nParam/WRAP);    
        for (k=0; k<nk; k++) {
            printf("\t\t");    
            for (j=k*WRAP; j<(k+1)*WRAP; j++) {
@@ -197,7 +198,7 @@ void Summary::display(void)
     if (mmRef->punit!=NONE){
         printf("Univariate Tests for overall:\n");
         // note the change of the display direction
-        nk = (int)floor(nVars/WRAP);    
+        nk = (int)floor((double)nVars/WRAP);    
         for (k=0; k<nk; k++) {
             printf("\t\t");    
             for (j=k*WRAP; j<(k+1)*WRAP; j++) {
