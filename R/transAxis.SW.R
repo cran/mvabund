@@ -33,8 +33,8 @@ transAxis <- function (formula, subset = NULL, var.subset = NULL)
             if (missing(var.subset)) {
                 var.subset <- 1:p
             }
-            else if (is.logical(var.subset) & any(!is.na(var.subset)))
-                var.subset <- which(var.subset[!is.na(var.subset)])
+            else if (is.logical(var.subset) & any(!is.na(list(var.subset))))
+                var.subset <- which(var.subset[!is.na(list(var.subset))])
             if (missing(subset))
                 subset <- 1:nrow(y)
             trans <- TRUE

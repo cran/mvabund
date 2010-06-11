@@ -8,7 +8,7 @@
 This package provides tools for a model-based approach to the analysis of multivariate abundance data in ecology. 
 This includes graphical methods for exploring the properties of data and the community-environment association, 
 flexible regression methods for estimating and making robust inferences about the community-environment association, 
-and diagnostic plots to chekc the appropriateness of a fitted model.
+and diagnostic plots to check the appropriateness of a fitted model.
 
 Future versions of this function will extend it to regression analysis using additive functions, and model-based cluster analysis.
 }
@@ -21,7 +21,6 @@ The key functions available in this package are the following.
       \item{\code{\link{plot.mvabund}}}{ draw a range of plots for Multivariate Abundance Data }
       \item{\code{\link{boxplot.mvabund}}}{ draw a range of plots of Model Formulae for Multivariate Abundance Data }
       \item{\code{\link{meanvar.plot}}}{ draw mean-variance plots for Multivariate Abundance Data }
-      \item{\code{\link{plotMvaFactor}}}{ draw a range of plots for Multivariate Abundance Data where the data is split into groups according to a grouping variable}
     }
 
 \bold{For estimating and displaying Linear Models:}
@@ -70,12 +69,11 @@ Warton, D. I. and Guttorp, P. (2007)
 \emph{Compositional analysis of overdispersed counts using generalized estimating equations}, Technical report. http://www.maths.unsw.edu.au/statistics/files/preprint-2007-02.pdf
 }
 
-\author{ David Warton \email{David.Warton@unsw.edu.au}, Ulrike Naumann and Yi Wang.}
+\author{ David Warton \email{David.Warton@unsw.edu.au}, Yi Wang, Ulrike Naumann and Stephen Wright.}
 
 \seealso{ 
 \code{\link{mvabund}}, \code{\link{mvformula}},
-\code{\link{plot.mvabund}}, \code{\link{boxplot.mvabund}}, \code{\link{meanvar.plot}}, \code{\link{plotMvaFactor}},
-\code{\link{manylm}}, \code{\link{summary.manylm}}, \code{\link{anova.manylm}}, \code{\link{plot.manylm}}, 
+\code{\link{plot.mvabund}}, \code{\link{boxplot.mvabund}}, \code{\link{meanvar.plot}}, \code{\link{manylm}}, \code{\link{summary.manylm}}, \code{\link{anova.manylm}}, \code{\link{plot.manylm}}, 
 }
 
 \examples{
@@ -91,7 +89,6 @@ X <- spider$x
 ## Draw a plot of the spider data:
 plot(spiddat, col="gray1", n.vars=8, transformation="sqrt", xlab=c("Hunting Spider"), ylab="Spider Species", scale.lab="s",t.lab="t", shift=TRUE, fg= "lightblue", col.main="red", main="Spiders") 
 
-
 ## A mean-variance plot, data organised by year, 
 ## for 1981 and 1983 only, as in Figure 7a of Warton (2008):
 data(tikus)
@@ -100,21 +97,9 @@ year <- tikus$x[,1]
 is81or83 <- year==81 | year==83
 meanvar.plot(tikusdat~year,legend=TRUE, subset=is81or83, col=c(1,10)) 	
 
-## Create a formula for multivariate abundance data:
-foo <- mvformula( spiddat~X )
-
-## Create a List of Univariate Formulas:
-fooUni <- formulaUnimva(spiddat~X)
-fooUniInt <- formulaUnimva(spiddat~X, intercept=TRUE)
-
-## Find the three variables that best explain the response:
-best.r.sq( foo, n.xvars= 3)
-
-## Fit a multivariate linear model:
+## Plot Diagnostics for a multivariate linear model:
 foo <- mvformula( spiddat~X )
 lm.spider <- manylm(foo)
-
-## Plot Diagnostics for a multivariate linear model:
 plot(lm.spider,which=1:2,col.main="red",cex=3,overlay=FALSE)
 
 ## Obtain a summary of test statistics using residual resampling:

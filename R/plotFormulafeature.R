@@ -50,12 +50,12 @@ if ("col" %in% names(dots)) {
 	dcol <- dots$col
 	dots$col <- NULL
 
-	if(type=="bx") dcolbx <- dcol
-	else dcolbx <- NULL
+#	if(type=="bx") dcolbx <- dcol
+#	else dcolbx <- NULL
 
 } else {
 	dcol <- "black"
-	dcolbx <- NULL
+#	dcolbx <- NULL
 }
 
 if ("border" %in% names(dots)) {
@@ -171,7 +171,7 @@ if (response) {
 				x.data <-  model.mat[ , colnames(model.mat) == i]
 			} else  x.data <- mf[[i]]
 				
-			if (type=="bx") x.data <- factor(x.data)
+#			if (type=="bx") x.data <- factor(x.data)
 	
 			if (horizontal && is.factor(x.data)) {
 				yl <- xl
@@ -181,8 +181,8 @@ if (response) {
 			if(is.list(dcol)) dcoli <- dcol[[jj[j]]] 
 			else dcoli <- dcol
 
-			if(is.list(dcolbx)) dcolbxi <- dcolbx[[jj[j]]] 
-			else dcolbxi <- dcolbx
+#			if(is.list(dcolbx)) dcolbxi <- dcolbx[[jj[j]]] 
+#			else dcolbxi <- dcolbx
 
 			if(is.list(pch)) dots$pch <- pch[[jj[j] ]]
 			
@@ -190,7 +190,7 @@ if (response) {
 
 			if (is.factor(x.data)) {
 cat("plot 1\n")			
-				do.call(funname, c(list(x.data, y, ylab = "", xlab = "", col=dcolbxi,
+				do.call(funname, c(list(x.data, y, ylab = "", xlab = "", col=dcol,
 						border=bordcol) , main=main, axes =axes,las=las, fg=fg, dots))
 				title(xlab=xl, ylab=yl,line=2, cex.lab=1.2)
 			} else { 

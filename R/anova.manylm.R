@@ -19,7 +19,7 @@ anova.manylm <- function(object, ..., nBoot=object$nBoot,resample=object$resampl
     nParam <- ncol(object$x)
     Y <- matrix(as.integer(object$y), nrow=nRows, ncol=nVars) 
 
-    if(substr(p.uni,1,1) == "n"){
+    if (substr(p.uni,1,1) == "n"){
        pu <- 0
        calc.pj <- adjust.pj <- FALSE
     } else if(substr(p.uni,1,1) == "u"){

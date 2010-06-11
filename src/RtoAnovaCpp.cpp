@@ -66,7 +66,7 @@ RcppExport SEXP RtoAnovaCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
 	    gsl_matrix_set(X, i, k, Xr(i, k));
 //	    Rprintf("%.2f ", gsl_matrix_get(X, i, k));
 	}
-	Rprintf("\n");
+//	Rprintf("\n");
     }
        
     for (i=0; i<nModels; i++){
@@ -110,7 +110,7 @@ RcppExport SEXP RtoAnovaCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
 
     // resampling test
     anova.resampTest();
-//    anova.display();
+ //   anova.display();
 
 //    clk_end = clock();
 //    float dif = (float)(clk_end - clk_start)/(float)(CLOCKS_PER_SEC);

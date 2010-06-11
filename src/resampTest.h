@@ -96,7 +96,7 @@ public: mv_Method *mmRef;
 	gsl_matrix *Yref;
 	gsl_matrix *Xref;
 	gsl_matrix *inRef;
-	unsigned int nSamp;
+	size_t nSamp;
 
 	double *multstat;
 	double *Pmultstat;
@@ -132,7 +132,7 @@ class Summary
 public: mv_Method *mmRef;
 	gsl_matrix *Yref;
 	gsl_matrix *Xref;
-	unsigned int nSamp;
+	size_t nSamp;
 
         double R2;	
 	double *multstat;

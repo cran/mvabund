@@ -184,7 +184,7 @@ summary.manylm <- function(object, nBoot=object$nBoot,resample=object$resample, 
     overaltest <- c(val$multstat, val$Pmultstat, numdf = rankX - df.int, dendf = rdf)
     names(overaltest) <- c(testname, pname, "num df", "den df")
     if (calc.pj) {
-        unit_overaltest <- cbind(val$unitmult, val$Punitmult)
+        unit_overaltest <- cbind(val$unitmult, val$Punitmult) 
         dimnames(unit_overaltest) <- list(responseNames, c(testname, pname)) 
     } 
     else unit_overaltest <- NULL

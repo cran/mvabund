@@ -23,8 +23,7 @@ ridgeParamEst<-function(dat, X, weights = rep(1,times=nRows), refs, tol=1.0e-010
     } else if (nRows<=40) {
         nFolds      <- 10
     } else    {
-      
-	  nFolds      <- 5
+	nFolds      <- 5
     }
 	
     nGroupI         <- ceiling(nRows/nFolds) # max number in each CV group.
@@ -42,9 +41,8 @@ isSing     <- FALSE
 mnPred     <- matrix(0,nrow=nRows,ncol=nVars)
 
 sdInvTrain <- RTrain <- list()
-sdInvTr    <- eyeTr  <- matrix(0, nrow=nVars, ncol=nVars)
-eyeTr[1+0:(nVars-1)*(nVars+1)] <- 1 
-
+sdInvTr <- eyeTr  <- matrix(0, nrow=nVars, ncol=nVars)
+eyeTr[1+0:(nVars-1)*(nVars+1)] <- 1  
 # loop
 singular <- 0
 for (iFold in 1:nFolds) { 
@@ -62,26 +60,26 @@ for (iFold in 1:nFolds) {
     # Obtain the training estimate.
     betaTrain <- chol2inv(qrTrain$qr[1:rank,1:rank, drop=FALSE]) %*% t(XTrain*weights[isTrain]) %*% datTrain
     # Obtain the predicted data with the training beta.
-    mnPred[isTest,] <- X[isTest,qrTrain$pivot[1:rank], drop = FALSE] %*% betaTrain 	
+    mnPred[isTest, ] <- X[isTest,qrTrain$pivot[1:rank], drop = FALSE] %*% betaTrain 	
 
     # Obtain the training residuals
     resTrain  <- datTrain - XTrain %*% betaTrain
-    s <- cov(resTrain)   # cov of training residuals
-
-    vr  <- c(s)[1+0:(nVars-1)*(nVars+1)]
+    s <- cov(resTrain)   # cov of training residuals 
+    vr <- diag(s) 
     # Variables that should basically be remove from furhther analysis
-    isVr0  <- (vr < 1e-10)
-    seql.isVr0	 <- 1:sum(isVr0)
-    #  vr(isVr0) <- 10^-10 # basically removes these variables from further analyses...
-    sdInvTr[1+0:(nVars-1)*(nVars+1)]  <- 1/ sqrt(vr)
-    sdInvTrain[[iFold]] <-  sdInvTr
+    isVr0  <- (vr < tol)     
+#    seql.isVr0	 <- 1:sum(isVr0)
+    #  vr(isVr0) <- 10^-10 # basically removes these variables from further analyses... 
+    diag(sdInvTr) <- 1/sqrt(vr) 
+    diag(sdInvTr)[isVr0] <- tol #1/sqrt(2*pi) # added by Alice
+    sdInvTrain[[iFold]] <- sdInvTr
 # bug found here: * => %*%
-    RTrain[[iFold]] <- sdInvTrain[[iFold]] %*% s %*% sdInvTrain[[iFold]]
-#browser()
-    # these get var=0, cov=eye
-    # Inf values are set to 1
-    sdInvTrain[[iFold]][isVr0,isVr0] <- RTrain[[iFold]][isVr0,isVr0] <-      eyeTr[seql.isVr0,seql.isVr0]  # = diag(sum(isVr0))
-
+    RTrain[[iFold]] <- sdInvTrain[[iFold]] %*% s %*% sdInvTrain[[iFold]] 
+# these get var=0, cov=eye
+    RTrain[[iFold]][isVr0, isVr0] <- 1
+#    # Inf values are set to 1
+#    sdInvTrain[[iFold]][isVr0,isVr0] <- RTrain[[iFold]][isVr0,isVr0] <- eyeTr[seql.isVr0,seql.isVr0]  # = diag(sum(isVr0)) # commented out by Alice
+ 
     rankRT <- qr(RTrain[[iFold]])$rank
     if ( rankRT< nVars) isSing <- TRUE  # flag for k choice.
 }
@@ -103,6 +101,8 @@ if (!only.ridge) {
 } else {
    minLL<-NULL
 }
+
+
 
 if (doPlot) {
 

@@ -125,11 +125,11 @@ void AnovaTest::releaseTest()
 
 void AnovaTest::display(void)
 {
-    unsigned int i, j, k;
+    size_t i, j, k;
     printf("Anova Table (resampling under H0):\n");
     printf("Hypo\t Alter\t df\t TestStat\t P-value\n");
     for ( i=0; i<nModels-1; i++ ){
-       printf("Model%u\t Model%u\t %u\t %.3f\t\t %.3f\n", i+1, i, dfDiff[i], multstat[i], Pmultstat[i]);
+       printf("Model%g\t Model%g\t %g\t %.3f\t\t %.3f\n", i+1, i, dfDiff[i], multstat[i], Pmultstat[i]);
     }
 
     if (mmRef->punit!=NONE){
@@ -137,10 +137,10 @@ void AnovaTest::display(void)
        for (k=0; k<3; k++){
            printf("Response:\t");    
            for (j=k*4; j<(k+1)*4; j++)
-               printf("variable%u\t", j);    	
+               printf("variable%g\t", j);    	
            printf("\n");
            for ( i=0; i<nModels-1; i++ ){       
-               printf("Model %u:\t", i+1);
+               printf("Model %g:\t", i+1);
                for (j=k*4; j<(k+1)*4; j++)
                    printf("%.3f(%.3f)\t", gsl_matrix_get(statj, i, j), gsl_matrix_get(Pstatj, i, j));
                printf("\n");

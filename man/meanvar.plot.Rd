@@ -2,12 +2,12 @@
 \alias{meanvar.plot}
 \alias{meanvar.plot.mvabund}
 \alias{meanvar.plot.mvformula}
-
 \alias{meanvar.plot,mvabund-method}
 \alias{meanvar.plot,mvformula-method}
 \alias{meanvar.plot,formula-method}
 \alias{meanvar.plot,matrix-method}
 \alias{meanvar.plot,data.frame-method}
+
 
 \title{
 Construct Mean-Variance plots for Multivariate Abundance Data
@@ -23,56 +23,16 @@ Construct mean-variance plots, separately for each column of the input
 \usage{
 meanvar.plot(x, \dots)
 
-\method{meanvar.plot}{mvabund}(
-  x,type="p", log="xy", main=NULL, sub=NULL, xlab=NULL, ylab=NULL, 
-  col="black",pch=par("pch"), asp=if(log=="xy") 1 else NA,
-  n.vars = NULL, var.subset=NULL, subset=NULL, write.plot="show",
-  filename="plot.meanvar", table=FALSE, mfrow=1, mfcol=NULL, 
-  na.rm=TRUE, add.trendline=FALSE, trendline.col= 1,\dots ) 
+\method{meanvar.plot}{mvabund}( x, n.vars = NULL, var.subset=NULL, 
+	subset=NULL, table=FALSE, \dots ) 
 
-\method{meanvar.plot}{mvformula}(
-  x, type="p", log="xy", main=NULL,	sub=NULL, xlab=NULL, ylab=NULL, 
-  col="black", pch=par("pch"), asp=if(log=="xy") 1 else NA,
-  n.vars = NULL,var.subset=NULL, subset=NULL, write.plot="show", 
-  filename="plot.meanvar", table=FALSE, mfrow = if(index==0) c(1,1) 
-  else if(overlay | write.plot=="show") 4 else c(min(5,n.vars),min(4,index)), 
-  mfcol=NULL, na.rm=TRUE, add.trendline=FALSE, trendline.col= 1, cex.rel=FALSE,
-  overall.main=NULL, overlay=TRUE, all.labels=FALSE, legend=TRUE, 
-  legend.horiz = FALSE,\dots )
-
+\method{meanvar.plot}{mvformula}( x, n.vars = NULL, var.subset=NULL,
+	subset=NULL, table=FALSE, overall.main=NULL, overlay=TRUE, \dots )
 }
 
 \arguments{
 \item{x}{an mvabund objects or a Model Formula (can be a formula or a
 mvformula) to be used.}
-\item{type}{what type of plot should be drawn, see \code{plot}.}
-\item{log}{a character string which contains \sQuote{"x"} if the x axis with
-  the mean is to be logarithmic, \sQuote{"y"} if the y axis with the variance
-  is to be logarithmic and \sQuote{"xy"} or \sQuote{"yx"} if both
-  axes are to be logarithmic.}
-\item{main}{
- the title for the plot. If \code{overlay} is \code{TRUE} this can be either \code{NULL}
- or a character or 
- a character vector that must have the length of the number of explanatory 
- variables in the formula. If \code{overlay} is \code{FALSE} this can be either \code{NULL} 
- or a character or a character vector with the length of the number of 
- response variables or a list containing as first element a character vector 
- that must have the length of the number of response variables and as the 
- second element a character vector that must have the length of the number
- of explanatory variables.}
-\item{sub}{a sub title for the plot, see \code{plot}, if passed it will
-be the same for every plot.}
-\item{xlab}{a title for the x axis, see \code{plot}.}
-\item{ylab}{a title for the y axis, see \code{plot}.}
-\item{cex.rel}{
-only used in \code{meanvar.plot.mvformula}.
-whether the size of the plotting symbos should be relative to the number
-of cases in the group.}
-\item{col}{see \code{par}.}
-\item{pch}{the plotting symbol, see \code{points} for possible values and
- their interpretation.}
-\item{asp}{the y/x aspect ratio, see \code{plot.window}.
-If the y/x aspect ratio should not be used for scaling the plot, set \code{asp = NA}}
 \item{overall.main}{an overall title for the window.}
 \item{overlay}{logical, whether overall means/variances for all variables are
 calculated and drawn on a single plot or calculated and plotted separately for
@@ -81,28 +41,9 @@ different variables.}
 \item{var.subset}{vector of indices indicating the variables to be included
 on the plot, (default: the \code{n.vars} most abundant variables).}
 \item{subset}{an optional vector specifying a subset of observations to be used.}
-\item{write.plot}{
-can be "show" (default): plot is shown, or "eps", "postscript", "pdf", "jpeg",
-"bmp", "png"  to save the plot in this format, plot is then not shown.}
-\item{filename}{character, pathname where the file should be stored. default
-location is R's working directory.}
 \item{table}{logical, whether a table of the Means and Variances should be returned}
-\item{mfrow}{layout of the plotting window, either a pair of c(rows, columns)
-per window or an integer giving the prefered number of plots per window.}
-\item{mfcol}{like \code{mfrow}, but the order of drawing is by row and not by
-column, if mfcol is passed, mfrow is ignored.}
-\item{na.rm}{a logical indicating whether missing values should be removed.}
-\item{all.labels}{logical, whether all labels for the x- and y-axis are
-plotted or only the x-axis labels only at the bottom graphic and the y-axis
-labels only for the graphic on the right side of the window are produced.}
-\item{legend}{logical, if applicable, whether a legend is added.}
-\item{legend.horiz}{only for \code{meanvar.plot.mvformula} and if \code{legend} is \code{TRUE} and \code{overlay} is \code{FALSE} (Otherwise this argument is ignored.): whether the legend should be horizontal.
-}
-\item{add.trendline}{a logical indicating whether or not to add a trendline (linear) to the 
-mean-variance plot.}
-\item{trendline.col}{If add.trendline=TRUE then this parameter can be used to set the colour of
-trendline. e.g. trendline.col="red" or trendline.col=552}
-\item{\dots}{arguments to be passed to or from other methods.}
+\item{\dots}{arguments to be passed to or from other methods. See \code{\link{default.meanvar.plot}}
+for additional arguments.}
 }
 \details{
 \code{meanvar.plot} calculates a mean-variance plot for a dataset with many variables.
@@ -115,12 +56,8 @@ By default the means and variances of all variables (and all factor levels) are 
 
 For the latter, set \code{overlay} to \code{FALSE}. The mean-variances corresponding to the different factors will be drawn in different colors, that can be chosen by specifying \code{col}. \code{col} can then either be a single color value (see \code{par}) with the number of values being at least the maximum number of levels of the factors. The same applies to \code{pch}.
 
-If \code{mfrow} is \code{NULL} and \code{mfcol} is \code{NULL}, par("mfrow") is used. If \code{all.labels = FALSE}, only the x-axis labels at the bottom plot and the y-axis labels of plots on the right side of the window are printed if furthermore \code{main=NULL} only the graphics on the top contain the full title, the other ones an abreviated one.
-
 Note, that if a log-transformation is used for displaying the data, a specific mean-variance relation will not be visible in the plot, if either the calculated mean is zero and \code{log!="x"} or \code{log!="xy"} or if the calculated variance
 is zero and \code{log!="y"} or \code{log!="xy"}.
-
-By default the y/x ratio of the axis, specified by \code{asp}, will be set to \code{1} if \code{log!="xy"}. If the mean-variance relation is not displayed on a log scale and \code{overlay} is \code{FALSE}, it is most often not advisable to specify \code{asp}, as there might not be one choice of \code{asp} that is sensible for each of the plots.
 
 }
 
