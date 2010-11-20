@@ -145,7 +145,7 @@ void Summary::display(void)
         printf("Explan\t F value\tPr(>F)\n");
 
     for ( i=0; i<nParam; i++ )
-       printf("  %g\t %.3f\t\t %.3f\n", i, multstat[i+1], Pmultstat[i+1]);
+       printf("  %d\t %.3f\t\t %.3f\n", i, multstat[i+1], Pmultstat[i+1]);
 
     if ( mmRef->punit!=NONE) {
        // Significance univariate tests
@@ -154,11 +154,11 @@ void Summary::display(void)
        for (k=0; k<nk; k++) {
            printf("\t\t");    
            for (j=k*WRAP; j<(k+1)*WRAP; j++) {
-               printf("[Explan %g]\t", j);
+               printf("[Explan %d]\t", j);
            }	
            printf("\n");
            for ( i=0; i<nVars; i++ ){ 
-               printf("[Respons %g]\t", i);
+               printf("[Respons %d]\t", i);
                for (j=k*WRAP; j<(k+1)*WRAP; j++) {
                    printf("%.3f(%.3f)\t", gsl_matrix_get(unitstat, j+1, i), gsl_matrix_get(Punitstat, j+1, i));
                }
@@ -170,11 +170,11 @@ void Summary::display(void)
         if (lk>0) {
            printf("\t\t");    
            for (j=0; j<lk; j++) {
-               printf("[Explan %g]\t", nk*WRAP+j); 
+               printf("[Explan %d]\t", nk*WRAP+j); 
            }
            printf("\n");
            for ( i=0; i<nVars; i++ ){ 
-               printf("[Respons %g]\t", i);
+               printf("[Respons %d]\t", i);
                for (j=0; j<lk; j++) {
                    printf("%.3f(%.3f)\t", gsl_matrix_get(unitstat, nk*WRAP+j+1, i), gsl_matrix_get(Punitstat, nk*WRAP+j+1, i));
                }
@@ -202,7 +202,7 @@ void Summary::display(void)
         for (k=0; k<nk; k++) {
             printf("\t\t");    
             for (j=k*WRAP; j<(k+1)*WRAP; j++) {
-                printf("[Explain %g]\t", j);   
+                printf("[Explain %d]\t", j);   
             } 	
             printf("\n");
             if (mmRef->test==LOGWILK)
@@ -218,7 +218,7 @@ void Summary::display(void)
          if (lk>0) {
             printf("\t\t");    
             for (j=0; j<lk; j++)
-                printf("[Explain %g]\t", nk*WRAP+j); 
+                printf("[Explain %d]\t", nk*WRAP+j); 
 	    printf("\n");
             if (mmRef->test==LOGWILK)
 	        printf("LR (Pr):\t");
