@@ -125,7 +125,7 @@ void AnovaTest::releaseTest()
 
 void AnovaTest::display(void)
 {
-    size_t i, j, k;
+    int i, j, k;
     printf("Anova Table (resampling under H0):\n");
     printf("Hypo\t Alter\t df\t TestStat\t P-value\n");
     for ( i=0; i<nModels-1; i++ ){

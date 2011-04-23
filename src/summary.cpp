@@ -135,7 +135,7 @@ void Summary::releaseSummary()
 
 void Summary::display(void)
 {
-    size_t i, j, k, nk, lk;
+    int i, j, k, nk, lk;
     printf("Summary of fitting (resampling under H1):\n");
     // significance test
     printf("Significance Test:\n");
