@@ -15,7 +15,7 @@ manylm(
    na.action=options("na.action"),  method="qr", model=FALSE, 
    x=TRUE, y=TRUE, qr=TRUE, singular.ok=TRUE, contrasts=NULL, 
    offset, test="LR" , cor.type= "I", shrink.param=NULL, 
-   resample="residual", nBoot=1000, tol=1.0e-10, \dots)
+   tol=1.0e-10, \dots)
 }
 \arguments{
   \item{formula}{
@@ -76,15 +76,7 @@ This parameter is merely stored in \code{manylm}, and will be used as the defaul
 
 \item{shrink.param}{shrinkage parameter to be used if \code{cor.type="shrink"}. This parameter will be used as the default value of \code{shrink.param} in subsequent functions for inference.}
 
-\item{resample}{the method of resampling used. Can be "case"(not yet available), "residual" (default), "perm.resid","score" or "none". See Details. \cr
-This parameter is merely stored in \code{manylm}, and will be used as the
-default value of \code{resample} in subsequent functions for inference.}
-
-\item{nBoot}{the number of bootstrap iterations, default is \code{nBoot=1000}.
-This parameter will be used as the default value of \code{nBoot} in subsequent functions for inference.}
-
-\item{tol}{the sensitivity in calculations near 0.}
-
+\item{tol}{the tolerance used in estimations.}
 \item{\dots}{additional arguments to be passed to the low level regression fitting functions (see below).}
 }
 
@@ -147,7 +139,7 @@ A \code{manylm} object is a list containing at least the following components:
 % \references{...}
 % \note{...}
 \author{
-Ulrike Naumann and David Warton <David.Warton@unsw.edu.au>.
+Yi Wang, Ulrike Naumann and David Warton <David.Warton@unsw.edu.au>.
 }
 \seealso{
 \code{\link{anova.manylm}}, \code{\link{summary.manylm}}, \code{\link{plot.manylm}}}

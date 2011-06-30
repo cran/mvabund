@@ -4,16 +4,16 @@
 default.plot.mvabund <- function(x, 
 				y, 
 				type="p", 
-				main, 
-				xlab, 
-				ylab,
+				main="", 
+				xlab="", 
+				ylab="",
   				col= if(type=="bx") "white" else "black", 
 				fg= "grey", 
 				pch=1, 
 				las=1,
   				write.plot="show", 
 				filename="plot.mvabund", 
-				n.vars= min(12,NCOL(x)),
+				n.vars= 12,
   				overall.main, 
 				var.subset=NA, 
 				subset=NA, 
@@ -21,12 +21,11 @@ default.plot.mvabund <- function(x,
 				scale.lab="ss",
    				t.lab="o", 
 				mfrow=if(!two.objects | (type=="bx")) { 1 } 
-					else if(write.plot=="show") min(25, n.vars) 
-					else min(9,n.vars), 
+				else if(write.plot=="show") min(25, n.vars) 
+				else min(9,n.vars), 
 				mfcol=NULL,
   				shift=TRUE, 
-				border=	if(two.objects & length(col)==1) { c("red","blue")} 
-					else "black", 
+				border=	if(two.objects & length(col)==1) { c("red","blue")}else "black", 
 				checks = TRUE, 
 				add.line=FALSE, 
 				line.col="black",
@@ -35,24 +34,11 @@ default.plot.mvabund <- function(x,
 { 
 
  dev <- dev.list()
+ if (!is.null(dev)) dev.off() # close previous window
  dev.name <- getOption("device")
 
  if(is.null(dev.name))
- 	stop("Make sure that the 'device' option has a valid value, e.g. 'options(device = 'windows')'.
- 			Allowed values here are 'windows', 'win.graph', 'x11', 'X11'.")
- 
-#  if(!(any(dev.name == c("windows", "win.graph", "x11", "X11")) ) )
-#   stop("Make sure that the 'device' option has a valid value, e.g. 'options(device = 'windows')'.
-#   Allowed values here are 'windows', 'win.graph', 'x11', 'X11'.")
- 
- allargs <- match.call(expand.dots = FALSE)
- dots <- allargs$...
-
- if(!is.null(dots$log)){
-      dots$log <- NULL
-      warning("argument 'log' not implemented in 'plot.mvabund'")
- }
- if (missing(x)) { stop("The mvabund object 'x' is missing.") }
+ 	stop("Make sure that the 'device' option has a valid value, e.g. 'options(device = 'windows')'.	Allowed values here are 'windows', 'win.graph', 'x11', 'X11'.") 
 
  ########## BEGIN check transformation, t.lab, scale.lab ###########
 
@@ -69,264 +55,149 @@ default.plot.mvabund <- function(x,
  t.lab <- substr(t.lab,1,1)
  if(!t.lab %in% c("o", "t")) stop("You have passed an invalid 't.lab'")
 
- ########### END check transformation, t.lab, scale.lab ############
+# allargs = all arguments that are passed to the function
+allargs <- match.call(expand.dots=FALSE)  # argument list
+dots <- allargs$...
+if(!is.null(dots$log)){
+    dots$log <- NULL
+    warning("argument 'log' not implemented in 'plot.mvabund'")
+}
+
+allargs[[1]] <- NULL
+allargs$x <- NULL
+allargs$y <- NULL
+allargs$... <- NULL
+args <- lapply(allargs, eval, parent.frame()) # value of arguments
+targs <- match.call(call = sys.call(which = 1), expand.dots = FALSE)
+# targs = plot(x = tasm.cop ~ treatment, col = as.numeric(block)) the original input
 
  ########## BEGIN mvabund data check, pipe to alternate Function call if needed 
- if (! missing(y) && !is.null(y) ) {
-   # Find out which object is mvabund
-   # and whether another function needs to be called
+if (missing(x)) { stop("The mvabund object 'x' is missing.") }
 
-        two.objects <- TRUE
-   
-        if (is.mvabund(y) & is.mvabund(x)) {  
-            mvabund.object.2 <- as.matrix(unabund(y))
-            if (any(!is.na(list(subset)))) 
-	        mvabund.object.2 <- mvabund.object.2[c(subset),]
-        } else {
-            if(! any(class(y) == "formula")) {	
-        	if(is.factor(as.data.frame(y)[,1])) {
-      		# x is assumed to be mvabund and y assumed to be factors.
-                	expl.data <- as.data.frame(y)
-			# Check if all columns in x are factors.
-                 	fac <- rep(TRUE, (ncol(expl.data)))
-                 	for(i in 1:ncol(expl.data)) {
-                  		if (!is.factor(expl.data[,i])) fac[i] <- FALSE
-                 	}
-                  	if(any(!fac))
-                  	warning("Only the factor variables ",
-			paste((1:ncol(expl.data))[fac], collapse =", "), " of x will be plotted.")
+ if (missing(y)) two.objects <- FALSE
+ else {   # Find out which object is mvabund and which function needs to be called
+    two.objects <- TRUE
 
-			#Subset the expl.data data and pass it to plot call!
-			#if(!any(is.na(subset))) {
-			#	expl.data <- expl.data[subset,]
-			#	x <- x[subset,]
-			#}
-	
-                  	allargs[[1]]<- NULL
-                  	allargs$...  <- NULL
-                  	allargs$x    <- NULL
-                  	allargs$y    <- NULL
-                  	allargs$checks <- NULL
-                  	allargs$line.col <- NULL
-                  	allargs$add.line <- NULL
-                  	allargs <- lapply(allargs, eval, parent.frame())
+    if (checks) { 
+       mvabund.colnames <- colnames(as.matrix(unabund(x)))
+       mvabund.colnames2 <- colnames(as.matrix(unabund(y)))
+       if(any(c(is.null(mvabund.colnames), is.null(mvabund.colnames2)))) ch <- TRUE
+       else ch <- sapply(1:length(mvabund.colnames), 
+                  function(x) mvabund.colnames[x] == mvabund.colnames2[x])
+       if(!all(ch)) stop("The two mvabund objects 'x' and 'y' seem not to consist of the same variables in the same order.")
+    } 
 
-                  	if(is.null(dots$legend.title) & !is.null(colnames(expl.data))){
-                    		if(is.factor(y)) allargs$legend.title <- "factor" 
-				else { allargs$legend.title <- colnames(expl.data) }
-                  	}	
-
-                  	if(shift) message("Overlapping points were shifted along the y-axis to make them visible.")
-                 	cat("\n PIPING TO 1st MVFACTOR \n")
-#browser()
-			do.call( "plotMvaFactor", c(list(x=x, y=expl.data), allargs, dots))
-               		return(invisible())
-          	}
-            }
-            if(!any(class(x) == "formula")) {
-        	if(is.factor(as.data.frame(x)[,1])) {
-           	    targs <- match.call(call = sys.call(which = 1), expand.dots = FALSE)
-           	    dots <- targs$...
-                    # y is assumed to be mvabund and x assumend to be factors.
-                    expl.data <- as.data.frame(x)
-		    # Check if all columns in x are factors.
-                    fac <- rep(TRUE, (ncol(expl.data)))
-                    for(i in 1:ncol(expl.data)) {
-                  	if (!is.factor(expl.data[,i])) fac[i] <- FALSE
-                     }
-	            if(any(!fac)) 
-                           warning("Only the factor variables ",
-                    	   paste((1:ncol(expl.data))[fac], collapse =", "),
-                    	   " of x will be plotted.")
-
-                    allargs[[1]] <- NULL
-                    allargs$...  <- NULL
-                    allargs$x    <- NULL
-                    allargs$y    <- NULL
-                    allargs$checks   <- NULL
-                    allargs$line.col <- NULL
-                    allargs$add.line <- NULL
-                    allargs <- lapply(allargs, eval, parent.frame())
-
-                    if(is.null(dots$legendtitle) &  !is.null(colnames(expl.data))) {
-                    	if(is.factor(x)) allargs$legend.title <- "factor" 
-			else { allargs$legend.title <-  colnames(expl.data) }
-                     }
-                    cat("\n PIPING TO 2nd MVFACTOR \n")
-                    if(shift) message("Overlapping points were shifted along the y-axis to make them visible.")
-                    do.call( "plotMvaFactor", c(list(x=y, y=expl.data), allargs, dots))
-                    return(invisible())
-	        }
-            }
-
-       if(!is.mvabund(x) & !is.data.frame(y)){ 
-           targs <- match.call(call = sys.call(which = 1), expand.dots = FALSE)
-           dots <- targs$...
-           # if (length(dots)>0){
-           #    dots <- lapply( dots, eval, parent.frame() )
-           # }
-           
-           if( inherits(eval(targs$x), "formula")) {
-              foo <-  eval(targs$x)
-              targs[[1]]    <- NULL
-              targs$x       <- NULL
-              targs$transformation <- NULL
-              targs$checks  <- NULL
-              targs$line.col <- NULL
-              targs$add.line <- NULL
-              targs$...     <- NULL
-              targs <- lapply(targs, eval, parent.frame())
-
-              cat("\n PIPING TO 1st MVFORMULA \n")	
-	      do.call( "plot.mvformula", c(list(x=foo),targs,dots))
-              return(invisible())
-            }  
-
+    if (is.data.frame(x) & !is.factor(y) ) {
+         # x is not mvabund and y is a data.frame.
+         # as they are both data frames, but the response in a formula cannot
+         # be a data frame, there is no interpretation as formula possible.
+         stop("The mvabund object 'x' is missing.")
+    }     
+    else if (is.mvabund(y) & is.mvabund(x)) {  
+        allargs$n.vars <- min(n.vars, NCOL(x))
+        mvabund.object.2 <- as.matrix(unabund(y))
+        if (any(!is.na(list(subset)))) 
+           mvabund.object.2 <- mvabund.object.2[c(subset),]          
+    } 
+    else if(is.mvabund(x) & is.factor(y)) {	
+        # x is mvabund data and y factor design
+        allargs$n.vars <- min(n.vars, NCOL(x))
+        expl.data <- as.data.frame(y)
+         # Check if all columns in x are factors.
+        fac <- rep(TRUE, (ncol(expl.data)))
+        for (i in 1:ncol(expl.data)) 
+             if (!is.factor(expl.data[,i])) fac[i] <- FALSE                
+        if (any(!fac)) warning("Only the factor variables ", paste((1:ncol(expl.data))[fac], collapse =", "), " of x will be plotted.")
+        if(shift) message("Overlapping points were shifted along the y-axis to make them visible.")
+        cat("\n PIPING TO 1st MVFACTOR \n")
+        do.call("default.plotMvaFactor", c(list(x=x, y=expl.data), allargs, dots))
+        return(invisible())
+    }
+    else if(is.mvabund(y) & is.factor(x)) {
+        # y is assumed to be mvabund and x assumend to be factors.
+        allargs$n.vars <- min(n.vars, NCOL(y))
+        expl.data <- as.data.frame(x)
+        # Check if all columns in x are factors.
+        fac <- rep(TRUE, (ncol(expl.data)))
+        for(i in 1:ncol(expl.data)) 
+            if (!is.factor(expl.data[,i])) fac[i] <- FALSE                    
+        if(any(!fac)) warning("Only the factor variables ", paste((1:ncol(expl.data))[fac], collapse =", "), " of x will be plotted.")
+        if(shift) message("Overlapping points were shifted along the y-axis to make them visible.")
+        cat("\n PIPING TO 2nd MVFACTOR \n")
+        do.call("default.plotMvaFactor", c(list(x=y, y=expl.data), allargs, dots))
+        return(invisible())
+     }
+     else if (!is.mvabund(x) & !is.data.frame(y)){ 
+        foo <- eval(targs$x)
+        if( inherits(foo, "formula")) {
+            cat("\n PIPING TO 1st MVFORMULA \n")	
+            do.call("default.plot.mvformula", foo, allargs, dots)
+            return(invisible())
+        }  
+        else {
             # If x is not a factor, y is assumed to be the response and the
             # mvabund object, pass on to plot.mvformula,
             # Define the formula.mva <- y ~ x.
             formula.mva <- as.formula(paste(deparse(targs$y,width.cutoff = 500),
-          		"~", deparse(targs$x,width.cutoff = 200), sep=""))
+          	"~", deparse(targs$x,width.cutoff = 200), sep=""))
 
             if(transformation != "") { 
-                if (min(x,na.rm=TRUE )< 0 | min(y,na.rm=TRUE) < 0)
-             	    stop("no negative values allowed in the data if a transformation is used")
-                if (transformation == "log") { 
-                    miny <- eval(min(y[y!=0],na.rm=TRUE))
-                    minx <- eval(min(x[x!=0],na.rm=TRUE))
-                    formula.mva <- update( formula.mva, log(. +miny)/miny ~ log(. + minx)/minx)
-                } else if(transformation == "sqrt4") { 
-              	    formula.mva <- update( formula.mva, (.)^0.25 ~ sqrt(sqrt(.)) )	
-	        } else if(transformation == "sqrt") { 
-             	    formula.mva <- update( formula.mva, sqrt(.) ~ sqrt(.) )
-                }
-             }
+               if (min(x,na.rm=TRUE )< 0 | min(y,na.rm=TRUE) < 0)
+                   stop("no negative values allowed in the data if a transformation is used")
+               if (transformation == "log") { 
+                   miny <- eval(min(y[y!=0],na.rm=TRUE))
+                   minx <- eval(min(x[x!=0],na.rm=TRUE))
+                   formula.mva <- update( formula.mva, log(. +miny)/miny ~ log(. + minx)/minx)
+               } else if(transformation == "sqrt4") { 
+                   formula.mva <- update( formula.mva, (.)^0.25 ~ sqrt(sqrt(.)) )	
+               } else if(transformation == "sqrt") { 
+                   formula.mva <- update( formula.mva, sqrt(.) ~ sqrt(.) )
+               }
+            }
             
-	     if(missing(n.vars)) allargs$n.vars <- min(NCOL(y), 12)
-             # HERE y is the mvabund and the response object, this may not be expected 
-
-             if(missing(mfrow) & missing(mfcol)) {
-                  if ( NCOL(x) ==1 |  allargs$n.vars==1) {
-                       allargs$mfrow <- min (NCOL(x) * n.vars, 20)
-                  } else if ( allargs$n.vars < 5 |NCOL(x) < 3 )
-                       allargs$mfrow <- c( min (allargs$n.vars,5), min(NCOL(x), 3))
-              }  
-            
-             if (checks) {  
-                  mvabund.colnames <- colnames(as.matrix(unabund(x)))
-                  mvabund.colnames2 <- colnames(as.matrix(unabund(y)))
-		  if(any(c(is.null(mvabund.colnames), is.null(mvabund.colnames2)))) ch <- TRUE 
-	          else ch <- sapply(1:length(mvabund.colnames), function(x) mvabund.colnames[x] == mvabund.colnames2[x])
-		  if(!all(ch)) stop("The two mvabund objects 'x' and 'y' seem not to consist of the same variables in the same order.")
-             } 
+            allargs$n.vars <- min(NCOL(y), 12)
              
-             allargs[[1]]    <- NULL
-             allargs$x       <- NULL
-             allargs$y       <- NULL
-             allargs$transformation <- NULL
-             allargs$checks   <- NULL
-             allargs$line.col <- NULL
-             allargs$add.line <- NULL
-             allargs$...      <- NULL 
-             allargs <- lapply(allargs, eval, parent.frame())
- 
-             cat("\n PIPING TO 2nd MVFORMULA \n")            	
-	     do.call( "plot.mvformula", c(list(x=formula.mva),allargs,dots))
-             return(invisible())
-            
-         }  else if (is.data.frame(x) & !is.factor(as.data.frame(y)[,1]) ) {
-            # x is not mvabund and y is a data.frame.
-            # as they are both data frames, but the response in a formula cannot
-            # be a data frame, there is no interpretation as formula possible.
-            stop("The mvabund object 'x' is missing.")
+            cat("\n PIPING TO 2nd MVFORMULA \n")            	
+	    do.call("default.plot.mvformula", c(list(x=formula.mva), allargs, dots))
+            return(invisible())
+        }
+    } 
+   else if (!is.mvabund(y) & !is.data.frame(x)){
+      	# x is assumed to be mvabund.
+        foo <-  eval(targs$y, envir =  parent.frame())
+     	if( inherits(foo, "formula") ) {
+            data <- eval( targs$x, envir =  parent.frame())
+            plot.mvformula(x=foo, y=data, allargs, dots)
+            return(invisible())
+        }
+       	# x is the mvabund and the response, pass on to plot.mvformula.
+        else {
+      	# Define the formula.mva <- x ~ y
+            formula.mva <- as.formula(paste(deparse(targs$x,width.cutoff = 200),
+      	        	"~", deparse(targs$y,width.cutoff = 500), sep=""))
+            if(transformation != "") {
+       	       if( min(x,na.rm=TRUE )< 0 | min(y,na.rm=TRUE) < 0)
+                  stop("no negative values allowed in the data if a transformation is used")
+               if(transformation == "log") { 
+                  minx   <- eval(min(x[x!=0],na.rm=TRUE))
+                  miny   <- eval(min(y[y!=0],na.rm=TRUE))
+                  formula.mva <- update(formula.mva, log(. +minx)/minx ~ log(. + miny)/miny )
+	       } else if(transformation == "sqrt4") { 
+                  formula.mva <- update( formula.mva, (.)^0.25 ~ sqrt(sqrt(.)) )
+	       } else if(transformation == "sqrt") { 
+                  formula.mva <- update( formula.mva, sqrt(.) ~ sqrt(.) )
+               }
+            }
 
-         } else {
-        	# x is assumed to be mvabund.
-                targs <- match.call(call = sys.call(which = 1), expand.dots = FALSE)
-           	dots <- targs$...
-           	# if (length(dots)>0){
-          	#    dots <- lapply( dots, eval, parent.frame() )
-           	# }
-
-           	if( inherits(eval(targs$y), "formula") ) {
-                   foo <-  eval(targs$y, envir =  parent.frame())
-                   data <- eval( targs$x, envir =  parent.frame())
-                   targs[[1]]     <- NULL
-                   targs$y        <- NULL
-                   targs$transformation <- NULL
-                   targs$checks   <- NULL
-                   targs$line.col <- NULL
-                   targs$add.line <- NULL
-                   targs$...      <- NULL
-              	   targs <- lapply(targs, eval, parent.frame())
-              		
-		   do.call( "plot.mvformula", c(list(x=foo, y=data),targs,dots))
-              	   return(invisible())
-           	 }
-
-            	# x is the mvabund and the response, pass on to plot.mvformula.
-            	targs <- match.call(call = sys.call(which = 1), expand.dots = FALSE)
-            	dots <- targs$...
-            	# if (length(dots)>0){
-            	#    dots <- lapply( dots, eval, parent.frame() )
-            	# }
-           
-           	# Define the formula.mva <- x ~ y
-           	formula.mva <- as.formula(paste(deparse(targs$x,width.cutoff = 200),
-              	        	"~", deparse(targs$y,width.cutoff = 500), sep=""))
-
-           	if(transformation != "") {
-           	    if( min(x,na.rm=TRUE )< 0 | min(y,na.rm=TRUE) < 0)
-              		stop("no negative values allowed in the data if a transformation is used")
-
-                    if(transformation == "log") { 
-                  	minx   <- eval(min(x[x!=0],na.rm=TRUE))
-                	miny   <- eval(min(y[y!=0],na.rm=TRUE))
-               		formula.mva <- update(formula.mva, log(. +minx)/minx ~ log(. + miny)/miny )
-		    } else if(transformation == "sqrt4") { 
-               		formula.mva <- update( formula.mva, (.)^0.25 ~ sqrt(sqrt(.)) )
-		    } else if(transformation == "sqrt") { 
-                 	formula.mva <- update( formula.mva, sqrt(.) ~ sqrt(.) )
-            	    }
-           	}
-
-            	if(missing(n.vars)) allargs$n.vars <- n.vars
-            	
-		if(missing(mfrow) & missing(mfcol)) {
-                    if ( n.vars ==1 |  NCOL(y)==1)  {
-                    	allargs$mfrow <- min (n.vars * NCOL(y), 20)
-                    } else if ( n.vars < 5 |NCOL(y) < 3 ) 
-                        allargs$mfrow <- c( min (n.vars,5), min(NCOL(y), 3))
-		}
-            
-		allargs[[1]]     <- NULL
-            	allargs$x        <- NULL
-            	allargs$y        <- NULL
-            	allargs$transformation <- NULL
-            	allargs$checks   <- NULL
-            	allargs$line.col <- NULL
-            	allargs$add.line <- NULL
-            	allargs$...      <- NULL
-            	allargs <- lapply(allargs, eval, parent.frame())
-
-            	if (checks) {
-                   mvabund.colnames <- colnames(as.matrix(unabund(x)))
-                   mvabund.colnames2 <- colnames(as.matrix(unabund(y)))
-                	
-		   if (any(c(is.null(mvabund.colnames),is.null(mvabund.colnames2)))) ch <- TRUE 
-		   else ch <- sapply(1:length(mvabund.colnames),function(x) mvabund.colnames[x] == mvabund.colnames2[x])
-                
-		   if(!all(ch)) stop("The two mvabund objects 'x' and 'y' seem not to consist of the same variables in the same order.")
-            	}
-                cat("\n PIPING TO 3rd MVFORMULA \n")
-            	do.call( "plot.mvformula", quote=FALSE, c(list(x=formula.mva),allargs,dots))
-            	return(invisible())
-    	} # if(!is.mvabund(x) & !is.data.frame(y))
-      } #  (is.mvabund(y) & is.mvabund(x))
-   } else { # (! missing(y) && !is.null(y) )
-     # Indicates if two mvabund.objects were passed.
-     two.objects <- FALSE
-   }
+            allargs$n.vars <- min(n.vars, NCOL(x))
+            cat("\n PIPING TO 3rd MVFORMULA \n")
+       	    do.call( "default.plot.mvformula", quote=FALSE, c(list(x=formula.mva),allargs,dots))
+            return(invisible())
+    	} # if (class(foo)==formula)
+    } #  (!is.mvabund(y) & !is.data.frame(x))
+    else
+       stop("unknown data type of x and y")
+  } # if (!missing(y) | !is.null(y))
  #### END mvabund data check, FACTOR & FORMULA PLOTS should have been piped elsewhere!! ##
 
  ########## PREPERATIONS FOR PLOT, OUTPUT, EXTRA INPUT, N, P, SUBSET ######### 
@@ -347,15 +218,12 @@ default.plot.mvabund <- function(x,
     	on.exit(dev.off(which = dev.curr))
  }
 
- miss.varsubset <- missing(var.subset)
+ miss.varsubset <- missing(var.subset) | is.null(var.subset) | !is.numeric(var.subset)
  # Change logical var.subset to numerical var.subset, if necessary. Note that
  # NA values are logical as well, but should be excluded here.
  if(!miss.varsubset){
  	if(is.logical(var.subset) & any(!is.na(list(var.subset)))) var.subset <- which(var.subset[!is.na(list(var.subset))])
  }
- miss.varsubset <- !is.numeric(var.subset) # If this function is called within
-    					   # another, the missing function could be tricked out.
-
  if(length(dots)>0) {
  # Delete arguments in ... that are defined lateron and cannot be used twice
  # in the plot function.

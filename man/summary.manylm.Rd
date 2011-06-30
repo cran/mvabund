@@ -8,12 +8,11 @@ in a linear model fitted to high-dimensional data, such as multivariate
 abundance data in ecology.}
 
 \usage{
-\method{summary}{manylm}(
-   object, nBoot=object$nBoot, resample=object$resample, 
-   test=object$test, cor.type=object$cor.type, 
-   shrink.param=object$shrink.param, p.uni="none", studentize=TRUE, 
-   R2="h", show.cor = FALSE, show.est=FALSE, show.residuals=FALSE, 
-   symbolic.cor=FALSE, tol=1.0e-010, \dots )
+\method{summary}{manylm}(object, nBoot=1000, resample="residual", 
+   test=object$test, cor.type=object$cor.type, shrink.param=NULL, 
+   p.uni="none", studentize=TRUE, R2="h", show.cor = FALSE, 
+   show.est=FALSE, show.residuals=FALSE, symbolic.cor=FALSE, 
+   tol=1.0e-10, \dots )
   
 \method{print}{summary.manylm}(
    x, digits = max(getOption("digits") - 3, 3), 
@@ -23,21 +22,23 @@ abundance data in ecology.}
 }
 
 \arguments{
-
-\item{object}{
-object of class \code{manylm}, usually, a result of a call to \code{\link{manylm}}.}
-\item{nBoot}{the number of iterations in resampling, default is \code{nBoot=1000}.}
-\item{resample}{the method of resampling used. Can be one of "case", "residual" (default), "perm.resid", "score" or "none". See Details.}
-\item{test}{the test to be used. Possible values are: \code{"LR"} = likelihood ratio statistic, \code{"F"} = Lawley-Hotelling trace statistic or \code{NULL} for no test.}
-\item{cor.type}{structure imposed on the estimated correlation matrix under the fitted model. Can be "I"(default), "shrink", or "R". See Details.}
-\item{shrink.param}{shrinkage parameter to be used if \code{cor.type="shrink"}. If not supplied, but needed, it will be estimated by estimated from the data by Cross Validation using the normal likelihood as in Warton (2008).}
+\item{object}{an object of class "manylm", usually, a result of a call to
+\code{\link{manylm}}.}
+\item{nBoot}{the number of Bootstrap iterations, default is \code{nBoot=1000}.}
+\item{resample}{the method of resampling used. Can be one of "case" (not yet available),"residual" (default), "perm.resid", "score" or "none". See Details.}
+\item{test}{ the test to be used. Possible values are: "LR" = likelihood ratio statistic (default) and "F" = Lawley-Hotelling trace statistic.\cr
+Note that if all variables are assumed independent (\code{cor.shrink="I"}) then "LR" is equivalent to LR-IND and "F" is the sum-of-F statistics from Warton & Hudson (2004).}
+\item{cor.type}{ structure imposed on the estimated correlation matrix under the fitted model. Can be "I"(default), "shrink", or "R". See Details.}
+\item{shrink.param}{shrinkage parameter to be used if \code{cor.type="shrink"}. If not supplied, but needed, it will be estimated from the data by Cross
+Validation using the normal likelihood as in Warton (2008).}
 \item{p.uni}{whether to calculate univariate test statistics and their P-values, and if so, what type. \cr
 "none" = no univariate P-values (default) \cr
-"unadjusted" = A test statistic and (ordinary unadjusted) P-value is reported
+"unadjusted" = a test statistic and (ordinary unadjusted) P-value is reported
 for each response variable. \cr
-"adjusted" = Univariate P-values are adjusted for multiple testing, using a step-down resampling procedure.
+"adjusted" = Univariate P-values are adjusted for multiple testing, using a
+step-down resampling procedure.
 }
-\item{studentize}{logical. Whether studentized residuals should be used to simulate the data in the resampling steps. This option is not used in case resampling.}
+\item{studentize}{logical, whether studentized residuals or residuals should beused for simulation in the resampling steps. This option is not used in case resampling. }
 \item{R2}{
  the type of R^2 (correlation coefficient) that should be shown, can be one of: \cr
  "h" = Hooper's R^2 = tr(SST^(-1)SSR)/p   \cr
@@ -168,18 +169,19 @@ spidx <- spider$x
 ## Estimate the coefficients of a multivariate linear model:
 fit <- manylm(spiddat~spidx)
 
-## Test multivariate significance using the (default) likelihood ratio
-## statistic, accounting for correlation, but shrinking the estimator 
-## to improve its stability:
-summary(fit, cor.type="shrink")
-
-## Now summarise the fit using score resampling and sum-of-F statistics
-## to estimate multivariate significance:
+## To summarise this multivariate fit, using score resampling to
+## and F Test statistic to estimate significance:
 summary(fit, resample="score", test="F")
 
-## Instead use residual permutation with 2000 iterations, and also report
+## Instead using residual permutation with 2000 iteration, using the sum of F 
+## statistics to estimate multivariate significance, but also reporting 
 ## univariate statistics with adjusted P-values:
-summary(fit, resample="perm.resid", nBoot=2000, test="F", p.uni="adjusted")
+summary(fit, resample = "perm.resid", nBoot=2000, test="F", p.uni="adjusted")
+
+## Obtain a summary of test statistics using residual resampling, accounting 
+## for correlation between variables but shrinking the correlation matrix to 
+## improve its stability and showing univariate p-values:
+summary(fit, cor.type="shrink", p.uni="adjusted")
 
 }
 \keyword{models}

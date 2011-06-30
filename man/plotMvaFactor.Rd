@@ -2,13 +2,12 @@
 \alias{plotMvaFactor}
 \title{Draw a Mvabund Object split into groups. }
 \description{Draw the \code{mvabund} object \code{x} but split the data into
-groups according to the grouping variable \code{y}. See \code{\link{default.plotMvaFactor}}
-for a full description of the function.}
+groups according to the grouping variable \code{y}.}
 \usage{
-plotMvaFactor(x, y, type="p", main="Abundance", n.vars= min(12,NCOL(x)),
-	transformation="log", legend=TRUE, ...)
+plotMvaFactor(x, y, type="p", main="Abundance", n.vars= min(12,NCOL(x)), 
+  transformation="log", legend=TRUE, ...)
 }
-\arguments{ 
+\arguments{
 \item{x}{a \code{mvabund object}, a matrix with multivariate abundance data.}
 \item{y}{a factor or a data.frame with factors, non-factor columns in a
 data.frame are ignored.}
@@ -22,34 +21,36 @@ in \code{par} are NOT allowed.}
 "sqrt4" =4th root transformed.}
 \item{legend}{logical, whether a legend should be added to the plot.}
 \item{\dots}{arguments to be passed to or from other methods.}
-
 }
 \details{
 For each variable in y that is a factor, a plot is drawn. When boxplots are drawn
 the colors, that can be supplied by \code{col} are used to display different
-factor levels. For scatterplots (type="p") it is also possible to use any plotting symbols
-via the \code{pch} functional argument. \cr
+factor levels.
+For scatterplots it is also possible to use the plotting symbols, specified by
+\code{pch} for that. \cr
 
 If the colors and for scatterplots the plotting symbols are not supplied,
-they will be automatically generated. If colors or the plotting symbols are supplied and 
-if the number of factor levels is bigger than the the number of different values 
-supplied by \code{pch} or \code{col}, then the colours and symbols will be repeated
-for the factors. NOTE: This is also the default behaviour for the \code{plot} function.
+they will be automatically generated. However, the plotting symbols will only
+be automatically used in this way if there are up to seven different levels.
+
+If colors or the plotting symbols are supplied, but the number of factor levels
+is bigger than the the number of different values, they will be replicated.
 
 Sometimes the legends might be only partially visible, especially when the width
 of the graphics device is too small. To fix this, create a graphics device with
-a larger width (see help("device") for available devices and their details)
-and then repeat the \code{plotMvaFactor} command.
+a larger width (see help("device") for on available devices and their details)
+and then repeat the
+\code{plotMvaFactor} command.
 }
 % \value{...}
 \references{
-Warton, D. I. (2008)
+Warton, D. I. ( )
 \emph{Raw data graphing: an informative but under-utilised tool 
-for the analysis of multivariate abundances}, Austral Ecology.
+for the analysis of multivariate abundances}, , .
 }
 % \note{...}
 \author{
-Ulrike Naumann, Stephen Wright and David Warton <David.Warton@unsw.edu.au>.
+Ulrike Naumann, Yi Wang, Stephen Wright and David Warton <David.Warton@unsw.edu.au>.
 }
 \seealso{
 \code{\link{plot.mvabund}}.
@@ -57,32 +58,14 @@ Ulrike Naumann, Stephen Wright and David Warton <David.Warton@unsw.edu.au>.
 \examples{
 require(graphics)
 
-#### Basic use ####
+## Plot an Environment Factor vs Abundance plot
 data(spider)
-spiddat <- spider$abund
+spiddat <- mvabund(spider$abund)
 X <- spider$x
 
-#Create a simplistic factor
+## Create a Environmental factor where TRUE=Sand, FALSE=No Sand)
 X <- as.factor(X[,2]>0)
-spiddat <- mvabund(spiddat)
-
-plotMvaFactor(spiddat,X)		#complete default
-plotMvaFactor(spiddat,X,type="bx")	#box plot via factor (TRUE or FALSE)
-
-#### Advanced Use ####
-data(solberg)
-solbdat <- mvabund(solberg$abund)
-treatment<- solberg$x
-
-#Scatter plot version
-plotMvaFactor(solbdat,treatment)
-
-#Complex boxplot version
-plotMvaFactor(x=solbdat, y=treatment, type="bx",
-	main="BoxPlot of The 4 Highest Abundant Species",
-	n.vars=4, xlab="Abundance [sqrt scale]", ylab="",
-	transformation="sqrt", t.lab="o", shift=TRUE)
-
+plotMvaFactor(x=spiddat, y=X)
 }
 \keyword{hplot}
 

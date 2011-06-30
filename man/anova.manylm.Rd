@@ -10,10 +10,7 @@ multivariate abundance data in ecology.
 
 \usage{
 \method{anova}{manylm}(
-  object, \dots, nBoot=object$nBoot, resample=object$resample, 
-  test=object$test, cor.type=object$cor.type, 
-  shrink.param=object$shrink.param, p.uni="none", 
-  studentize=TRUE, calc.rss = FALSE, tol=1.0e-10 )
+  object, \dots, resamp="perm.resid", test="F", p.uni="none", nBoot=1000, cor.type=object$cor.type, shrink.param=object$shrink.param, studentize=TRUE, calc.rss = FALSE, tol=1.0e-10, ld.perm=FALSE, filename=NULL )
 \method{print}{anova.manylm}(
     x, digits = max(getOption("digits") - 3, 3),
     signif.stars = getOption("show.signif.stars"),
@@ -30,7 +27,7 @@ for the \code{print.anova.manylm} method these are optional further arguments
 passed to or from other methods.
 }
 \item{nBoot}{the number of iterations in resampling.}
-\item{resample}{the method of resampling used. Can be one of "case", "residual" (default), "perm.resid", "score" or "none". See Details.}
+\item{resamp}{the method of resampling used. Can be one of "case" (not yet available), "residual" (default), "perm.resid", "score" or "none". See Details.}
 \item{test}{the test to be used. Possible values are: \code{"LR"} = likelihood ratio statistic, \code{"F"} = Lawley-Hotelling trace statistic or \code{NULL} for no test.}
 \item{cor.type}{structure imposed on the estimated correlation matrix under the fitted model. Can be "I"(default), "shrink", or "R". See Details.}
 \item{shrink.param}{shrinkage parameter to be used if \code{cor.type="shrink"}. If not supplied, but needed, it will be estimated by estimated from the data by Cross Validation using the normal likelihood as in Warton (2008).}
@@ -43,7 +40,8 @@ for each response variable. \cr
 \item{studentize}{logical. Whether studentized residuals should be used to simulate the data in the resampling steps. This option is not used in case resampling.}
 \item{calc.rss}{logical. Whether the Residual Sum of Squares should be calculated.}
 \item{tol}{the sensitivity in calculations near 0.}
-
+\item{ld.perm}{logical. Whether to load bootstrap id's from an external file. Default is \code{FALSE}, which will generate bootstrap id's on the fly.}
+\item{filename}{if \code{ld.perm} is \code{TRUE}, this specifies the file path to the stored bootstrap id's. Default is \code{NULL}.}
 
 \item{x}{an object of class \code{"anova.manylm"}, usually, a result of a call to \code{anova.manylm}.}
 \item{digits}{the number of significant digits to use when printing.}
@@ -126,7 +124,7 @@ Regression Analysis.
 \emph{The Annals of Statistics} 14:4, 1261-1295.
 }
 \author{
-Yi Wang and David Warton <David.Warton@unsw.edu.au>.
+Yi Wang, Ulrike Naumann and David Warton <David.Warton@unsw.edu.au>.
 }
 \seealso{
 \code{\link{manylm}}, \code{\link{summary.manylm}}, \code{\link{plot.manylm}}
@@ -142,19 +140,22 @@ spidx <- spider$x
 ## Fit several multivariate linear models:
 fit <- manylm( spiddat ~ spidx ) # model with all explanatory variables
 
-## Use residual resampling (default) to test the significance of this model:
+## Use the default residual resampling to test the significance of this model:
+## return summary of the manylm model
 anova(fit)
 
-## Now fit several models and use anova to compare:
 fit0 <- manylm( spiddat ~ 1) #intercept model
 fit1 <- update(fit0, . ~ . + spidx[, c(1, 3)]) #include soil and leaf variables
-fit2 <- update(fit1, . ~ . + spidx[, 4]) #include moss variable too
-## Compare models using a test statistic that accounts for correlation, 
-## but shrinks the correlation matrix to improve its stability:
+fit2 <- update(fit1, . ~ . + spidx[, 4]) #include moss variables
+
+## Use (residual) resampling to test the significance of these models, 
+## accounting for correlation between variables by shrinking 
+## the correlation matrix to improve its stability:
 anova(fit, fit0, fit1, fit2, cor.type="shrink")
 
-## Use the sum-of-F statistic for multivariate tests using 5000 resamples, 
-## and also report univariate statistics with adjusted P-values:
+## Use the sum of F statistics to estimate multivariate significance from 
+## 5000 resamples, and also reporting univariate statistics with 
+## adjusted P-values:
 anova(fit, fit0, fit1, fit2, nBoot=5000, test="F", p.uni="adjust")
 
 }

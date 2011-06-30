@@ -3,7 +3,7 @@
 # compare them for two objects                                                 #
 ################################################################################
 boxplot.mvabund <- function (x, 
-			y=NULL, 
+			y, 
 			range = 1.5, 
 			names=NULL,
     			at = NULL, 

@@ -15,8 +15,8 @@ print.anova.manylm <- function( x, digits = max(getOption("digits") - 3, 3), sig
     if(all(n.bootsdone==n.bootsdone[1]))  n.bootsdone <- n.bootsdone[1] 
     else n.bootsdone <- paste(n.bootsdone, collapse = ", ")
 
-    if(anova$resample == "perm.resid")
-      anova$resample <- "residual (without replacement)"
+    if(anova$resamp == "perm.resid")
+      anova$resamp <- "residual (without replacement)"
 
     if (anova$cor.type=="R")  corname <- "unconstrained correlation"
     else if (anova$cor.type=="I")  corname <- "response assumed to be uncorrelated"
@@ -55,18 +55,18 @@ print.anova.manylm <- function( x, digits = max(getOption("digits") - 3, 3), sig
     if (length(i <- grep("Df$", cn)))     # df s not shown as zap.i
         zap.i <- zap.i[!(zap.i %in% i)]
 
-    if(substr(anova$resample,1,1)=="n") colnames(x)[nc[has.P]]  <- ""
+    if(substr(anova$resamp,1,1)=="n") colnames(x)[nc[has.P]]  <- ""
     # "no p-values calculated as 'resample=none'
 
     printCoefmat(x, digits = digits, signif.stars = signif.stars, has.Pvalue = has.P, P.values = has.P, cs.ind = NULL, zap.ind = zap.i, tst.ind = tst.i, na.print = "", ...)
     
-    if(!is.null(test) & substr(anova$resample,1,1)!="n"){
+    if(!is.null(test) & substr(anova$resamp,1,1)!="n"){
         if(anova$p.uni=="none") {
             if(inherits(anova, "anova.manyglm") )
-                cat("Arguments: with", n.bootsdone, "resampling iterations using",       anova$resample, "resampling,", anova$teststat, "and",corname, "\n")
+                cat("Arguments: with", n.bootsdone, "resampling iterations using",       anova$resamp, "resampling,", anova$teststat, "and",corname, "\n")
             else
-                cat("Arguments: with", n.bootsdone, "resampling iterations using",        anova$resample, "resampling and",corname, "\n") 
-            if(anova$resample=="case" & sum(anova$n.iter.sing)>0) {
+                cat("Arguments: with", n.bootsdone, "resampling iterations using",        anova$resamp, "resampling and",corname, "\n") 
+            if(anova$resamp=="case" & sum(anova$n.iter.sing)>0) {
                 cat("\nNumber of iterations with adjusted tests (including skipped tests)      because of singularities in X due to the case resampling\n")
                 print.default(anova$n.iter.sing, quote = FALSE, right = TRUE, na.print = "", ...)
                 if(sum(anova$nBoot - anova$n.bootsdone)>0){
@@ -149,19 +149,19 @@ print.anova.manylm <- function( x, digits = max(getOption("digits") - 3, 3), sig
          uni.table <- rbind(col.names, uni.table)
          rownames(uni.table)[1] <- ""
 
-         if(substr(anova$resample,1,1)=="n") {
+         if(substr(anova$resamp,1,1)=="n") {
             print.default(uni.table[,-zap.iuni, drop=FALSE], quote = FALSE,
               right = TRUE, na.print = "", ...)
          } else print.default(uni.table, quote = FALSE, right = TRUE,
               na.print = "", ...)
 
 
-        if( substr(anova$resample,1,1)!="n"){
+        if( substr(anova$resamp,1,1)!="n"){
            if(inherits(anova, "anova.manyglm") )
-              cat("\nArguments: with", n.bootsdone, "resampling iterations using",              anova$resample, "resampling,", anova$teststat, "and",corname, "\n")
+              cat("\nArguments: with", n.bootsdone, "resampling iterations using",              anova$resamp, "resampling,", anova$teststat, "and",corname, "\n")
            else 
-              cat("\nArguments: with", n.bootsdone, "resampling iterations using", anova$resample, "resampling and",corname, "\n")
-           if(anova$resample=="case" & sum(anova$n.iter.sing)>0) {
+              cat("\nArguments: with", n.bootsdone, "resampling iterations using", anova$resamp, "resampling and",corname, "\n")
+           if(anova$resamp=="case" & sum(anova$n.iter.sing)>0) {
               cat("\nNumber of iterations with adjusted tests (including skipped tests)              because of singularities in X due to the case resampling\n")
               print.default(anova$n.iter.sing, quote = FALSE, right = TRUE, na.print = "", ...)
             }

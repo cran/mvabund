@@ -4,12 +4,12 @@
 # 05-Jan-2010
 ###############################################################################
 
-anova.manylm <- function(object, ..., nBoot=object$nBoot,resample=object$resample, test=object$test, cor.type=object$cor.type, shrink.param=object$shrink.param, p.uni="none", studentize=TRUE, calc.rss = FALSE, tol=1.0e-10 ) 
+anova.manylm <- function(object, ..., resamp="perm.resid", test="F", p.uni="none", nBoot=1000, cor.type=object$cor.type, shrink.param=object$shrink.param, studentize=TRUE, calc.rss = FALSE, tol=1.0e-10, ld.perm=FALSE, filename=NULL ) 
 {
     # ld.perm=TRUE load bootID from filename
     # for debug use only
-    ld.perm = FALSE
-    filename = NULL
+#    ld.perm = FALSE
+#    filename = NULL
 
     if(!any(class(object)=="manylm"))
        stop("The function 'anova.manylm' can only be used for a manylm object.")
@@ -78,17 +78,14 @@ anova.manylm <- function(object, ..., nBoot=object$nBoot,resample=object$resampl
         #XvarIn <- matrix(as.integer(XvarIn), nrow=nModels, ncol=nParam)
 
         # the following values need to be converted to integer types 
-        if (cor.type == "I") corr <- 1
-        else if (cor.type == "R") corr <- 0
-        else if (cor.type == "shrink") corr <- 2
-        else stop("No such correlation type.") 
 
-        # if (resample=="case") resam <- 0
+        if (resamp=="case") resam <- 0
         # To exclude case resampling
-	if (resample=="case") stop("Sorry, case resampling is not yet available.")
-        else if (resample == "residual") resam <- 1
-        else if (resample == "score") resam <- 2
-        else if (resample == "perm.resid") resam <- 3
+	# if (resamp=="case") 
+	#   stop("Sorry, case resampling is not yet available.")
+        else if (resamp == "residual") resam <- 1
+        else if (resamp == "score") resam <- 2
+        else if (resamp == "perm.resid") resam <- 3
         else stop("No such resampling method.") 
  
         if (test=="LR") testype <- 0
@@ -106,25 +103,35 @@ anova.manylm <- function(object, ..., nBoot=object$nBoot,resample=object$resampl
 	   if (any(w < 0)) stop("negative 'weights' not allowed")
         }
 
-        if (cor.type=="shrink" & is.null(shrink.param)) {
-           shrink.param <- ridgeParamEst(dat=Y, X=X, weights=w, only.ridge=TRUE, doPlot=FALSE, tol=tol)$ridgeParameter
-           # to simplify later computation  
-           if(shrink.param == 0) cor.type <- "I"  
-           if(shrink.param == 1) cor.type <- "R"
-           if (abs(shrink.param)>1)
-              stop("the absolute 'shrink.param' should be between 0 and 1")
-         }
-        else if (cor.type == "I") 
-           shrink.param <- 1 
-        else if (cor.type == "R")
-           shrink.param <- 0 
+        if (cor.type == "I") {
+	    corr <- 1
+	    shrink.param <- 0
+	}    
+        else if (cor.type == "R") { 
+	    corr <- 0 
+	    shrink.param <- 1
+        }
+        else if (cor.type == "shrink") {
+	     corr <- 2
+             if (is.null(shrink.param)) {
+                if ( object$cor.type=="shrink" ) 
+		    shrink.param=object$shrink.param
+                else shrink.param <- ridgeParamEst(dat=Y, X=X, weights=w, only.ridge=TRUE, tol=tol)$ridgeParameter
+                # to simplify later computation  
+                if(shrink.param == 0) cor.type <- "I"  
+                if(shrink.param == 1) cor.type <- "R"
+                if (abs(shrink.param)>1)
+                   stop("the absolute 'shrink.param' should be between 0 and 1")
+             }
+	}     
+        else stop("No such correlation type.") 
 
         if (ld.perm) {
            if (is.null(filename)) {
                paths <- .find.package("mvabund")
-              if (resample == "score")
+              if (resamp == "score")
                  filename <- file.path(paths, "data", "scores.dat")
-              else if (resample == "perm.resid") 
+              else if (resamp == "perm.resid") 
                  filename <- file.path(paths, "data", "permID.dat")
               else
                  filename <- file.path(paths, "data", "bootID.dat")
@@ -133,14 +140,13 @@ anova.manylm <- function(object, ..., nBoot=object$nBoot,resample=object$resampl
            rep <- 1
         }
         else {
-            bootID <- c(FALSE)
-            rep <- 0
+           bootID <- c(FALSE)
+           rep <- 0
         }
 	if (studentize) st <- 1
         else st <- 0
         # construct for param list      
         params <- list(tol=tol, nboot=nBoot, cor_type=corr, shrink_param=shrink.param, test_type=testype, resamp=resam, reprand=rep, studentize=st, punit=pu, rsquare=0)
-
         ######## call resampTest Rcpp #########
         val <- .Call("RtoAnovaCpp", params, Y, X, XvarIn, bootID, PACKAGE="mvabund")
 
@@ -167,7 +173,7 @@ anova.manylm <- function(object, ..., nBoot=object$nBoot,resample=object$resampl
          anova$p.uni <- p.uni
          anova$test  <- test
          anova$cor.type <- cor.type
-         anova$resample <- resample
+         anova$resamp <- resamp
          anova$shrink.param <- shrink.param
          anova$nBoot <- nBoot 
          # parameter
@@ -202,7 +208,7 @@ anova.manylm <- function(object, ..., nBoot=object$nBoot,resample=object$resampl
             testname    <- "no test"
             pname       <- ""
          }
-         dimnames(anova$table) <- list(paste("Model", 1:nModels), c("Res.Df", "Df", testname, pname))
+         dimnames(anova$table) <- list(paste("Model", 1:nModels), c("Res.Df", "Df.diff", testname, pname))
          # make several univariate tables 
          attr(anova$uni.test, "title") <- attr(anova$uni.p, "title") <- "\nUnivariate Tests\nTest statistics:\n"
          if (is.null(dimnam.a)) dimnam.a <- paste("abund", 1:nVars)
@@ -213,14 +219,14 @@ anova.manylm <- function(object, ..., nBoot=object$nBoot,resample=object$resampl
      }
   else {
   #  return the summary multstat result
-     smry <- summary.manylm(object, nBoot=nBoot,resample=resample, test=test, cor.type=cor.type, shrink.param=shrink.param, p.uni=p.uni, studentize=studentize, tol=tol) 
+     smry <- summary.manylm(object, nBoot=nBoot,resamp=resamp, test=test, cor.type=cor.type, shrink.param=shrink.param, p.uni=p.uni, studentize=studentize, tol=tol) 
 
          anova <- list()
          # Outputs passed from inputs
          anova$p.uni <- p.uni
          anova$test  <- test
          anova$cor.type <- cor.type
-         anova$resample <- resample
+         anova$resamp <- resamp
          anova$shrink.param <- shrink.param
          anova$nBoot <- nBoot 
          # parameter

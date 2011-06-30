@@ -2,11 +2,12 @@
 ## PLOT.mvformula: Plot functions for mvabund objects                          #
 ## (multivariate abundance data)                                               #
 ################################################################################
+
 default.plot.mvformula <- function(	x,
-				y=NA, 
+				y, 
 				type="p", 
-				main="", 
-				xlab=NULL,
+				main, 
+				xlab,
   				ylab="Abundances", 
 				col=if(type=="bx") "white" else "black", 
 				fg="grey",
@@ -14,14 +15,13 @@ default.plot.mvformula <- function(	x,
 				las=1, 
 				write.plot="show", 
 				filename="plot.mvabund",
-  				n.vars=if(any(is.na(list(var.subset)))) 12 else length(var.subset), 
+  				n.vars=if(any(is.na(var.subset))) 12 else length(var.subset), 
 				overall.main="",
   				data=parent.frame(), 
 				var.subset=NA, 
 				xvar.select=TRUE,
   				n.xvars=if(any(is.na(xvar.subset))) min(3, sum(!is.interaction)) else length(xvar.subset),
   				xvar.subset=NA, 
-                                transformation.formula="log", 
 				scale.lab="ss", 	
 				t.lab="t", 
 				mfrow=c(min(5,n.vars), min(3, n.xvars[xvar.select])), 
@@ -35,7 +35,6 @@ default.plot.mvformula <- function(	x,
 #Kill Function if a BoxPlot has been passed
 if (type=="bx") { stop("\nERROR: It is not ideal to use a boxplot for this data type\n") }
 
-if(missing(all.labels)) all.labels <- FALSE
 # If there is only one response variable this is changed to TRUE
 # (overwritten independent of passed value)
 
@@ -43,7 +42,8 @@ dev <- dev.list()
 dev.name <- getOption("device")
 
 if(is.null(dev.name))
-	stop("Make sure that the 'device' option has a valid value, e.g. 'options(device = 'windows')'.Allowed values here are 'windows', 'win.graph', 'x11', 'X11'.")
+	stop("Make sure that the 'device' option has a valid value, e.g. 'options(device = 'windows')'.
+		Allowed values here are 'windows', 'win.graph', 'x11', 'X11'.")
 
 # if(!(any(dev.name == c("windows", "win.graph", "x11", "X11")) ) )
 #   stop("Make sure that the 'device' option has a valid value, e.g. 'options(device = 'windows')'.
@@ -56,7 +56,7 @@ dots  <- m$...
 logWarn <- FALSE
 if(!is.null(dots$log)){
 	# dots$log <- NULL
-	if(regexpr("y", dots$log ) != -1) {
+	if(regexpr("y", dots$log ) !=-1) {
 		dots$log <-  sub("y","", dots$log)
 		logWarn <- TRUE
 	}
@@ -88,8 +88,8 @@ miss.varsubset <- missing(var.subset)
 # Change logical var.subset to numerical var.subset, if necessary. Note that
 # NA values are logical as well, but should be excluded here.
 if(!miss.varsubset){
-	if(is.logical(var.subset) & any(!is.na(list(var.subset))))
-	var.subset <- which(var.subset[!is.na(list(var.subset))])
+	if(is.logical(var.subset) & any(!is.na(var.subset)))
+	var.subset <- which(var.subset[!is.na(var.subset)])
 }
 
 miss.varsubset <- !is.numeric(var.subset) # If this function is called within
@@ -97,7 +97,6 @@ miss.varsubset <- !is.numeric(var.subset) # If this function is called within
 var.subset  <- as.vector(var.subset)
 
 miss.xvarsubset <- missing(xvar.subset)
-
 if(!miss.xvarsubset){
 	if(is.logical(xvar.subset) & any(!is.na(xvar.subset)))
 	var.subset <- which(xvar.subset[!is.na(xvar.subset)])
@@ -115,39 +114,19 @@ if(!inherits(x, "formula") ) {
 # The response cannot be a data.frame, when both objects are data.frames an
 # error will be produced.
 # If none is an mvabund object, x is the response, if it is not a data.frame.
-	if (missing(y) | is.null(y) ) { stop("A response and independent variables need to be provided for a formula.") }
+	if (missing(y)) { stop("A response and independent variables need to be provided for a formula.") }
 
 	if( (is.mvabund(y) & ! is.mvabund(x)  ) | is.data.frame(x)) { 
-
 		if(is.data.frame(y)) stop("a data.frame is not accepted as response for building the formula")
-	
-		targs <- match.call(call = sys.call(which = 1), expand.dots = FALSE) 
-		if(missing(n.vars)) n.vars <- min(NCOL(y), 12)
-		# ! y is the mvabund / the response object, This may not be expected.
-
-		if(missing(mfrow) & missing(mfcol)) {
-		      if ( NCOL(x) ==1 |  n.vars==1) { mfrow <- min (NCOL(x) * n.vars, 20)
-		      } else if ( n.vars < 5 |NCOL(x) < 3 )
-		      mfrow <-  c( min (n.vars,5), min(NCOL(x), 3))
-		}
-	   
-		mvabund.formula<-x<-as.formula(paste(deparse(targs$y,width.cutoff=500),	"~",deparse(targs$x,width.cutoff = 500), sep=""))
+		targs <- match.call(call = sys.call(which = 1), expand.dots = FALSE)
+		mvabund.formula <- x <- as.formula(paste(deparse(targs$y,width.cutoff = 500),"~",deparse(targs$x,width.cutoff = 500), sep=""))
 
 	# That might result in troubles if either targs$y or targs$x has the name "x"
 	# try to remove x (formula) earlier after giving it the name mvabund.formula
-	} else { 	
+	} else { 
 		targs <- match.call(call = sys.call(which = 1), expand.dots = FALSE)
-		if(missing(n.vars)) n.vars <- min(12,NCOL(x))
-		if(missing(mfrow) & missing(mfcol)) {			
-			if ( n.vars ==1 |  NCOL(y)==1)  {
-				mfrow <- min (n.vars * NCOL(y), 20)
-			} else if ( n.vars < 5 |NCOL(y) < 3 )
-		
-			mfrow <- c( min (n.vars,5), min(NCOL(y), 3))
-			mvabund.formula <- x <- as.formula( paste(deparse(targs$x,width.cutoff = 500),"~", deparse(targs$y,width.cutoff = 500), sep="") )
-		} 
+		mvabund.formula <- x <- as.formula( paste(deparse(targs$x,width.cutoff = 500),"~", deparse(targs$y,width.cutoff = 500), sep="") )
 	}
-
 	# if(length(x) != 3)   stop("'formula' is incorrect")
 } else mvabund.formula	<- x
 
@@ -162,7 +141,7 @@ if(resp) {
 
 	if(!is.null(colnames( mvabund.object.1 ))){
 		if(any(is.na(suppressWarnings(as.numeric(sub( nam ,"", colnames( mvabund.object.1 ))))))){
-		          colnames( mvabund.object.1 ) <- sub( nam ,"", colnames( mvabund.object.1 ))
+			colnames( mvabund.object.1 ) <- sub( nam ,"", colnames( mvabund.object.1 ))
 		}
 	}
 } else stop("'formula' has no response")
@@ -207,17 +186,12 @@ expl.data <- as.data.frame(mf[, -1])
 # This is a matrix, ie factors are split to dummy variables
 # not used for the actual plot, but for getting assign, etc
 pExpl <- length(is.interaction) # NCOL(expl.data) + sum(is.interaction)
-if(pExpl == 0) stop("The model is empty. There\'s nothing to plot.")
+if(pExpl == 0) stop("The model is empty. There's nothing to plot.")
 
-if(missing(mfrow) & missing(mfcol)) {
-	if ( min(pExpl,n.xvars[xvar.select]) ==1 |  n.vars==1) {
-		mfrow <- min (min(pExpl,n.xvars[xvar.select]) * n.vars, 12)
-	}
-}
+miss.xlab <- missing(xlab) 
+if (miss.xlab) xlab <- NULL 
 
-miss.xlab <- missing(xlab)
-miss.main <- missing(main)
-
+miss.main <- missing(main) 
 if (miss.main)  {
 
 	nam <- paste(deparse( mvabund.formula[[2]]), ".", sep="")
@@ -233,12 +207,13 @@ if (miss.main)  {
 	# main <- colnames(mvabund.object.1) <- colnames(as.matrix(
 	#   model.frame( mvabund.formula)))[1:p]
 	n.mn <- nchar(main, type="chars")
-	if(any(n.mn > 14))  main[n.mn > 14] <- paste(substr(main[n.mn > 14], 1, 7),"...\n...", substr(main[n.mn > 14], n.mn[n.mn > 14]-7, n.mn[n.mn > 14]) )
-
+	if(any(n.mn > 14))  main[n.mn > 14] <- paste(substr(main[n.mn > 14], 1, 7),"...\n...",
+							substr(main[n.mn > 14], n.mn[n.mn > 14]-7, n.mn[n.mn > 14]) )
+	
 } else if (length(main)==p){
 	colnames(mvabund.object.1) <- main
 
-} else if (!all(is.na(list(var.subset))) & length(main)==length(var.subset)){
+} else if (!all(is.na(var.subset)) & length(main)==length(var.subset)){
 	colnames(mvabund.object.1)[var.subset]<- main
 	main <- colnames(mvabund.object.1)
 
@@ -335,7 +310,6 @@ pExpl <- length(xvar.subset)
 
 ########### factor plot #################
 is.all.factor <- TRUE
-
 for(i in xvar.subset) {
 	if (!is.factor(expl.data[,i])) is.all.factor <- FALSE
 }
@@ -363,16 +337,16 @@ if(is.all.factor) {
 
 	if(shift) message("Overlapping points were shifted along the y-axis to make them visible.")
 
-cat("\n \tPIPING to 1st MVFACTOR PLOT \n") 
-	suppressWarnings(do.call( "plotMvaFactor", c(list(x=mvabund.object.1, y=expl.data[,xvar.subset, drop=FALSE]), transformation=transformation.formula, m, dots) ))
 
+        cat("\n \tPIPING to 1st MVFACTOR PLOT \n") 
+	   do.call( "default.plotMvaFactor", c(list(x=mvabund.object.1, y=expl.data[,xvar.subset, drop=FALSE],transformation="no"), m, dots))
 	return(invisible())
 }
 ########### END factor plot #################
 
 # print a warning if the y-axis was wanted to be log-transformed - this should
 # be done inside the formula
-if(logWarn) warning("logarithmic axis is only possible on the x axis in \'plot.mvformula\'")
+if(logWarn) warning("logarithmic axis is only possible on the x axis in 'plot.mvformula'")
 
 ########## whether to write the plot ##################################
 
@@ -396,14 +370,16 @@ mvabund.formula <-  mvabund.formulaUni
 
 ###########
 
-if (miss.xlab) xlab <-  attr(terms(mvabund.formula[[1]]),"term.labels")  
-else { 
+if (miss.xlab) xlab <- attr(terms(mvabund.formula[[1]]),"term.labels")
+else
+{ 
 	llab <- length(attr(terms(mvabund.formula[[1]]),"term.labels"))
 
 	# xlab needs to include names for every column of x.
 	# not only the ones chosen with x.var.subset
 	if (length(xlab)!= llab & length(xlab)>1)
-	    stop("'names.ind' must be a vector consisting of ", as.character(llab), " characters")
+		stop("'names.ind' must be a vector consisting of ",
+			as.character(llab), " characters")
 }  
 
 ############################################################################
@@ -501,9 +477,11 @@ par(oma=c(1,1,4,1))
 
 
 ######### BEGIN plot #########
- t.lab <- substr(t.lab,1,1) 
- if(!t.lab %in% c("o", "t")) stop("You have passed an invalid 't.lab'")
- if (t.lab=="o") {
+t.lab <- substr(t.lab,1,1)
+
+if(!t.lab %in% c("o", "t")) stop("You have passed an invalid 't.lab'")
+
+if (t.lab=="o") {
 	# Obtain the transformation-axis ticklabels and tickmark values.
 	# at the moment transAxis only works with the original name (so 'x' must be used)
 	# and not if there are indices used, then the normal axis is drawn
@@ -512,6 +490,7 @@ par(oma=c(1,1,4,1))
 		axes <- TRUE
 		yaxislabs <- yaxvalues <- NULL
 	} else {
+
 		if (trAxis$trans ) {  
 			axes   <- FALSE 
 			opp <- par("mgp")
@@ -560,7 +539,9 @@ if(any(c(pExpl, n.vars)==1)) {
 		matrix(layoutmat, nrow=min(n.vars,rows),ncol=min(pExpl,columns), byrow=TRUE )
 
 	if(pExpl>columns & (pExpl%%columns)!=0) {
-		layouthelp2[(1:min(n.vars,rows)),1:(pExpl%%columns)] <-	matrix((1:(min(n.vars,rows)*(pExpl%%columns))), nrow=min(n.vars,rows),ncol=(pExpl%%columns), byrow=TRUE )
+		layouthelp2[(1:min(n.vars,rows)),1:(pExpl%%columns)] <-
+				matrix((1:(min(n.vars,rows)*(pExpl%%columns))),
+					nrow=min(n.vars,rows),ncol=(pExpl%%columns), byrow=TRUE )
 		uselayout2 <- TRUE
 	} else uselayout2 <- FALSE
 }
@@ -608,7 +589,10 @@ if(any(scale.lab == "ss")){
 	
 		# dev.set(which = dev.curr)
 cat("\n \tPIPING TO 1st PLOT FORMULA FEATURE \n")
-		do.call( "plotFormulafeature", c(list(mvabund.formula[[wh.max]], data=data, axes=axes, type=type[1], ylim=c(0,mxAll[wh.max]+mxAll[wh.max]/10), xvar.subset=1, ask=FALSE), dots ))
+		do.call( "plotFormulafeature", c(list(mvabund.formula[[wh.max]],
+				data=data, axes=axes, type=type[1],
+					ylim=c(0,mxAll[wh.max]+mxAll[wh.max]/10), xvar.subset=1,
+						ask=FALSE), dots ))
 
 		yaxTic <- axTicks(2)
 		yaxLab <- as.character(yaxTic)
@@ -694,10 +678,10 @@ for (yi in 1:winylevel) {
 			}
 
 cat("\n \tPIPING TO 2nd PLOT FORMULA FEATURE \n")
-			do.call( "plotFormulafeature", c(list(mvabund.formula[[yj]], data=data,ylab=ylabj, xlab=xlabyj, ask=aske, yaxis.ticks=yaxvalues[[yj]],yaxis.labs=yaxislabs[[yj]], fg=fg, cex.xaxis=0.9, cex.yaxis=0.9,axes=axes , col=col, pch=pch, type=type, las=las, main= main[yj], ylim=ylimVal, border=border, xvar.subset=colsj, cex.lab=1.2, all.labels= if(mfr) all.labels else TRUE), dots ))
+			do.call( "plotFormulafeature", c(list(mvabund.formula[[yj]], data=data,	ylab=ylabj, xlab=xlabyj, ask=aske, yaxis.ticks=yaxvalues[[yj]],	yaxis.labs=yaxislabs[[yj]], fg=fg, cex.xaxis=par("cex.axis"), cex.yaxis=par("cex.axis"), axes=axes , col=col, pch=pch, type=type, las=las, main= main[yj], ylim=ylimVal, border=border, xvar.subset=colsj, cex.lab=par("cex.lab"),all.labels= if(mfr) all.labels else TRUE), dots ))
 	
 			if (yj==rowsj[1] & overall.main!=""  & par("oma")[3]>=1) {
-			mtext(overall.main, outer = TRUE, cex = 0.9*par("cex.main"), col=par("col.main"), line = 1) 
+				mtext(overall.main, outer = TRUE, cex = 0.9*par("cex.main"), col=par("col.main"), line = 1) 
 			}
 		}
 	}
@@ -763,6 +747,8 @@ if(keep.window & !(pmfg[1]==rows & pmfg[2]==columns)) {
 		} else  par(mfcol=c(rows,columns),mfg=c(pmfg2[1],pmfg2[2]))
 	}
 	
-} 
 }
+
+}
+
 

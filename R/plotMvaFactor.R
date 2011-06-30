@@ -10,13 +10,12 @@ plotMvaFactor <- function(x,
 			legend = TRUE, ... ) 
 {
 	#Send default MVAFACTOR plot.
-	default.plotMvaFactor(x=x, 
-			y=y, 
+	default.plotMvaFactor(x, y, 
 			type=type, 
 			main=main, 
 			n.vars=n.vars,
 			transformation=transformation, 
-			legend=legend,...)
+			legend=legend, ...)
  
 }
 

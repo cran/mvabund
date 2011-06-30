@@ -4,7 +4,7 @@
 # 05-Jan-2010
 ###############################################################################
 
-summary.manylm <- function(object, nBoot=object$nBoot,resample=object$resample, test=object$test, cor.type=object$cor.type, shrink.param=object$shrink.param, p.uni="none", studentize=TRUE, R2="h", show.cor = FALSE, show.est=FALSE, show.residuals=FALSE, symbolic.cor = FALSE, tol=1.0e-10, ... ) 
+summary.manylm <- function(object, nBoot=1000,resample="residual", test=object$test, cor.type=object$cor.type, shrink.param=NULL, p.uni="none", studentize=TRUE, R2="h", show.cor = FALSE, show.est=FALSE, show.residuals=FALSE, symbolic.cor = FALSE, tol=1.0e-10, ... ) 
 {
   # ld.perm and filename for debug use only
   # ld.perm=TRUE load bootID from file
@@ -41,9 +41,9 @@ summary.manylm <- function(object, nBoot=object$nBoot,resample=object$resample, 
     else if (cor.type == "shrink") corr <- 2
     else stop("No such correlation type.") 
     
-    #if (resample=="case") resam <- 0
     # To exclude case resampling
-    if (resample=="case") stop("Sorry, case resampling is not yet available.")
+    #if (resample=="case") stop("Sorry, case resampling is not yet available.")
+    if (resample=="case") resam <- 0
     else if (resample == "residual") resam <- 1
     else if (resample == "score") resam <- 2
     else if (resample == "perm.resid") resam <- 3

@@ -5,11 +5,11 @@
 default.meanvar.plot.mvabund <- function(x, 
 				type="p", 
 				log="xy", 
-				main=NULL, 
+				main="", 
 				sub=NULL,
-  				xlab=NULL,
-				ylab=NULL, 
-				col="black", 
+  				xlab="",
+				ylab="", 
+				col, 
 				pch=par("pch"), 
 				asp=if(log=="xy") 1 else NA,
   				n.vars = NULL, 
@@ -53,27 +53,20 @@ if(!is.null(subset)) {
 	mvabund.object <- mvabund.object[c(subset),]
 }
 
-if(missing(n.vars)) {
-	if(any(is.null(var.subset))) n.vars <- ncol(mvabund.object) 
-	else n.vars <- length(var.subset)
-}
-
-miss.varsubset <- missing(var.subset)
+miss.varsubset <- missing(var.subset) | is.null(var.subset)
 # Change logical var.subset to numerical var.subset, if necessary. Note that
 # NA values are logical as well, but should be excluded here.
 if(!miss.varsubset){
-	if(is.logical(var.subset) & any(!is.na(list(var.subset))))
-	var.subset <- which(var.subset[!is.na(list(var.subset))])
+	if(is.logical(var.subset) & any(!is.na(var.subset)))
+	var.subset <- which(var.subset[!is.na(var.subset)])
 }
-
 miss.varsubset <- !is.numeric(var.subset) 
-# If this function is called within
 # another, the missing function could be tricked out.
 var.subset  <- as.vector(var.subset)
 
-# Initiate n.vars before removing x.
-if(missing(n.vars)){
-	if(!any(is.null(var.subset))) n.vars <- length(var.subset)
+if (missing(n.vars) | is.null(n.vars)) {
+	if(is.null(var.subset)) n.vars <- ncol(mvabund.object) 
+	else n.vars <- length(var.subset)
 }
 
 rm(x)
@@ -124,9 +117,8 @@ if (write.plot!="show"){
 	on.exit( dev.off() )
 } 
 
-if(missing(col))  col  <- "black"
-miss.pch <- missing(pch)
 mvabund.object <- mvabund.object[,var.subset, drop=FALSE]
+if (missing(col)) col <- "black"
 if(length(col)==p)  col <- col[var.subset]
 if(length(pch)==p)  pch <- pch[var.subset]
 ## END edit var.subset, n.vars and mvabund.objects
@@ -242,7 +234,7 @@ if(write.plot=="show" & is.null(dev)) {
 	if(!is.finite(hfac)) hfac <- 1
 	if(hfac==0) hfac <- 1
 
-	if(is.null(mfr) | miss.pch) dev.off()
+	if(is.null(mfr)) dev.off()
 			do.call(dev.name, args=list(height=height*hfac,width=width))
 }
 		
@@ -318,11 +310,11 @@ if (table) {
 default.meanvar.plot.mvformula <- function(  x,  
 					type="p", 
 					log="xy", 
-					main=NULL,
+					main="",
   					sub=NULL, 
-					xlab=NULL, 
-					ylab=NULL, 
-					col="black", 
+					xlab="", 
+					ylab="", 
+					col="", 
 					pch=par("pch"),
   					asp=if(log=="xy") 1 else NA,
   					n.vars = NULL,
@@ -343,7 +335,7 @@ default.meanvar.plot.mvformula <- function(  x,
 					overlay=TRUE, 
 					all.labels=FALSE,
   					legend=TRUE, 
-					legend.horiz = FALSE, ... ) {
+					legend.horiz, ... ) {
 
 dev 	<- dev.list()
 dev.name <- getOption("device")
@@ -369,20 +361,16 @@ if(any(is.na(mvabund.object))) {
 	} else message("missing values in the mvabund object were removed columnwise for calculations and plots")
 }
 
-miss.varsubset <- missing(var.subset)
+miss.varsubset <- missing(var.subset) | is.null(var.subset)
 # Change logical var.subset to numerical var.subset, if necessary. Note that
 # NA values are logical as well, but should be excluded here.
 if(!miss.varsubset){
-	if(is.logical(var.subset) & any(!is.na(list(var.subset))))
-	var.subset <- which(var.subset[!is.na(list(var.subset))])
+    if(is.logical(var.subset) & any(!is.na(var.subset)))
+    var.subset <- which(var.subset[!is.na(var.subset)])
 }
-
 miss.varsubset <- !is.numeric(var.subset) # If this function is called within
-
 # another, the missing function could be tricked out.
 var.subset  <- as.vector(var.subset)
-
-miss.horiz <- missing(legend.horiz)
 
 rm(x)
 
@@ -581,7 +569,7 @@ if (missing(col)) {
 } else {
 	colr <- col
 }
-
+col <- colr
 	
 if(length(pch)==1) { 
 	pch <- rep(pch, times=max(max.length,1))
@@ -892,7 +880,10 @@ cat("Plotting if overlay is TRUE\n")
 					xminind <- min(mean.mvabund[[ind]][mean.mvabund[[ind]]>0],na.rm=na.rm)
 	
 					if (sum(mean.mvabund[[ind]]<=0, na.rm=na.rm)>0) {
-						message("using grouping variable",mainlabel," ", sum(mean.mvabund[[ind]]<=0,na.rm=na.rm), "mean values were 0 and could not be included in the log-plot")
+						message("using grouping variable ",mainlabel," ",
+								sum(mean.mvabund[[ind]]<=0,na.rm=na.rm),
+									" mean values were 0 and could 
+										not be included in the log-plot")
 					}
 				}
 
@@ -902,11 +893,15 @@ cat("Plotting if overlay is TRUE\n")
 					yminind<- min(var.mvabund[[ind]][var.mvabund[[ind]]>0])
 					
 					if (sum(var.mvabund[[ind]]<=0,na.rm=na.rm)>0) {
-						message("using grouping variable ",	mainlabel," ", sum(var.mvabund[[ind]]<=0,na.rm=na.rm), " variance values were 0 and could not be included in the log-plot")
+						message("using grouping variable ",
+								mainlabel," ", sum(var.mvabund[[ind]]<=0,na.rm=na.rm),
+									" variance values were 0 and could not 
+										be included in the log-plot")
 					}
 				}
 
-				plot(c(xminind,xmaxind),c(yminind,ymaxind), type="n", asp=asp, log=log, xlab=xlab, ylab=ylab, main=main.ind,sub=sub, ... )
+				plot(c(xminind,xmaxind),c(yminind,ymaxind), type="n", asp=asp,
+						log=log, xlab=xlab, ylab=ylab, main=main.ind,sub=sub, ... )
 						
 				j <- 1
 				while (j< (nlevels[[ind]]+1)) {
@@ -953,11 +948,11 @@ cat("Plotting if overlay is TRUE\n")
 				}
 				
 				if (legend) {
-
+#browser()
 					#par(mar=c(0,0,mar[3],0))
 				
 					#plot(0,0,type="n",axes=FALSE,xlab="", ylab="")
-					if(miss.horiz) {
+					if(missing(legend.horiz)) {
 						ncoll <- ceiling(nlevels[[ind]]/(5+5*rows))
 					} else  ncoll <- 1
 					
@@ -1263,7 +1258,7 @@ cat("Plotting if overlay is FALSE\n")
 						leg[natmp]  <- substr( leg[natmp], 1, 5 )
 						leg[!natmp] <- zapsmall( as.numeric(leg[!natmp]), digits=5 )
 
-						if(miss.horiz) {
+						if(missing(legend.horiz)) {
 							ncoll <- ceiling(nlevels[[ind]]/min(ncolfact,24/rows))
 							if (ncoll>ncolmax) {
 								ncoll<-ncolmax
@@ -1346,4 +1341,4 @@ if(!any(is.null(subset))) {
 if (table) return(MeanVarTable)
 
 }
-###### END THE MEANVAR FORMULA PLOT ######
+

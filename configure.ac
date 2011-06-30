@@ -1,5 +1,5 @@
 
-AC_INIT([mvabund], 0.1-7)
+AC_INIT([mvabund], 1.0-1)
 
 AC_CHECK_LIB(gsl, gsl_matrix_set,
              [LIBS="${LIBS} -lgsl -lgslcblas"], 
@@ -47,13 +47,15 @@ else
 fi
 
 ## Use Rscript to query Rcpp for compiler and linker flags
+# Rcpp compile flag providing header directory containing Rcpp.h
+RCPP_CXXFLAGS=`"${R_HOME}/bin/Rscript" -e 'Rcpp:::CxxFlags()'`
 ## link flag providing libary as well as path to library, and optionally rpath
-RCPP_LDFLAGS=`${R_HOME}/bin/Rscript -e 'Rcpp:::LdFlags()'`
+RCPP_LDFLAGS=`"${R_HOME}/bin/Rscript" -e 'Rcpp:::LdFlags()'`
 
 # Now substitute these variables in src/Makevars.in to create src/Makevars
 AC_SUBST(GSL_CFLAGS)
 AC_SUBST(GSL_LIBS)
+AC_SUBST(RCPP_CXXFLAGS)
 AC_SUBST(RCPP_LDFLAGS)
 
 AC_OUTPUT(src/Makevars)
-

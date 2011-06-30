@@ -5,7 +5,7 @@ plot.mvabund <- function(x,
 				y, 
 				type="p", 
 				overall.main="",
-				n.vars= min(12,NCOL(x)),
+				n.vars= 12,
 				var.subset=NA,
   				transformation="log", 
 				...) 
@@ -19,16 +19,10 @@ plot.mvabund <- function(x,
 				n.vars=n.vars,
   				transformation=transformation, 
 				...)
-
-
 }
 ###### END FUNCTION CALL ######
-
-
 setMethod("plot", signature("mvabund", "mvabund"), plot.mvabund)
 setMethod("plot", signature("mvabund", "missing"), plot.mvabund)
 setMethod("plot", signature(x="ANY", y="mvabund"), plot.mvabund)
 setMethod("plot", signature(x="mvabund",y="ANY"), plot.mvabund)
-
-
 

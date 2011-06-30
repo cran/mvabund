@@ -1,6 +1,5 @@
 // Interface between R and summary.cpp (Rcpp API >= 0.7.11 )
-//
-// Author: Yi Wang (yi dot wang at computer dot org)
+// Author: Yi Wang (yi dot wang at unsw dot edu dot au)
 // Last modified: 20-April-2010
 
 #include "Rcpp.h"

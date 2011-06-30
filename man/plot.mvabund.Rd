@@ -9,14 +9,16 @@ for different levels of a factor
 stacked by response variable; comparative dot-plots and boxplots for different 
 levels of a factor, stacked by response variable; scatterplots of abundances 
 against a set of explanatory variables; scatterplots of pair-wise abundance 
-data, e.g. from repeated measures. For additional details on all available functional 
-options, see \code{\link{default.plot.mvabund}}.
+data, e.g. from repeated measures. See details below.
 }
 \usage{
-\method{plot}{mvabund}( x, y, type="p", overall.main, n.vars= min(12,NCOL(x)),
-	var.subset=NA, transformation="log", \dots )
+\method{plot}{mvabund}(x, y, type="p", overall.main="", n.vars=12, 
+  var.subset=NA, transformation="log", ...)
 
-\method{plot}{mvformula}(x, y=NA, type="p", var.subset=NA, n.vars=if(any(is.na(list(var.subset)))) 12 else length(var.subset), xvar.select=TRUE, xvar.subset=NA, n.xvars=if(any(is.na(xvar.subset))) min(3, 4) else length(xvar.subset), transformation="log", \dots )
+\method{plot}{mvformula}(x,y=NA, type="p", var.subset=NA, 
+  n.vars= if(any(is.na(list(var.subset)))) 12 else length(var.subset),
+  xvar.select=TRUE, xvar.subset = NA, n.xvars=if(any(is.na(xvar.subset)))min(3, 4)
+  else length(xvar.subset), transformation="log", ...) 
 }
 
 \arguments{
@@ -31,32 +33,22 @@ independent variables to explain x.}
 \item{type}{what type of plot should be drawn. Useful types are "p" for
 scatterplot, "bx" for boxplot and "n" for no plot. Other types, see
 \code{plot} are allowed, but usually don't give a meaningful output.}
-\item{n.vars}{the number of variables to include in the plot.}
 \item{overall.main}{a character to display as title for every window.}
 \item{var.subset}{a numeric vector of indices indicating which variables of the
 mvabund.object should be included on the plot.}
-\item{subset}{a vector specifying a subset of cases, if any values in subset
-are NA, the argument is discarded.}
+\item{n.vars}{the number of variables to include in the plot.}
+\item{xvar.select}{whether only a subset of x variables should be plotted or all.}
+\item{n.xvars}{the number of the most relevant x variables that should be plotted, is not used if \code{xvar.select = FALSE}.}
+\item{xvar.subset}{a subset of x variables that should be plotted, is not used if \code{xvar.select = FALSE}.}
 \item{transformation}{an optional transformation, if no formula is given,
 "no" = untransformed, "sqrt"=square root transformed,
 "log" (default)=log(Y/min+1) transformed, "sqrt4" =4th root transformed.\cr
 Note that if \code{plot.mvabund} is called explicitly, and two data objects 
 supplied, none of which is a \code{mvabund} object, then \code{plot.mvformula}
 will be called (See Details). The argument \code{transformation} is then NOT 
-available. 
+available. }
+\item{\dots}{arguments to be passed to or from other methods.}
 }
-\item{xvar.select}{whether only a subset of x variables should be plotted or all.}
-\item{n.xvars}{the number of the most relevant x variables that should be
-plotted, is not used if \code{xvar.select = FALSE}.}
-\item{xvar.subset}{
-a subset of x variables that should be plotted, is not used
-if \code{xvar.select = FALSE}.
-}
-\item{\dots}{arguments to be passed to or from other methods. For additional 
-arguments see \code{\link{default.plot.mvabund}}.}
-
-}
-
 \details{
 The function \code{plot.mvabund} produces plots for the visualisation of
 multivariate abundance data and their relationships to environmental variables.
@@ -177,17 +169,18 @@ Warton D.I. (2008). Raw data graphing: an informative but under-utilized tool
 for the analysis of multivariate abundances. \emph{Austral Ecology} 33(3), 290-300.
 }
 \author{
-Ulrike Naumann, Stephen Wright and David Warton <David.Warton@unsw.edu.au>.
+Ulrike Naumann, Yi Wang, Stephen Wright and David Warton <David.Warton@unsw.edu.au>.
 }
 \seealso{
-\code{\link{boxplot.mvabund}}, \code{\link{meanvar.plot}}, \code{\link{plot.manylm}}.
+\code{\link{boxplot.mvabund}}, \code{\link{meanvar.plot}}, \code{\link{plot.manylm}}, 
+\code{\link{plot.manyglm}}.
 }
 \examples{
 
 require(graphics)
 
 ############################
-## Some ``type (1)" plots ##
+## Some "type (1)" plots ##
 ############################
 
 data(solberg)
@@ -197,44 +190,79 @@ treatment<- solberg$x
 ## Plot a multivariate dataset (Species vs Abundance)
 plot.mvabund(solbdat)
 
-## Draw an mvabund object in a boxplot, but using the 20 most abundant 
-## variables in the plot, using the square root transform, and colour:
-plot.mvabund(solbdat, n.vars=20, type="bx", transformation="sqrt", 
-fg="lightblue", ylab="", main="Solberg abundances", col.main="red")
-
-## Plot Species (split by treatment) vs Abundance, similar to Figure 2 
-## of Warton (2008):
+## Alternatively, the plot command could be used directly if spiddat is 
+## defined as an mvabund object:
 solbmvabund <- mvabund(solbdat)
-plot.mvformula(solbmvabund~treatment)
+plot(solbmvabund)
+
+## Draw an mvabund object in a boxplot, but using the 20 most abundant 
+## variables in the plot, using the square root transform, and adding 
+## coloured axes and title:
+plot.mvabund(solbdat, n.vars=20, type="bx", transformation="sqrt", 
+fg="lightblue", main="Solberg abundances", col.main="red")
+
+## Plot Species (split by treatment) vs Abundance
+plot(solbmvabund,treatment)
+
+## This can also be produced using
+plot(solbmvabund~treatment)
+
+## To use plot.mvabund to plot only the variables with P-values less than 0.1:
+lm.solberg <- manylm(log(solbmvabund+1)~treatment)
+anova.solb <- anova(lm.solberg, p.uni="unadjusted")
+pj = anova.solb$uni.p
+
+plot(solbmvabund~treatment, var.subset=pj<0.1)
+
+## Or to plot only the 12 most significant variables, according to their 
+## univariate ANOVA P-values:
+pj.sort = sort(pj, index.return=TRUE)
+plot(solbmvabund~treatment, var.subset=pj.sort$ix[1:12])
+
 
 ############################
-## Some ``type (2)" plots ##
+## Some "type (2)" plots ##
 ############################
-
 #load and convert data
 data(spider)
 spiddat <- mvabund(spider$abund)
 spidx <- mvabund(spider$x)
 
-#Simple function call
-plot.mvformula(spiddat~spidx, transformation="log")
+#create labels vectors
+pch.vec <- as.numeric(spidx[,3]<2)
+pch.vec[pch.vec==0] <- 3
+
+#Scale the soil water variable
+soilWater <- spidx[,1]
+
+#Create the Table for the main titles of each plot
+title <- c("\n\nAlopecosa accentuata", "\n\nAlopecosa cuneata",
+           "\n\nAlopecosa fabrilis", "\n\nArctosa lutetiana", 
+           "\n\nArctosa perita", "\n\nAulonia albimana", 
+           "\n\nPardosa lugubris", "\n\nPardosa monticola", 
+           "\n\nPardosa nigriceps", "\n\nPardosa pullata",
+           "\n\nTrochosa terricola", "\n\nZora spinimana")
+
+#Plot Species Abundance vs Environmental variable
+plot.mvformula(log(spiddat+1) ~ exp(soilWater), main=title, xlab="\% Soil Moist - Log Scale  ", ylab="Abundance [log scale]", overall.main="Species Abundance vs \%Soil Moisture", col=pch.vec, fg="grey", pch=pch.vec, las=1, scale.lab="ss",t.lab="o", mfrow=c(4,3),log="x")
+
+#Add a Margin
+par(xpd=NA)
+legend("topright",pch=c(1,3),col=c(1,3),legend = c("few twigs", "many twigs"), cex = 1, inset=c(0,-0.19))
+
 
 ############################
-## Some ``type (3)" plots ##
+## Some "type (3)" plots ##
 ############################
 
 ##Plot 1981 Abundance vs 1983 Abundance
 data(tikus)
 year <- tikus$x[,1]
-tikusdat <- tikus$abund
-tik81 <-mvabund(tikusdat[year==81,])
-tik83 <-mvabund(tikusdat[year==83,])
+tikusdat <- mvabund(tikus$abund)
+site <- tikus$x[,2]
 
-plot(tik81, tik83, col.main="blue",xlab="1981 abundance",
-	ylab="1983 abundance",add.line=TRUE)
+plot(tikusdat[year==81,], tikusdat[year==83,], col.main="blue", xlab="1981 abundance", ylab="1983 abundance")
 
-## For more elaborate exampels, including ones mimicking other figures in 
-## Warton (2008), see default.plot.mvabund
 }
 \keyword{hplot}
 

@@ -68,8 +68,8 @@ best.r.sq <- function (formula, data = parent.frame(), subset, var.subset,
    #  else new.respname <- paste(deparse(foo.new[[2]]),"[,var.subset]", sep="")
    
    if(!missing(var.subset)) {
-      if(is.logical(var.subset) & any(!is.na(list(var.subset))))
-        var.subset <- which(var.subset[!is.na(list(var.subset))])
+      if(is.logical(var.subset) & any(!is.na(var.subset)))
+        var.subset <- which(var.subset[!is.na(var.subset)])
       if(any(var.subset<1) | any(var.subset>ncol(y) ))
         stop("'var.subset' must be a vector with values between 1 and",  ncol(y))
       y  <- y[,var.subset, drop=FALSE]

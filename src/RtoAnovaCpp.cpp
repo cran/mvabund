@@ -1,6 +1,6 @@
 // Interface between R and anova.cpp (Rcpp API >= 0.7.11)
 //
-// Author: Yi Wang (yi dot wang at computer dot org)
+// Author: Yi Wang (yi dot wang at unsw dot edu dot au)
 // Last modified: 20-April-2010
 
 #include "Rcpp.h"
@@ -30,7 +30,7 @@ RcppExport SEXP RtoAnovaCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
     mm.rsquare = rparam["rsquare"];
 
 // for debug
-// Rprintf("Input param arguments:\n tol=%g, nboot=%d, cor_type=%d, shrink_param=%g, test_type=%d, resamp=%d, reprand=%d\n",mm.tol, mm.nboot, mm.corr, mm.shrink_param, mm.test, mm.resamp, mm.reprand);
+//    Rprintf("Input param arguments:\n tol=%g, nboot=%d, cor_type=%d, shrink_param=%g, test_type=%d, resamp=%d, reprand=%d\n",mm.tol, mm.nboot, mm.corr, mm.shrink_param, mm.test, mm.resamp, mm.reprand);
 
     IntegerMatrix Yr(Ysexp);
     NumericMatrix Xr(Xsexp);
@@ -40,7 +40,7 @@ RcppExport SEXP RtoAnovaCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
     int nParam = Xr.ncol();
     int nModels = INr.nrow();
 // for debug
-//  Rprintf("nRows=%d, nVars=%d, nParam=%d\n", nRows, nVars, nParam);
+//    Rprintf("nRows=%d, nVars=%d, nParam=%d\n", nRows, nVars, nParam);
 
     // Rcpp -> gsl
     int i, j, k;
@@ -78,8 +78,8 @@ RcppExport SEXP RtoAnovaCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
     }
 
     // do stuff	
-//  clock_t clk_start, clk_end;
-//  clk_start = clock();
+    clock_t clk_start, clk_end;
+    clk_start = clock();
 
 // initialize anova class
     AnovaTest anova(&mm, Y, X, isXvarIn);
@@ -110,11 +110,11 @@ RcppExport SEXP RtoAnovaCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
 
     // resampling test
     anova.resampTest();
- //   anova.display();
+//    anova.display();
 
-//    clk_end = clock();
-//    float dif = (float)(clk_end - clk_start)/(float)(CLOCKS_PER_SEC);
-//    Rprintf("Time elapsed: %.4f seconds\n", dif);
+    clk_end = clock();
+    float dif = (float)(clk_end - clk_start)/(float)(CLOCKS_PER_SEC);
+    Rprintf("Time elapsed: %.4f seconds\n", dif);
 
     // Wrap the gsl objects with Rcpp 
     NumericVector Vec_mul(anova.multstat, anova.multstat+nModels-1);

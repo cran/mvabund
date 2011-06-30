@@ -1,5 +1,5 @@
 // Resampling-based hypothesis test for comparing multivariate linear models
-// Author: Yi Wang (yi dot wang at computer dot org)
+// Author: Yi Wang (yi dot wang at unsw dot edu dot au)
 // 16-Nov-2009
 
 
@@ -125,11 +125,11 @@ void AnovaTest::releaseTest()
 
 void AnovaTest::display(void)
 {
-    int i, j, k;
+    size_t i, j, k;
     printf("Anova Table (resampling under H0):\n");
     printf("Hypo\t Alter\t df\t TestStat\t P-value\n");
     for ( i=0; i<nModels-1; i++ ){
-       printf("Model%d\t Model%d\t %d\t %.3f\t\t %.3f\n", i+1, i, dfDiff[i], multstat[i], Pmultstat[i]);
+       printf("Model%u\t Model%u\t %u\t %.3f\t\t %.3f\n", (unsigned int)i+1, (unsigned int)i, dfDiff[i], multstat[i], Pmultstat[i]);
     }
 
     if (mmRef->punit!=NONE){
@@ -137,10 +137,10 @@ void AnovaTest::display(void)
        for (k=0; k<3; k++){
            printf("Response:\t");    
            for (j=k*4; j<(k+1)*4; j++)
-               printf("variable%d\t", j);    	
+               printf("variable%u\t", (unsigned int)j);    	
            printf("\n");
            for ( i=0; i<nModels-1; i++ ){       
-               printf("Model %d:\t", i+1);
+               printf("Model %u:\t", (unsigned int)i+1);
                for (j=k*4; j<(k+1)*4; j++)
                    printf("%.3f(%.3f)\t", gsl_matrix_get(statj, i, j), gsl_matrix_get(Pstatj, i, j));
                printf("\n");
@@ -192,9 +192,11 @@ int AnovaTest::resampTest(void)
                gsl_matrix_set_row (bX, j, &Xj.vector); 
 	    }
            anovacase(bY, bX);
-     } } 
+           nSamp++;
+        }
+    } 
     else if (mmRef->resamp == RESIBOOT) {
-        nSamp = maxiter;
+        nSamp = 0;
         for (i=0; i<maxiter; i++) {
           for (p=1; p<nModels; p++) { 
             for (j=0; j<nRows; j++){
@@ -218,9 +220,11 @@ int AnovaTest::resampTest(void)
                gsl_vector_add (&bootr.vector, &Yj.vector);
 	    } 
             anovaresi(bY, p);
-     } } } 
+         }
+        nSamp++;
+    } }
    else if (mmRef->resamp == SCOREBOOT) {
-       nSamp = maxiter;
+       nSamp = 0;
        for (i=0; i<maxiter; i++) {
          for (p=1; p<nModels; p++) {
            for ( j=0; j<nRows; j++ ) {
@@ -244,12 +248,14 @@ int AnovaTest::resampTest(void)
                gsl_vector_add (&bootr.vector, &Fj.vector);
  	   } 
           anovaresi(bY, p);
-     } } }
+        } 
+        nSamp++;
+   } }
    else if ( mmRef->resamp == PERMUTE ) { 
-       nSamp = maxiter;
        gsl_matrix_add_constant (Pstatj, 1.0); 
        for (p=0; p<nModels-1; p++)
            Pmultstat[p]=1.0;       // include itself
+        nSamp = 1;
         for (i=0; i<maxiter-1; i++) { //999
             for (p=1; p<nModels; p++){ 
                 if (bootID == NULL ) 
@@ -276,7 +282,8 @@ int AnovaTest::resampTest(void)
                  }
                  anovaresi(bY, p);
            }
-       }       
+           nSamp++;
+       }      
    }
    else 
        GSL_ERROR("Invalid resampling option", GSL_EINVAL);
@@ -327,7 +334,7 @@ int AnovaTest::anovacase(gsl_matrix *bY, gsl_matrix *bX)
    }
 
    size_t i, k, hid, aid;
-   double *sj, *pj;
+   double *sj, *pj, *bj;
    // Hats.X 
    for (i=0; i<nModels; i++){
        k=0;
@@ -356,12 +363,10 @@ int AnovaTest::anovacase(gsl_matrix *bY, gsl_matrix *bX)
           // get result ptr corresponds to model i
           sj = gsl_matrix_ptr (statj, i-1, 0);
 	  pj = gsl_matrix_ptr (Pstatj, i-1, 0);
-//          displayvector(bStatj, "bStatj");
-          calcAdjustP(mmRef->punit, nVars, bStatj, sj, pj, sortid[i-1]);
+          bj = gsl_vector_ptr (bStatj, 0);          
+          calcAdjustP(mmRef->punit, nVars, bj, sj, pj, sortid[i-1]);
       }
    }   
-
-  nSamp++;
 
   return 0;
 }
@@ -381,7 +386,8 @@ int AnovaTest::anovaresi(gsl_matrix *bY, const size_t i)
     // get result ptr corresponds to model i
     double *sj = gsl_matrix_ptr (statj, i-1, 0);
     double *pj = gsl_matrix_ptr (Pstatj, i-1, 0);
-    calcAdjustP(mmRef->punit, nVars, bStatj, sj, pj, sortid[i-1]);    
+    double *bj = gsl_vector_ptr (bStatj, 0);
+    calcAdjustP(mmRef->punit, nVars, bj, sj, pj, sortid[i-1]);    
        
    return 0;
 }

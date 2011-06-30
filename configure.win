@@ -1,4 +1,3 @@
-
 if test -z "${LIB_GSL}"; then
     echo "You need to set a variable LIB_GSL that points to a directory"
     echo "containing working and current headers and libraries for the"

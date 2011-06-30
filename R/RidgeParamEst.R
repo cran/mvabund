@@ -18,31 +18,28 @@ ridgeParamEst<-function(dat, X, weights = rep(1,times=nRows), refs, tol=1.0e-010
  if (miss.refs) { 
 	# Set REFS, which determines the method of cross-validation.
  
-    if (nRows<=20)    {
-        nFolds      <- nRows
-    } else if (nRows<=40) {
-        nFolds      <- 10
-    } else    {
-	nFolds      <- 5
-    }
+    if (nRows<=20) nFolds <- nRows
+    else if (nRows<=40) nFolds <- 10
+    else nFolds <- 5   
 	
-    nGroupI         <- ceiling(nRows/nFolds) # max number in each CV group.
-    refs            <- rep.int( 1:nFolds,times= nGroupI )
+    nGroupI <- ceiling(nRows/nFolds) # max number in each CV group.
+    refs    <- rep.int( 1:nFolds,times= nGroupI )
     # length>nRows, but next line also ensures that the length is the same again.
     # Put refs into a random order.
-    refs            <- refs[ order( runif(nRows) )  ]
+    refs    <- refs[ order( runif(nRows) )  ]
  } else {
   # Set default values for other input arguments.
-	if(length(refs)!=nRows)
-    stop("the length of 'refs' must be the sample size of 'dat'")
+    if(length(refs)!=nRows)
+       stop("the length of 'refs' must be the sample size of 'dat'")
     nFolds <- length( unique(refs) )
 }
 isSing     <- FALSE
 mnPred     <- matrix(0,nrow=nRows,ncol=nVars)
 
 sdInvTrain <- RTrain <- list()
-sdInvTr <- eyeTr  <- matrix(0, nrow=nVars, ncol=nVars)
-eyeTr[1+0:(nVars-1)*(nVars+1)] <- 1  
+sdInvTr    <- eyeTr  <- matrix(0, nrow=nVars, ncol=nVars)
+eyeTr[1+0:(nVars-1)*(nVars+1)] <- 1 
+
 # loop
 singular <- 0
 for (iFold in 1:nFolds) { 
@@ -60,26 +57,27 @@ for (iFold in 1:nFolds) {
     # Obtain the training estimate.
     betaTrain <- chol2inv(qrTrain$qr[1:rank,1:rank, drop=FALSE]) %*% t(XTrain*weights[isTrain]) %*% datTrain
     # Obtain the predicted data with the training beta.
-    mnPred[isTest, ] <- X[isTest,qrTrain$pivot[1:rank], drop = FALSE] %*% betaTrain 	
+    mnPred[isTest,] <- X[isTest,qrTrain$pivot[1:rank], drop = FALSE] %*% betaTrain 	
 
     # Obtain the training residuals
     resTrain  <- datTrain - XTrain %*% betaTrain
-    s <- cov(resTrain)   # cov of training residuals 
-    vr <- diag(s) 
+    s <- cov(resTrain)   # cov of training residuals
+
+    vr  <- c(s)[1+0:(nVars-1)*(nVars+1)]
     # Variables that should basically be remove from furhther analysis
-    isVr0  <- (vr < tol)     
-#    seql.isVr0	 <- 1:sum(isVr0)
-    #  vr(isVr0) <- 10^-10 # basically removes these variables from further analyses... 
-    diag(sdInvTr) <- 1/sqrt(vr) 
-    diag(sdInvTr)[isVr0] <- tol #1/sqrt(2*pi) # added by Alice
-    sdInvTrain[[iFold]] <- sdInvTr
+    isVr0  <- (vr < 1e-10)
+    vr[isVr0] <- 1e-10
+    seql.isVr0	 <- 1:sum(isVr0)
+    #  vr(isVr0) <- 10^-10 # basically removes these variables from further analyses...
+    sdInvTr[1+0:(nVars-1)*(nVars+1)]  <- 1/ sqrt(vr)
+    sdInvTrain[[iFold]] <-  sdInvTr
 # bug found here: * => %*%
-    RTrain[[iFold]] <- sdInvTrain[[iFold]] %*% s %*% sdInvTrain[[iFold]] 
-# these get var=0, cov=eye
-    RTrain[[iFold]][isVr0, isVr0] <- 1
-#    # Inf values are set to 1
-#    sdInvTrain[[iFold]][isVr0,isVr0] <- RTrain[[iFold]][isVr0,isVr0] <- eyeTr[seql.isVr0,seql.isVr0]  # = diag(sum(isVr0)) # commented out by Alice
- 
+    RTrain[[iFold]] <- sdInvTrain[[iFold]] %*% s %*% sdInvTrain[[iFold]]
+#browser()
+    # these get var=0, cov=eye
+    # Inf values are set to 1
+    sdInvTrain[[iFold]][isVr0,isVr0] <- RTrain[[iFold]][isVr0,isVr0] <-      eyeTr[seql.isVr0,seql.isVr0]  # = diag(sum(isVr0))
+
     rankRT <- qr(RTrain[[iFold]])$rank
     if ( rankRT< nVars) isSing <- TRUE  # flag for k choice.
 }
@@ -87,22 +85,18 @@ for (iFold in 1:nFolds) {
 resPred <- dat - mnPred # predicted residuals
 
 # BEGIN iterative estimation of the CV penalized likelihood
-    ridgeParameter <- LLSolve(RTrain=RTrain,resPred=resPred,sdInvTrain=sdInvTrain,
-		refs=refs,nFolds=nFolds,tol=tol, max.iter=5)
+    ridgeParameter <- LLSolve(RTrain=RTrain,resPred=resPred,sdInvTrain=sdInvTrain, refs=refs,nFolds=nFolds,tol=tol, max.iter=5)
 	  
 # END iterative estimation
 
 if (!only.ridge) {
    # estimation of the minimal CV penalized likelihood
    # minLL may be complex, if complexDisc set FALSE (default: TRUE)
-   minLL <- LLCalc(lambdas=ridgeParameter,isSing=isSing,nFolds=nFolds,resPred=resPred,
-   refs=refs,RTrain=RTrain,nVars=nVars,sdInvTrain=sdInvTrain, tol=tol) 
+   minLL <- LLCalc(lambdas=ridgeParameter,isSing=isSing,nFolds=nFolds,resPred=resPred, refs=refs,RTrain=RTrain,nVars=nVars,sdInvTrain=sdInvTrain, tol=tol) 
 
 } else {
    minLL<-NULL
 }
-
-
 
 if (doPlot) {
 

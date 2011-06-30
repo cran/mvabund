@@ -2,12 +2,12 @@
 \alias{meanvar.plot}
 \alias{meanvar.plot.mvabund}
 \alias{meanvar.plot.mvformula}
+
 \alias{meanvar.plot,mvabund-method}
 \alias{meanvar.plot,mvformula-method}
 \alias{meanvar.plot,formula-method}
 \alias{meanvar.plot,matrix-method}
 \alias{meanvar.plot,data.frame-method}
-
 
 \title{
 Construct Mean-Variance plots for Multivariate Abundance Data
@@ -23,27 +23,24 @@ Construct mean-variance plots, separately for each column of the input
 \usage{
 meanvar.plot(x, \dots)
 
-\method{meanvar.plot}{mvabund}( x, n.vars = NULL, var.subset=NULL, 
-	subset=NULL, table=FALSE, \dots ) 
+\method{meanvar.plot}{mvabund}(
+  x, n.vars=NULL, var.subset=NULL, subset=NULL, table=FALSE, ...)
 
-\method{meanvar.plot}{mvformula}( x, n.vars = NULL, var.subset=NULL,
-	subset=NULL, table=FALSE, overall.main=NULL, overlay=TRUE, \dots )
+\method{meanvar.plot}{mvformula}(
+  x, n.vars = NULL, var.subset=NULL, subset=NULL, table=FALSE, 
+  overall.main=NULL, overlay=TRUE, ...) 
 }
 
 \arguments{
 \item{x}{an mvabund objects or a Model Formula (can be a formula or a
 mvformula) to be used.}
-\item{overall.main}{an overall title for the window.}
-\item{overlay}{logical, whether overall means/variances for all variables are
-calculated and drawn on a single plot or calculated and plotted separately for
-different variables.}
 \item{n.vars}{the number of variables to include in the plot.}
-\item{var.subset}{vector of indices indicating the variables to be included
-on the plot, (default: the \code{n.vars} most abundant variables).}
+\item{var.subset}{vector of indices indicating the variables to be included on the plot, (default: the \code{n.vars} most abundant variables).}
 \item{subset}{an optional vector specifying a subset of observations to be used.}
 \item{table}{logical, whether a table of the Means and Variances should be returned}
-\item{\dots}{arguments to be passed to or from other methods. See \code{\link{default.meanvar.plot}}
-for additional arguments.}
+\item{overall.main}{an overall title for the window.}
+\item{overlay}{logical, whether overall means/variances for all variables are calculated and drawn on a single plot or calculated and plotted separately for different variables.}
+\item{\dots}{arguments to be passed to or from other methods.} 
 }
 \details{
 \code{meanvar.plot} calculates a mean-variance plot for a dataset with many variables.
@@ -56,8 +53,12 @@ By default the means and variances of all variables (and all factor levels) are 
 
 For the latter, set \code{overlay} to \code{FALSE}. The mean-variances corresponding to the different factors will be drawn in different colors, that can be chosen by specifying \code{col}. \code{col} can then either be a single color value (see \code{par}) with the number of values being at least the maximum number of levels of the factors. The same applies to \code{pch}.
 
+If \code{mfrow} is \code{NULL} and \code{mfcol} is \code{NULL}, par("mfrow") is used. If \code{all.labels = FALSE}, only the x-axis labels at the bottom plot and the y-axis labels of plots on the right side of the window are printed if furthermore \code{main=NULL} only the graphics on the top contain the full title, the other ones an abreviated one.
+
 Note, that if a log-transformation is used for displaying the data, a specific mean-variance relation will not be visible in the plot, if either the calculated mean is zero and \code{log!="x"} or \code{log!="xy"} or if the calculated variance
 is zero and \code{log!="y"} or \code{log!="xy"}.
+
+By default the y/x ratio of the axis, specified by \code{asp}, will be set to \code{1} if \code{log!="xy"}. If the mean-variance relation is not displayed on a log scale and \code{overlay} is \code{FALSE}, it is most often not advisable to specify \code{asp}, as there might not be one choice of \code{asp} that is sensible for each of the plots.
 
 }
 

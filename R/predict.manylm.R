@@ -4,37 +4,41 @@ function (object, newdata, se.fit = FALSE, scale = NULL, df = Inf,
     type = c("response", "terms"), terms = NULL, na.action = na.pass,
     pred.var = res.var/weights, weights = 1, ...) {
 
-    tt <- terms(object)
-    if (missing(newdata) || is.null(newdata)) {
-        mm <- X <- model.matrix(object, data=object$data)
-        mmDone <- TRUE
-        offset <- object$offset
-    } else {
-        Terms <- delete.response(tt)
-        m <- model.frame(Terms, newdata, na.action = na.action, 
-            xlev = object$xlevels)
-        if (!is.null(cl <- attr(Terms, "dataClasses"))) 
-            .checkMFClasses(cl, m)
-        X <- model.matrix(Terms, m, contrasts.arg = object$contrasts)
-        offset <- if (!is.null(off.num <- attr(tt, "offset"))) 
-            eval(attr(tt, "variables")[[off.num + 1]], newdata)
-        else if (!is.null(object$offset)) 
-            eval(object$call$offset, newdata)
-        mmDone <- FALSE
-    }
-    
-    isGlm <- inherits(object, "manyglm")
-    
-    n <- NROW(object$residuals)
+
+#    n <- NROW(object$residuals)
     p <- object$rank
     p1 <- seq_len(p)
     mf <- model.frame(object, data=object$data)
     nvar <- NCOL(model.response(mf))
     ynames <- colnames(as.matrix(model.response(mf)))
     
-    if(isGlm)    piv <- object$qr[[1]]$pivot[p1] else {
-    piv <- object$qr$pivot[p1] }
+    tt <- terms(object)
+    if (missing(newdata) || is.null(newdata)) {
+        n <- NROW(object$residuals)
+        mm <- X <- model.matrix(object, data=object$data)
+        mmDone <- TRUE
+        offset <- object$offset
+    } else {
+        n <- NROW(newdata) 
+        Terms <- delete.response(tt)
+#        m <- model.frame(Terms, newdata, na.action = na.action, 
+#            xlev = object$xlevels)
+#        if (!is.null(cl <- attr(Terms, "dataClasses"))) 
+#            .checkMFClasses(cl, m)
+#        X <- model.matrix(Terms, m, contrasts.arg = object$contrasts)
+        X <- model.matrix(object)[1:n,]
+        offset <- if (!is.null(off.num <- attr(tt, "offset"))) 
+                       eval(attr(tt, "variables")[[off.num + 1]], newdata)
+                  else if (!is.null(object$offset)) 
+                       eval(object$call$offset, newdata)
+        mmDone <- FALSE
+    }
     
+    isGlm <- inherits(object, "manyglm")
+    
+#    if(isGlm)    piv <- object$qr[[1]]$pivot[p1] else {
+    piv <- object$qr$pivot[p1] #}
+
     if (p < ncol(X) && !(missing(newdata) || is.null(newdata))) 
         warning("prediction from a rank-deficient fit may be misleading")
     beta <- as.matrix(object$coefficients)

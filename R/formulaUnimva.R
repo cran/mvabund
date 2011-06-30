@@ -48,8 +48,8 @@ if(missing(var.subset)) {
 } else {
   # Change logical var.subset to numerical var.subset, if necessary. Note that
   # NA values are logical as well, but should be excluded here.
-  if(is.logical(var.subset) & any(!is.na(list(var.subset))))
-    var.subset <- which(var.subset[!is.na(list(var.subset))])
+  if(is.logical(var.subset) & any(!is.na(var.subset)))
+    var.subset <- which(var.subset[!is.na(var.subset)])
   if((max (var.subset)>p) | (p<1)) stop("'var.subset' is not valid")
 }
    

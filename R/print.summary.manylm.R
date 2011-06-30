@@ -28,8 +28,8 @@ print.summary.manylm <- function (x, digits = max(getOption("digits") - 3, 3), s
       corname <- paste("correlation matrix augmented with parameter",round(x$shrink.param, digits = 2))
     else corname <- ""
 	
-    if(x$resample == "perm.resid")
-       x$resample <- "residual (without replacement)"
+    if(x$resamp == "perm.resid")
+       x$resamp <- "residual (without replacement)"
 	
     # print significance tests
     if (length(x$aliased) == 0) 
@@ -72,7 +72,7 @@ print.summary.manylm <- function (x, digits = max(getOption("digits") - 3, 3), s
             ok <- !(is.na(pval))
             # formating the p values
             pval[ok]<- format.pval(pval[ok], digits = dig.tst, eps = eps.Pvalue)
-            if(x$resample=="none") pval[] <- ""
+            if(x$resamp=="none") pval[] <- ""
 
             signif.stars <- signif.stars && any(coefs[ok, 2] < 0.1)
 	    tests <- cbind(testvalue, pval)
@@ -83,19 +83,19 @@ print.summary.manylm <- function (x, digits = max(getOption("digits") - 3, 3), s
                print.default(cbind(tests, format(Signif)), quote = FALSE, right = TRUE, na.print = "NA",...)
                cat("--- \nSignif. codes: ", attr(Signif, "legend"), "\n") 
 	       if(x$p.uni == "none"){
-                   if(x$resample!="none")
-		      cat("Arguments: with", n.bootsdone, "resampling iterations using",    x$resample, "resampling and",corname, "\n")  
+                   if(x$resamp!="none")
+		      cat("Arguments: with", n.bootsdone, "resampling iterations using",    x$resamp, "resampling and",corname, "\n")  
             }    } 
             else {
-               if(x$resample!="none")
+               if(x$resamp!="none")
 	          print.default(tests, quote = FALSE, right = TRUE, na.print = "NA",...)
 	       else 
                   print.default(tests[,-zap.i, drop=FALSE], quote = FALSE, right = TRUE, na.print = "NA",...)
-               if (x$p.uni == "none" & x$resample!="none")
-                  cat("Arguments: with", n.bootsdone, "resampling iterations using",        x$resample, "resampling and",corname, "\n")
+               if (x$p.uni == "none" & x$resamp!="none")
+                  cat("Arguments: with", n.bootsdone, "resampling iterations using",        x$resamp, "resampling and",corname, "\n")
 	    }
 
-  	   if(x$p.uni == "none" & x$resample=="case" & sum(x$n.iter.sing)>0) {
+  	   if(x$p.uni == "none" & x$resamp=="case" & sum(x$n.iter.sing)>0) {
 		cat("\nNumber of iterations with adjusted tests (including skipped tests)      because of singularities in X due to the case resampling\n")
 		print.default(x$n.iter.sing, quote = FALSE, right = TRUE, na.print = "", ...)	
 		if(sum(x$nBoot-x$n.bootsdone)>0){
@@ -115,7 +115,7 @@ print.summary.manylm <- function (x, digits = max(getOption("digits") - 3, 3), s
             coeffs.j <- matrix(NA, ncol=2*cols, nrow=nrow(x$uni.p))
             ok <- !(is.na(uni.p))
 		uni.p[ok]<- format.pval(uni.p[ok], digits = dig.tst, eps = eps.Pvalue)
-	    if(x$resample=="none")  uni.p[] <- ""
+	    if(x$resamp=="none")  uni.p[] <- ""
             coeffs.j[,2*(1:cols)-1]  <- format(round(x$uni.test, dig = dig.tst), digits = digits)
             coeffs.j[,2*(1:cols)]    <- uni.p
             colna <- rep.int("", times=2*cols)
@@ -129,13 +129,13 @@ print.summary.manylm <- function (x, digits = max(getOption("digits") - 3, 3), s
 	    rownames(coeffs.j)[1] <- ""
 	}
         cat(paste("\nUnivariate test statistic: \n" ))
-        if(x$resample!="none"){
+        if(x$resamp!="none"){
             print.default(coeffs.j, quote =FALSE, right = TRUE, na.print = "NA",...)
-            cat("\nArguments: with", n.bootsdone, "resampling iterations using",             x$resample, "resampling and",corname, "\n")
+            cat("\nArguments: with", n.bootsdone, "resampling iterations using",             x$resamp, "resampling and",corname, "\n")
         } 
         else 
             print.default(coeffs.j[,2*(1:cols)-1, drop=FALSE], quote =FALSE, right = TRUE, na.print = "NA",...)
-	    if(x$resample=="case" & sum(x$n.iter.sing)>0) {
+	    if(x$resamp=="case" & sum(x$n.iter.sing)>0) {
 		cat("\nNumber of iterations with adjusted tests (including skipped tests)      because of singularities in X due to the case resampling\n")
 		print.default(x$n.iter.sing, quote = FALSE, right = TRUE, na.print = "", ...)	
 		if (sum(x$nBoot-x$n.bootsdone)>0) {
@@ -159,10 +159,10 @@ print.summary.manylm <- function (x, digits = max(getOption("digits") - 3, 3), s
        else if (x$test=="F") statname <- "\nLawley-Hotelling trace statistic: "
        else statname <- "\nTest statistic: "
 
-       if(x$resample!="none"){
+       if(x$resamp!="none"){
           cat(statname, paste(formatC(x$statistic[1], digits = digits),",",sep=""),         "p-value:", format.pval(x$statistic[2], digits = dig.tst, eps = eps.Pvalue),"\n")
           if (x$p.uni == "none") 
-             cat("Arguments: with", x$overall.n.bootsdone, "resampling iterations using", x$resample, "resampling and",corname, "\n")    
+             cat("Arguments: with", x$overall.n.bootsdone, "resampling iterations using", x$resamp, "resampling and",corname, "\n")    
        } 
        else cat(statname, paste(formatC(x$statistic[1], digits = digits),"\n",sep=""))
     
@@ -171,13 +171,13 @@ print.summary.manylm <- function (x, digits = max(getOption("digits") - 3, 3), s
 	  pvalj <- x$statistic.j[,zap.ij]
 	  ok <- !(is.na(pvalj))
 	  pvalj[ok]<- format.pval(pvalj[ok], digits = dig.tst, eps = eps.Pvalue)
-	  if(x$resample=="none") pvalj[] <- ""
+	  if(x$resamp=="none") pvalj[] <- ""
 	  x$statistic.j[,1] <- format(round(x$statistic.j[,1], dig = dig.tst), digits = digits)
 	  x$statistic.j[,2] <- pvalj
           cat("\nUnivariate test statistic: \n")
-          if(x$resample!="none"){
+          if(x$resamp!="none"){
              print.default(t(x$statistic.j), quote =FALSE, right = TRUE, na.print = "NA",...)
-             cat("\nArguments: with", n.bootsdone, "resampling iterations using", x$resample, "resampling and",corname, "\n")
+             cat("\nArguments: with", n.bootsdone, "resampling iterations using", x$resamp, "resampling and",corname, "\n")
           } else {
              uni.stat <- x$statistic.j[,-zap.ij, drop=FALSE]
              rownames(x$statistic.j)

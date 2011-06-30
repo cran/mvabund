@@ -25,7 +25,7 @@ function (x, digits = max(3, getOption("digits") - 3), ...)
 # the (default) methods coef, residuals, fitted values can be used             #
 ################################################################################
 
-manylm <- function (formula, data=NULL, subset=NULL, weights=NULL, na.action=options("na.action"), method = "qr", model = FALSE, x = TRUE, y = TRUE, qr = TRUE, singular.ok = TRUE, contrasts = NULL, offset, test="LR", cor.type= "I", shrink.param=NULL, resample="residual", nBoot=1000, tol=1.0e-10, ...) {
+manylm <- function (formula, data=NULL, subset=NULL, weights=NULL, na.action=options("na.action"), method = "qr", model = FALSE, x = TRUE, y = TRUE, qr = TRUE, singular.ok = TRUE, contrasts = NULL, offset, test="LR", cor.type= "I", shrink.param=NULL, tol=1.0e-10, ...) {
 ret.x <- x
 ret.y <- y
 ret.qr <- qr
@@ -39,7 +39,7 @@ mf <- eval(mf, parent.frame())    # Obtain the model.frame.
 if (method == "model.frame") { 
     return(mf)
 } else if (method != "qr") 
-        warning(gettextf("method = '%s' is not supported. Using 'qr'", method), domain = NA)
+    warning(gettextf("method = '%s' is not supported. Using 'qr'", method), domain = NA)
 mt <-  attr(mf, "terms")  # Obtain the model terms.
 
 abundances <- as.matrix(model.response(mf, "numeric"))
@@ -126,17 +126,16 @@ else {
    # New codes added for estimating ridge parameter 
    if (cor.type=="shrink") {
       if (is.null(shrink.param)) {
-         shrink.param <- ridgeParamEst(dat=abundances, X=X, weights=w, only.ridge=TRUE, doPlot=FALSE, tol=tol)$ridgeParameter
-         # to simplify later computation
-         if(shrink.param == 0) cor.type <- "I"
-         if(shrink.param == 1) cor.type <- "R"
-       } 
+         tX <- matrix(1, NROW(abundances), 1)
+         shrink.param <- ridgeParamEst(dat=z$residuals, X=tX, weights=w, only.ridge=TRUE, doPlot=FALSE, tol=tol)$ridgeParameter
+      }	 
+      # to simplify later computation
+      if(shrink.param == 0) cor.type <- "I"
+      else if(shrink.param == 1) cor.type <- "R"      
       else if (abs(shrink.param)>1)
-        stop("the absolute 'shrink.param' should be between 0 and 1")
+          stop("the absolute 'shrink.param' should be between 0 and 1")
    }
-   else if (cor.type == "I") {
-      shrink.param <- NULL 
-   }
+   else if (cor.type == "I") shrink.param <- NULL 
    else if (cor.type == "R") {
       if (nrow(abundances)<=ncol(abundances))
           stop("An unstructured correlation matrix should only be used if N>>number of variables.") 
@@ -152,8 +151,6 @@ else {
 z$test          <- test
 z$cor.type      <- cor.type
 z$shrink.param  <- shrink.param
-z$resample      <- resample
-z$nBoot         <- nBoot
 z$call          <- cl
 z$terms         <- mt
 

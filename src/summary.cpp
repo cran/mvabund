@@ -1,6 +1,6 @@
 // calculates a summary of a multivariate linear model
-// Author: Yi Wang (yi dot wang at computer dot org)
-// Last modified on 20-April-2010
+// Author: Yi Wang (yi dot wang at unsw dot edu dot au)
+// 20-April-2010
 
 
 #include "resampTest.h"
@@ -135,7 +135,8 @@ void Summary::releaseSummary()
 
 void Summary::display(void)
 {
-    int i, j, k, nk, lk;
+    size_t i;
+    int j, k, nk, lk;
     printf("Summary of fitting (resampling under H1):\n");
     // significance test
     printf("Significance Test:\n");
@@ -145,7 +146,7 @@ void Summary::display(void)
         printf("Explan\t F value\tPr(>F)\n");
 
     for ( i=0; i<nParam; i++ )
-       printf("  %d\t %.3f\t\t %.3f\n", i, multstat[i+1], Pmultstat[i+1]);
+       printf("  %d\t %.3f\t\t %.3f\n", (int)i, multstat[i+1], Pmultstat[i+1]);
 
     if ( mmRef->punit!=NONE) {
        // Significance univariate tests
@@ -158,7 +159,7 @@ void Summary::display(void)
            }	
            printf("\n");
            for ( i=0; i<nVars; i++ ){ 
-               printf("[Respons %d]\t", i);
+               printf("[Respons %d]\t", (int)i);
                for (j=k*WRAP; j<(k+1)*WRAP; j++) {
                    printf("%.3f(%.3f)\t", gsl_matrix_get(unitstat, j+1, i), gsl_matrix_get(Punitstat, j+1, i));
                }
@@ -174,7 +175,7 @@ void Summary::display(void)
            }
            printf("\n");
            for ( i=0; i<nVars; i++ ){ 
-               printf("[Respons %d]\t", i);
+               printf("[Respons %d]\t", (int)i);
                for (j=0; j<lk; j++) {
                    printf("%.3f(%.3f)\t", gsl_matrix_get(unitstat, nk*WRAP+j+1, i), gsl_matrix_get(Punitstat, nk*WRAP+j+1, i));
                }
@@ -258,9 +259,9 @@ int Summary::resampTest(void)
 	       permid[i]=i;
        }
     }
-    nSamp = 0;
     // resampling options 
     if (mmRef->resamp == CASEBOOT) {
+       nSamp = 0;
        for (i=0; i<maxiter; i++) {
            for ( j=0; j<nRows; j++ ){
 	       // resampling index
@@ -275,9 +276,11 @@ int Summary::resampTest(void)
                gsl_matrix_set_row (bX, j, &Xj.vector); 
 	    }
            smrycase(bY, bX);
+           nSamp++;
         } 
      } 
     else if (mmRef->resamp == RESIBOOT) {
+        nSamp = 0;
         for (i=0; i<maxiter; i++){ 
            for (j=0; j<nRows; j++){
            // resampling index
@@ -299,9 +302,11 @@ int Summary::resampTest(void)
 	  // bY = bootr for resampling under H1 
 //	  displaymatrix(Hats[0].Y, "fit");
           smryresi(bY);
+          nSamp++;
        } 
     }
    else if (mmRef->resamp == SCOREBOOT) {
+       nSamp=0;
        for (i=0; i<maxiter; i++) {
           for ( j=0; j<nRows; j++ ) {
              // random score
@@ -323,10 +328,12 @@ int Summary::resampTest(void)
  	   } 
 	  // bY = bootr for resampling under H1 
           smryresi(bY);
+          nSamp++;
        } 
     } 
    else if ( mmRef->resamp == PERMUTE ) { 
        gsl_matrix_add_constant (Punitstat, 1.0); 
+       nSamp = 1;
        for (i=0; i<maxiter-1; i++) { //999
           if (bootID == NULL ) 
              gsl_ran_shuffle(rnd, permid, nRows, sizeof(size_t));
@@ -349,6 +356,7 @@ int Summary::resampTest(void)
           }
 	  // bY = bootr for resampling under H1 
           smryresi(bY);
+          nSamp++;
        }  
     }
    else 
@@ -402,7 +410,7 @@ int Summary::smrycase(gsl_matrix *bY, gsl_matrix *bX)
    }
 
    size_t i;
-   double *sj, *pj;
+   double *sj, *pj, *bj;
 
    //Y = X*coef
    gsl_blas_dgemm (CblasNoTrans,CblasNoTrans,1.0,bX,Hats[0].Coef,0.0,Hats[0].Y);
@@ -422,7 +430,8 @@ int Summary::smrycase(gsl_matrix *bY, gsl_matrix *bX)
        Pmultstat[0]++;
    sj = gsl_matrix_ptr (unitstat, 0, 0);
    pj = gsl_matrix_ptr (Punitstat, 0, 0);
-   calcAdjustP(mmRef->punit, nVars, &buj.vector, sj, pj, sortid[0]);
+   bj = gsl_matrix_ptr (bUnitStat, 0, 0);
+   calcAdjustP(mmRef->punit, nVars, bj, sj, pj, sortid[0]);
 
    // calc significance stats
    gsl_vector *ref=gsl_vector_alloc(nParam);
@@ -441,9 +450,9 @@ int Summary::smrycase(gsl_matrix *bY, gsl_matrix *bX)
          Pmultstat[i]++;
       sj = gsl_matrix_ptr (unitstat, i, 0);
       pj = gsl_matrix_ptr (Punitstat, i, 0);
-      calcAdjustP(mmRef->punit, nVars, &buj.vector, sj, pj, sortid[i]);
+      bj = gsl_matrix_ptr (bUnitStat, i, 0);
+      calcAdjustP(mmRef->punit, nVars, bj, sj, pj, sortid[i]);
    }  
-   nSamp++;
    gsl_vector_free(ref);
    return 0;
 
@@ -465,8 +474,8 @@ int Summary::smryresi(gsl_matrix *bY)
 
     double *sj = gsl_matrix_ptr (unitstat, 0, 0);
     double *pj = gsl_matrix_ptr (Punitstat, 0, 0);
-      
-    calcAdjustP(mmRef->punit, nVars, &buj.vector, sj, pj, sortid[0]);
+    double *bj = gsl_matrix_ptr (bUnitStat, 0, 0);
+    calcAdjustP(mmRef->punit, nVars, bj, sj, pj, sortid[0]);
     // calc significance stats
     for (i=1; i<nParam+1; i++) {    
        calcSS(bY, &(Hats[i+1]), mmRef, FALSE, FALSE, TRUE);
@@ -478,11 +487,11 @@ int Summary::smryresi(gsl_matrix *bY)
           Pmultstat[i]++;
        sj = gsl_matrix_ptr (unitstat, i, 0);
        pj = gsl_matrix_ptr (Punitstat, i, 0);
-       calcAdjustP(mmRef->punit, nVars, &buj.vector, sj, pj, sortid[i]);
+       bj = gsl_matrix_ptr (bUnitStat, i, 0);
+       calcAdjustP(mmRef->punit, nVars, bj, sj, pj, sortid[i]);
     }
 //   displaymatrix(Punitstat, "Punitstat");
   
-   nSamp++;
    return 0;
 }
 

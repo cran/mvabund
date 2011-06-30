@@ -9,29 +9,38 @@
   a plot of Cook's distances versus row labels.  
   By default, all of them are provided. 
 
-  The function is not yet available for manyglm object.
-
-  See \code{\link{default.plot.manylm}} for a full description of available options.
+  The function is not yet available for manyglm object
 }
 \usage{
-\method{plot}{manylm}(x, which = 1:4, caption = c("Residuals vs Fitted","Normal Q-Q", "Scale-Location", "Cook's distance"), overlay=TRUE, n.vars=12, var.subset=NULL, sub.caption = NULL, studentized=TRUE, ... )
+\method{plot}{manylm}(
+  x, which=1:4, caption=c("Residuals vs Fitted", "Normal Q-Q", 
+  "Scale-Location", "Cook's distance"), overlay=TRUE, 
+  n.vars=12, var.subset=NULL, sub.caption=NULL, studentized= TRUE, ...)
 
-\method{plot}{manyglm}(x, which = 1:4, caption = c("Residuals vs Fitted","Normal Q-Q", 	"Scale-Location", "Cook's distance"), overlay=TRUE, n.vars=12, var.subset=NULL,	sub.caption = NULL, studentized=TRUE, ... )
+\method{plot}{manyglm}(
+  x, which=1, caption=c("Residuals vs Fitted", "Normal Q-Q", 
+  "Scale-Location", "Cook's distance"), overlay=TRUE, 
+  n.vars=12, var.subset=NULL, sub.caption=NULL, ...)
+
 }
 \arguments{
  \item{x}{ \code{manylm} object or \code{manyglm} object, typically the 
   result of a call to \code{\link{manylm}} or \code{manyglm}.}
- \item{which}{chooses between plots of "\code{Residuals vs Fitted}" (1), "\code{Normal Q-Q}" (2), "\code{Scale-Location}" (3), and "\code{Cook\'s distance}" (4). If a subset of these plots is required, specify a subset of the numbers \code{1:4}.}
- \item{caption}{captions to appear above the plots}
- \item{overlay}{logical, whether or not the different variables should be
- overlaid on a single plot.}
- \item{n.vars}{the number of variables to include in the plot.}
- \item{var.subset}{the variables to include in the plot.}
- \item{sub.caption}{common title---above figures if there are multiple;
- used as \code{sub} (s.\code{title}) otherwise.}  
- \item{\dots}{other parameters to be passed through to plotting functions.}
- \item{studentized}{logical indicating whether studentized or standardized residuals should 
- be used for plot 2 and 3.}
+  \item{which}{if a subset of the plots is required, specify a subset of
+    the numbers \code{1:4}.}
+  \item{caption}{captions to appear above the plots}
+  \item{overlay}{logical, whether or not the different variables should be
+    overlaid on a single plot.}
+  \item{n.vars}{the number of variables to include in the plot.}
+  \item{var.subset}{the variables to include in the plot.}
+  \item{sub.caption}{common title---above figures if there are multiple;
+    used as \code{sub} (s.\code{title}) otherwise.  If \code{NULL},
+    as by default, a possible shortened version of
+    \code{deparse(x$call)} is used.}
+  \item{\dots}{other parameters to be passed through to plotting
+    functions.}
+  \item{studentized}{logical indicating whether studentized or standardized residuals should be used for plot 2 and 3.}
+
 }
 \details{
   \code{plot.manylm} is used to check the linear model assumptions that are made
@@ -44,6 +53,10 @@
   sure there are no big outliers and no suggestion of strong skew in the data.
 
   Some technical details on usage of this function:  \cr
+   \code{sub.caption} - by default the function call - is shown as
+  a subtitle (under the x-axis title) on each plot when plots are on
+  separate pages, or as a subtitle in the outer margin (if any) when
+  there are multiple plots per page.  % check that
   
   The \sQuote{Scale-Location} plot, also called \sQuote{Spread-Location} or
   \sQuote{S-L} plot, takes the square root of the absolute residuals in
@@ -54,19 +67,22 @@
   plot, use \emph{standardized} residuals which have identical variance 
   (under the hypothesis) otherwise \emph{studentized} residuals are used.  
 
-  Unlike other plotting functions \code{plot.manylm} and \code{plot.manyglm} 
-  respectively do not have a subset argument, the subset needs to be specified 
-  in the \code{manylm} or respectively \code{manyglm} function.
+ Unlike other plotting functions \code{plot.manylm} and \code{plot.manyglm} 
+ respectively do not have a subset argument, the subset needs to be specified 
+ in the \code{manylm} or respectively \code{manyglm} function.
 
-  For all arguments that are formally located after the position of \code{\dots},
-  positional matching does not work.
+ For all arguments that are formally located after the position of \code{\dots},
+ positional matching does not work.
 
+ For restrictions on \code{filename} see R's help on eps/pdf/jpeg.
+ Note that \code{keep.window} will be ignored if \code{write.plot} is 
+ not \code{show}.
 }
 \author{
-Ulrike Naumann, Stephen Wright and David Warton <David.Warton@unsw.edu.au>.
+Ulrike Naumann and David Warton <David.Warton@unsw.edu.au>.
 }
 \seealso{
-\code{\link{manylm}, \link{plot.lm}}
+\code{\link{manylm}}
 }
 \examples{
 require(graphics)
@@ -77,9 +93,9 @@ X <- spider$x
 
 ## plot the diagnostics for the linear fit of the spider data
 spidlm <- manylm(spiddat~X)
-plot(spidlm, which=1:2, col.main="red",cex=3,overlay=FALSE)
+plot(spidlm,which=1:2,col.main="red",cex=3,overlay=FALSE)
 
-plot(spidlm, which=1:4, col.main="red",cex=3,overlay=TRUE)
+plot(spidlm,which=1:4,col.main="red",cex=3,overlay=TRUE)
 
 }
 \keyword{hplot}
