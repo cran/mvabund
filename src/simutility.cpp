@@ -6,10 +6,10 @@
 
 int GetMean(gsl_matrix *X, gsl_matrix *Y, gsl_matrix *Mu)
 {
-    size_t nRows = X->size1;
-    size_t nParam = X->size2;
-    size_t nVars = Y->size2;
-    size_t j;
+    unsigned int nRows = X->size1;
+    unsigned int nParam = X->size2;
+    unsigned int nVars = Y->size2;
+    unsigned int j;
 
     gsl_matrix *Coef=gsl_matrix_alloc(nParam, nVars);
     gsl_matrix *U=gsl_matrix_alloc(nRows, nParam);
@@ -36,11 +36,11 @@ int GetMean(gsl_matrix *X, gsl_matrix *Y, gsl_matrix *Mu)
     return 0;
 }
 
-int GetCov (gsl_matrix *Mu, gsl_matrix *Y, size_t AR1MAT, gsl_matrix *Sigma)
+int GetCov (gsl_matrix *Mu, gsl_matrix *Y, unsigned int AR1MAT, gsl_matrix *Sigma)
 {
-    size_t nRows=Y->size1;
-    size_t nVars=Y->size2;
-    size_t i, j;
+    unsigned int nRows=Y->size1;
+    unsigned int nVars=Y->size2;
+    unsigned int i, j;
     double tmp, d1, d2;
 
     /* ---------------------------- */
@@ -107,14 +107,14 @@ int GetCov (gsl_matrix *Mu, gsl_matrix *Y, size_t AR1MAT, gsl_matrix *Sigma)
     return SUCCESS;
 }
 
-int GetMeanCov(gsl_matrix *X, gsl_matrix *Y, mv_Method *mm, size_t AR1MAT, gsl_matrix *Mu, gsl_matrix *Sigma)
+int GetMeanCov(gsl_matrix *X, gsl_matrix *Y, mv_Method *mm, unsigned int AR1MAT, gsl_matrix *Mu, gsl_matrix *Sigma)
 {
-    size_t i, j;
+    unsigned int i, j;
     double tmp, d1, d2;
-    size_t nRows = X->size1; 
-    size_t nParam = X->size2;
-    size_t nVars = Y->size2;
-    size_t INCOR = mm->corr;
+    unsigned int nRows = X->size1; 
+    unsigned int nParam = X->size2;
+    unsigned int nVars = Y->size2;
+    unsigned int INCOR = mm->corr;
     mv_mat H;
     H.SS = gsl_matrix_alloc (nVars, nVars);
     H.mat = gsl_matrix_alloc(nRows, nRows);
@@ -221,14 +221,14 @@ int GetMeanCov(gsl_matrix *X, gsl_matrix *Y, mv_Method *mm, size_t AR1MAT, gsl_m
     return 0;
 }
 
-int GetPdstbtion(double *p, size_t nVars, size_t *isH0var, size_t *cnt, size_t *cntfwe)
+int GetPdstbtion(double *p, unsigned int nVars, unsigned int *isH0var, unsigned int *cnt, unsigned int *cntfwe)
 {
     // The multivariate test    
     if ( *p < ALFA+TOL) cnt[0]=cnt[0]+1;
 //    printf("%.2f(%d) ", *p, cnt[0]);	
     // The univariate test
     double minP = 1.0;
-    for ( size_t j=1; j<nVars+1; j++ ) {               
+    for ( unsigned int j=1; j<nVars+1; j++ ) {               
 	if ( *(p+j) < ALFA+TOL ) cnt[j]=cnt[j]+1;	
 //	printf("%.2f(%d) ", *(p+j), cnt[j]);	
         // strong FWE control over the null variables only	
@@ -243,15 +243,15 @@ int GetPdstbtion(double *p, size_t nVars, size_t *isH0var, size_t *cnt, size_t *
 // ----------------------------------------------------- //
 //  Select test variables according to variances under H0 //
 // ----------------------------------------------------- //
-      
-int GetH0var(gsl_matrix *Mu0, gsl_matrix *Mu1, gsl_matrix *Sigma, gsl_vector *var, size_t AR1MAT, char *fname_isH0var)
+/* 
+int GetH0var(gsl_matrix *Mu0, gsl_matrix *Mu1, gsl_matrix *Sigma, gsl_vector *var, unsigned int AR1MAT, char *fname_isH0var)
 {
-    size_t nVars = Mu0->size2;
-    size_t j, h0id, h1id; 
-    size_t Half=(size_t)floor(nVars/2);
-    size_t *srtid = (size_t *)malloc(nVars*sizeof(size_t));
-    size_t *shuffled = (size_t *)malloc(nVars*sizeof(size_t));
-    size_t *isH0var = (size_t *)malloc(nVars*sizeof(size_t));
+    unsigned int nVars = Mu0->size2;
+    unsigned int j, h0id, h1id; 
+    unsigned int Half=(unsigned int)floor(nVars/2);
+    unsigned int *srtid = (unsigned int *)malloc(nVars*sizeof(unsigned int));
+    unsigned int *shuffled = (unsigned int *)malloc(nVars*sizeof(unsigned int));
+    unsigned int *isH0var = (unsigned int *)malloc(nVars*sizeof(unsigned int));
 
     if (AR1MAT<3) { //0 1 2
 //       GetCov (Mu0, logY, AR1MAT, Sigma);
@@ -281,7 +281,7 @@ int GetH0var(gsl_matrix *Mu0, gsl_matrix *Mu1, gsl_matrix *Sigma, gsl_vector *va
    // printf("\nisH0var=[ ");
     FILE *f_isH0var=fopen(fname_isH0var, "w");
     for (j=0; j<nVars; j++){
-       fprintf (f_isH0var, "%d ", (int)isH0var[j]);
+       fprintf (f_isH0var, "%d ", (unsigned int)isH0var[j]);
    //    printf("%d ", isH0var[j]);
        
        gsl_vector_view m0j=gsl_matrix_column(Mu0, j);
@@ -302,4 +302,4 @@ int GetH0var(gsl_matrix *Mu0, gsl_matrix *Mu1, gsl_matrix *Sigma, gsl_vector *va
 
     return 0;
 }
-
+*/

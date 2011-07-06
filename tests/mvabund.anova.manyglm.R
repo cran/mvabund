@@ -1,0 +1,2 @@
+stopifnot(require(mvabund))
+

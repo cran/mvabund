@@ -98,7 +98,7 @@ default.print.summary.manyglm <- function (x, digits = max(getOption("digits") -
   	   if(x$p.uni == "none" & x$resamp=="case" & sum(x$n.iter.sing)>0) {
 		cat("\nNumber of iterations with adjusted tests (including skipped tests)      because of singularities in X due to the case resampling\n")
 		print.default(x$n.iter.sing, quote = FALSE, right = TRUE, na.print = "", ...)	
-		if(sum(x$nBoot-x$n.bootsdone)>0){
+		if(sum(x$nBoot-n.bootsdone)>0){
                    cat("\nNumber of iterations with skipped test statistic as the respective      variable to test became linear dependent during the case resampling step\n")
 		   print.default(x$nBoot-x$n.bootsdone, quote = FALSE, right = TRUE,        na.print = "", ...) 
        }     }    } 
@@ -162,7 +162,7 @@ default.print.summary.manyglm <- function (x, digits = max(getOption("digits") -
        if(x$resamp!="none"){
           cat(statname, paste(formatC(x$statistic[1], digits = digits),",",sep=""), "p-value:", format.pval(x$statistic[2], digits = dig.tst, eps = eps.Pvalue),"\n")
           if (x$p.uni == "none") 
-             cat("Arguments: with", x$overall.n.bootsdone, "resampling iterations using", x$resamp, "resampling and",corname, "\n")    
+             cat("Arguments: with", n.bootsdone, "resampling iterations using", x$resamp, "resampling and",corname, "\n")    
        } 
        else cat(statname, paste(formatC(x$statistic[1], digits = digits),"\n",sep=""))
     

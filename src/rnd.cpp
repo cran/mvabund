@@ -36,9 +36,9 @@
 
 #include "resampTest.h"
 
-int rmvnorm(const gsl_rng *r, const int n, const gsl_matrix *Sigma, gsl_vector *randeffect)
+int rmvnorm(const gsl_rng *r, const unsigned int n, const gsl_matrix *Sigma, gsl_vector *randeffect)
 {
-    int k;
+    unsigned int k;
     gsl_matrix *work = gsl_matrix_alloc(n,n);
 
     gsl_matrix_memcpy(work, Sigma);
@@ -60,9 +60,9 @@ int rmvnorm(const gsl_rng *r, const int n, const gsl_matrix *Sigma, gsl_vector *
 /* use eigen decomposition instead of cholesky           */
 /* see cholcov.m in matlab                               */
 /*********************************************************/
-int semirmvnorm(const gsl_rng *rnd, const int n, const gsl_matrix *Sigma, gsl_vector *randeffect)
+int semirmvnorm(const gsl_rng *rnd, const unsigned int n, const gsl_matrix *Sigma, gsl_vector *randeffect)
 {
-    int k, r=0;
+    unsigned int k, r=0;
     double lambda;
     gsl_matrix *work = gsl_matrix_alloc(n,n);
 
@@ -117,7 +117,7 @@ int semirmvnorm(const gsl_rng *rnd, const int n, const gsl_matrix *Sigma, gsl_ve
 *	var	variance matrix of dimension n x n
 */
 /*************************************************************************/
-double dmvnorm(const int n, const gsl_vector *x, const gsl_vector *mean, const gsl_matrix *var)
+double dmvnorm(const unsigned int n, const gsl_vector *x, const gsl_vector *mean, const gsl_matrix *var)
 {
    int s;
    double ax,ay;
@@ -157,9 +157,9 @@ double dmvnorm(const int n, const gsl_vector *x, const gsl_vector *mean, const g
 *	result	 output variable with a single random vector normal distribution generation
 */
 /*************************************************************************************/
-int rmvt(const gsl_rng *r, const int n, const gsl_vector *location, const gsl_matrix *scale, const int dof, gsl_vector *result)
+int rmvt(const gsl_rng *r, const unsigned int n, const gsl_vector *location, const gsl_matrix *scale, const unsigned int dof, gsl_vector *result)
 {
-    int k;
+    unsigned int k;
     gsl_matrix *work = gsl_matrix_alloc(n,n);
     double ax = 0.5*dof; 
 
@@ -189,7 +189,7 @@ int rmvt(const gsl_rng *r, const int n, const gsl_vector *location, const gsl_ma
 *	dof	 degrees of freedom
 */
 /*****************************************************************************************************************/
-double dmvt(const int n, const gsl_vector *x, const gsl_vector *location, const gsl_matrix *scale, const int dof)
+double dmvt(const unsigned int n, const gsl_vector *x, const gsl_vector *location, const gsl_matrix *scale, const unsigned int dof)
 {
     int s;
     double ax,ay,az=0.5*(dof + n);
@@ -229,9 +229,9 @@ double dmvt(const int n, const gsl_vector *x, const gsl_vector *location, const 
 *	result	 output variable with a single random matrix Wishart distribution generation
 */
 /***************************************************************************************/
-int rwishart(const gsl_rng *r, const int n, const int dof, const gsl_matrix *scale, gsl_matrix *result)
+int rwishart(const gsl_rng *r, const unsigned int n, const unsigned int dof, const gsl_matrix *scale, gsl_matrix *result)
 {
-    int k,l;
+    unsigned int k,l;
     gsl_matrix *work = gsl_matrix_calloc(n,n);
 
     for(k=0; k<n; k++){

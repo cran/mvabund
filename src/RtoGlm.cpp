@@ -2,7 +2,7 @@
 // Author: Yi Wang (yi dot wang at unsw dot edu dot au)
 // 20-April-2011
 
-#include "Rcpp.h"
+#include <Rcpp.h>
 extern "C"{
 #include "resampTest.h"
 //#include "time.h"
@@ -16,23 +16,23 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
     List rparam(params);
     // pass parameters
     reg_Method mm;	
-    mm.tol = rparam["tol"];
-    mm.model = rparam["regression"];
-    mm.estiMethod = rparam["estimation"];
-    mm.varStab = rparam["stablizer"];
+    mm.tol = as<double>(rparam["tol"]);
+    mm.model = as<unsigned int>(rparam["regression"]);
+    mm.estiMethod = as<unsigned int>(rparam["estimation"]);
+    mm.varStab = as<unsigned int>(rparam["stablizer"]);
 // for debug
-//    Rprintf("tol=%g, model=%d, estiMethod=%d, varStab\n", mm.tol, mm.model, mm.estiMethod, mm.varStab);
+//    Rprintf("tol=%g, model=%d, estiMethod=%d, varStab=%d\n", mm.tol, mm.model, mm.estiMethod, mm.varStab);
 
     IntegerMatrix Yr(Ysexp);
     NumericMatrix Xr(Xsexp);
-    int nRows = Yr.nrow();
-    int nVars = Yr.ncol();
-    int nParam = Xr.ncol();
+    unsigned int nRows = Yr.nrow();
+    unsigned int nVars = Yr.ncol();
+    unsigned int nParam = Xr.ncol();
 // for debug
 //    Rprintf("nRows=%d, nVars=%d, nParam=%d\n", nRows, nVars, nParam);
 
     // Rcpp -> gsl
-    int i, j, k;
+    unsigned int i, j, k;
     gsl_matrix *X = gsl_matrix_alloc(nRows, nParam);        
     gsl_matrix *Y = gsl_matrix_alloc(nRows, nVars);
 
@@ -65,7 +65,7 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
     LogiGlm lfit(&mm);
     NBinGlm nbfit(&mm);
     glm *glmPtr[3] = { &pfit, &nbfit, &lfit };
-    size_t mtype = mm.model-1;
+    unsigned int mtype = mm.model-1;
     glmPtr[mtype]->regression(Y, X, NULL);
 //    glmPtr[mtype]->display();
 	
@@ -106,11 +106,6 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
 //    std::copy(uj, uj+nVars*(nModels-1), Mat_statj.begin());
 //    std::copy(pj, pj+nVars*(nModels-1), Mat_Pstatj.begin());
 
-    // clear objects
-    glmPtr[mtype]->releaseGlm();
-    gsl_matrix_free(Y);
-    gsl_matrix_free(X);
-
     // Rcpp -> R
     List rs = List::create(
          _["coefficients"] = Beta,
@@ -126,6 +121,11 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
 	 _["aic"] = aic,
 	 _["iter"] = iterconv
     );
+
+    // clear objects
+    glmPtr[mtype]->releaseGlm();
+    gsl_matrix_free(Y);
+    gsl_matrix_free(X);
 
     return rs;
 }

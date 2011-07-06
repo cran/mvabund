@@ -99,7 +99,7 @@ default.plot.manylm  <- function(x,
     	show <- rep.int(FALSE, times = 4)
     	show[which] <- TRUE
     	
-	if(ncol(model.matrix(x)) > 0 ) empty <- FALSE 
+	if(ncol(x$x) > 0 ) empty <- FALSE 
 	else empty <- TRUE
 
     	if(empty && show[4]) 
@@ -166,7 +166,7 @@ default.plot.manylm  <- function(x,
     	if (miss.varsubset){
            	if (n.vars>p) n.vars <- min(n.vars,p)
 
-                y <- as.matrix(model.response(model.frame(x)))
+                y <- as.matrix(x$y)
 
        	        if(any(na.action.type == "pass") | is.null(na.action.type)) {
             	     if(length(which.na.pass)>0)  y <- y[, - which.na.pass]
@@ -368,12 +368,13 @@ default.plot.manylm  <- function(x,
             	stop("Plot(s) ", c(2,3)[show[2:3]], " cannot be drawn: standardized residuals cannot be calculated, as there are no degrees of freedom")
             else {  
                	wr <- na.omit( as.matrix(weighted.residuals(x)) )[,var.subset,drop=FALSE]                # variance <- (t(wr) %*% wr) / df.residual(x)
-                ######## to check: use only the diagonal of this variance 
-                ######## (as in deviance.mlm,  rep(1, nrow(wr)) %*% wr^2)
-       		s <- sqrt(deviance(x)/df.residual(x))  
-            }
-            # if(any(na.action.type == "pass") | is.null(na.action.type)) {
-            # s <- s[- which.na.pass] }
+            } 
+            ######## to check: use only the diagonal of this variance 
+            ######## (as in deviance.mlm,  rep(1, nrow(wr)) %*% wr^2)
+       	    s <- sqrt(deviance(x)/df.residual(x))  
+            s <- s[var.subset]
+#            if(any(na.action.type == "pass") | is.null(na.action.type)) {
+#                  s <- s[- which.na.pass] }
             if (show[4]) {          
                 # the non-weighed residuals are used!
                 cook <- cooks.distance(x, sd = s, res = r.orig)

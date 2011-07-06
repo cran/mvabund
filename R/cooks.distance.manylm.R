@@ -5,10 +5,12 @@
 
 cooks.distance.manylm <-
     function (model, infl = manylm.influence(model, do.coef = FALSE),
-    res = as.matrix(weighted.residuals(model)),
+    res = as.matrix(residuals(model)),
     sd = sqrt(deviance(model)/df.residual(model)), 
     hat = infl$hat, ...) 
 {
+        if (!is.null(model$weighted.residuals))
+            res <- as.matrix(model$weighted.residuals)
 	p  <- model$rank
 	sd <- matrix(rep.int(sd, times=nrow(res)), nrow=nrow(res),
           ncol=length(sd), byrow=TRUE)

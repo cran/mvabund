@@ -116,7 +116,7 @@ void glm::initialGlm(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)
     GetMean(t1, Y, Mu);
     gsl_matrix_free(t1);
 
-    size_t i, j;
+    unsigned int i, j;
     double eij;
    // double lTol=-log(mintol);
     for (i=0; i<nRows; i++) 
@@ -130,7 +130,7 @@ void glm::initialGlm(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)
     ll = new double [nVars];
     dev = new double [nVars];
     aic = new double [nVars];
-    iterconv = new int [nVars];    
+    iterconv = new unsigned int [nVars];    
    
     rdf = nRows - nParams;
 
@@ -161,7 +161,7 @@ void glm::InitResampGlm(gsl_matrix *T, gsl_matrix *X, gsl_matrix *O, glm *src, g
     ll = new double [nVars];
     dev = new double [nVars];
     aic = new double[nVars];
-    iterconv = new int [nVars]; 
+    iterconv = new unsigned int [nVars]; 
    
     rdf = nRows - nParams;
 
@@ -197,7 +197,7 @@ int glm::copyGlm(glm *src)
     gsl_matrix_memcpy(wHalf, src->wHalf);
     gsl_matrix_memcpy(sqrt1_Hii, src->sqrt1_Hii);
     
-    for (size_t i=0; i<nVars; i++) {
+    for (unsigned int i=0; i<nVars; i++) {
         phi[i] = src->phi[i];	
         ll[i] = src->ll[i];
         dev[i] = src->dev[i];
@@ -211,7 +211,7 @@ int glm::copyGlm(glm *src)
 
 void glm::display(void)
 {   
-    size_t j;
+    unsigned int j;
     if ( mmRef->model == LM )
        printf("Linear regression:\n");
     else if ( mmRef->model == POISSON )
@@ -275,7 +275,7 @@ int PoissonGlm::EstIRLS(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, double *a)
 //    displaymatrix(Mu, "Mu0");
 //    displaymatrix(Beta, "Beta0");
 
-    size_t i, j;   
+    unsigned int i, j;   
     double yij, mij, vij, wij, rij, tol;
 
 //    clock_t clk_start = clock();
@@ -321,9 +321,9 @@ int PoissonGlm::EstIRLS(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, double *a)
 }
 
 
-int PoissonGlm::betaEst( size_t id, size_t iter, double *tol, double a )
+int PoissonGlm::betaEst( unsigned int id, unsigned int iter, double *tol, double a )
 {
-   size_t i, isConv=FALSE, step=1;
+   unsigned int i, isConv=FALSE, step=1;
    double eij, mij=0, yij, oij, wij, zij;
 
    gsl_vector *z = gsl_vector_alloc(nRows);
@@ -388,9 +388,9 @@ int PoissonGlm::betaEst( size_t id, size_t iter, double *tol, double a )
    return step;
 }
 
-double PoissonGlm::getDisper( size_t id ) const
+double PoissonGlm::getDisper( unsigned int id ) const
 {
-    size_t i,nNonZero=0;
+    unsigned int i,nNonZero=0;
     double ss2, yij, mij, chi2=0;
 
     gsl_vector_view yj = gsl_matrix_column (Yref, id);
@@ -435,9 +435,9 @@ double NBinGlm::llfunc ( double yi, double mui, double a  ) const
     return 2*l;
 }
 
-int NBinGlm::getfAfAdash(double a, size_t id, double *fAPtr, double *fAdashPtr )
+int NBinGlm::getfAfAdash(double a, unsigned int id, double *fAPtr, double *fAdashPtr )
 {
-    size_t i;
+    unsigned int i;
     double yij, mij, dl, ddl, k=1/a;
     *fAPtr = 0;
     *fAdashPtr = 0;
@@ -462,7 +462,7 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)
 {   
     initialGlm(Y, X, O);
 
-    size_t i, j, isConv;
+    unsigned int i, j, isConv;
     double yij, mij, vij;
     double disper, a, tol, fA, fAdash, crtold;
     gsl_vector_view b0j, m0j, e0j;

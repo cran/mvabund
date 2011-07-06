@@ -15,7 +15,7 @@
 
 Summary::Summary(mv_Method *mm, gsl_matrix *Y, gsl_matrix *X):mmRef(mm), Yref(Y), Xref(X)
 {
-    size_t i, j;
+    unsigned int i, j;
     nRows=Yref->size1, nVars=Yref->size2, nParam=Xref->size2;
  
     // initialize public variables: stats    
@@ -48,39 +48,38 @@ Summary::Summary(mv_Method *mm, gsl_matrix *Y, gsl_matrix *X):mmRef(mm), Yref(Y)
            Hats[i].X = gsl_matrix_alloc(nRows, nParam);
            gsl_matrix_memcpy (Hats[i].X, Xref);
 	   Hats[i].Coef = gsl_matrix_alloc(nParam, nVars);
-           calcSS(Yref, &(Hats[i]),mmRef,TRUE,TRUE,TRUE);
+           calcSS(Yref, &(Hats[i]), mmRef, TRUE, TRUE, TRUE); 
+           // no need to calc test stat as this is the H1 model
         }
 	else {
-	   if ( i == 1 ) { // response mean
+           if ( i==1 ) { // the intercept model
               Hats[i].X = gsl_matrix_alloc(nRows, 1);
               gsl_matrix_set_all (Hats[i].X, 1.0);
 	      Hats[i].Coef = gsl_matrix_alloc(1, nVars);
            }
 	   else { // subtract a term to test significance
-	      if ( nParam == 1 ) // intercept model
-	      {
-                  Hats[i].X = gsl_matrix_alloc(nRows, 1);
-                  Hats[i].Coef=gsl_matrix_alloc(1, nVars);
-		  gsl_matrix_memcpy(Hats[i].X, Xref);
+	      if ( nParam == 1 ) {  
+                 Hats[i].X = gsl_matrix_alloc(nRows, 1);
+	         gsl_matrix_memcpy(Hats[i].X, Xref);
+                 Hats[i].Coef=gsl_matrix_alloc(1, nVars);
 	      }
 	      else {
-                  Hats[i].X = gsl_matrix_alloc(nRows, nParam-1);
-                  Hats[i].Coef=gsl_matrix_alloc(nParam-1, nVars);
-                  gsl_vector_set (ref, i-2, 0);
-                  subX(Xref, ref, Hats[i].X);
-                  gsl_vector_set (ref, i-2, 1);
-	      }
-	   }	 
-          calcSS(Yref, &(Hats[i]),mmRef,TRUE,TRUE,TRUE);
-          gsl_vector_view sj=gsl_matrix_row(unitstat, i-1);
-          testStatCalc(&(Hats[i]),&(Hats[0]),mmRef,TRUE,(multstat+i-1),&sj.vector);
-          // sortid
-          sortid[i-1] = gsl_permutation_alloc(nVars);
-          gsl_sort_vector_index (sortid[i-1], &sj.vector); 
-          // rearrange sortid in descending order
-          gsl_permutation_reverse (sortid[i-1]);
-//	     gsl_permutation_fprintf(stdout, sortid[i-1], " %u");
-//	     printf("\n");
+                 Hats[i].X = gsl_matrix_alloc(nRows, nParam-1);
+                 Hats[i].Coef=gsl_matrix_alloc(nParam-1, nVars);
+                 gsl_vector_set (ref, i-2, 0);
+                 subX(Xref, ref, Hats[i].X);
+                 gsl_vector_set (ref, i-2, 1);
+            }	}  	 
+      
+            calcSS(Yref, &(Hats[i]),mmRef,TRUE,TRUE,TRUE);
+            gsl_vector_view sj=gsl_matrix_row(unitstat, i-1);
+            testStatCalc(&(Hats[i]),&(Hats[0]),mmRef,TRUE,(multstat+i-1),&sj.vector);
+           // printf("multstat=%.3f\n", &(multistat+i-1));
+            // sortid
+            sortid[i-1] = gsl_permutation_alloc(nVars);
+            gsl_sort_vector_index (sortid[i-1], &sj.vector); 
+            // rearrange sortid in descending order
+            gsl_permutation_reverse (sortid[i-1]);
        }  
    }
    
@@ -110,7 +109,7 @@ void Summary::releaseSummary()
     gsl_matrix_free(Punitstat);
 // The above commented out s.t. the results are passed out to Rcpp wrapper
 
-    size_t i;
+    unsigned int i;
     for ( i=0; i<nParam+2; i++ ){
         gsl_matrix_free(Hats[i].mat);
         gsl_matrix_free(Hats[i].SS);
@@ -135,8 +134,8 @@ void Summary::releaseSummary()
 
 void Summary::display(void)
 {
-    size_t i;
-    int j, k, nk, lk;
+    unsigned int i;
+    unsigned int j, k, nk, lk;
     printf("Summary of fitting (resampling under H1):\n");
     // significance test
     printf("Significance Test:\n");
@@ -151,7 +150,7 @@ void Summary::display(void)
     if ( mmRef->punit!=NONE) {
        // Significance univariate tests
        printf("Univariate Tests for significance:\n");
-       nk = (int)floor((double)nParam/WRAP);    
+       nk = (unsigned int)floor((double)nParam/WRAP);    
        for (k=0; k<nk; k++) {
            printf("\t\t");    
            for (j=k*WRAP; j<(k+1)*WRAP; j++) {
@@ -199,7 +198,7 @@ void Summary::display(void)
     if (mmRef->punit!=NONE){
         printf("Univariate Tests for overall:\n");
         // note the change of the display direction
-        nk = (int)floor((double)nVars/WRAP);    
+        nk = (unsigned int)floor((double)nVars/WRAP);    
         for (k=0; k<nk; k++) {
             printf("\t\t");    
             for (j=k*WRAP; j<(k+1)*WRAP; j++) {
@@ -235,8 +234,8 @@ void Summary::display(void)
 int Summary::resampTest(void)
 {
   //  printf("Start resampling test ...\n");
-    size_t i, j, id;
-    size_t maxiter= mmRef->nboot; 
+    unsigned int i, j, id;
+    unsigned int maxiter= mmRef->nboot; 
 //    printf("maxiter=%d\n", maxiter);
     double hii, score;
 
@@ -251,10 +250,10 @@ int Summary::resampTest(void)
     rnd=gsl_rng_alloc(T);
 
     // initialize permid
-    size_t *permid=NULL;
+    unsigned int *permid=NULL;
     if ( bootID == NULL ) {
        if ( mmRef->resamp == PERMUTE ) {
-           permid = (size_t *)malloc(nRows*sizeof(size_t));
+           permid = (unsigned int *)malloc(nRows*sizeof(unsigned int));
 	   for (i=0; i<nRows; i++)
 	       permid[i]=i;
        }
@@ -268,7 +267,7 @@ int Summary::resampTest(void)
  	       if (bootID == NULL) 
 	          id = gsl_rng_uniform_int(rnd, nRows);
                else 
-	          id = (size_t) gsl_matrix_get(bootID, i, j);
+	          id = (unsigned int) gsl_matrix_get(bootID, i, j);
                // resample Y and X
                gsl_vector_view Yj=gsl_matrix_row(Yref, id);
                gsl_matrix_set_row (bY, j, &Yj.vector);
@@ -287,7 +286,7 @@ int Summary::resampTest(void)
  	       if (bootID == NULL) 
 	          id = gsl_rng_uniform_int(rnd, nRows);
                else 
-	          id = (size_t) gsl_matrix_get(bootID, i, j);
+	          id = (unsigned int) gsl_matrix_get(bootID, i, j);
                // bootr by resampling resi=(Y-fit)
                gsl_vector_view Yj=gsl_matrix_row(Yref, id);
                gsl_vector_view Fj=gsl_matrix_row(Hats[0].Y, id); //fit_alt
@@ -336,13 +335,13 @@ int Summary::resampTest(void)
        nSamp = 1;
        for (i=0; i<maxiter-1; i++) { //999
           if (bootID == NULL ) 
-             gsl_ran_shuffle(rnd, permid, nRows, sizeof(size_t));
+             gsl_ran_shuffle(rnd, permid, nRows, sizeof(unsigned int));
           // get bootr by permuting resi:Y-fit
           for (j=0; j<nRows; j++){
  	      if (bootID == NULL) 
 	         id = permid[j];
               else 
-	         id = (size_t) gsl_matrix_get(bootID, i, j);
+	         id = (unsigned int) gsl_matrix_get(bootID, i, j);
               // bootr by resampling resi=(Y-fit)
               gsl_vector_view Yj=gsl_matrix_row(Yref, id);
               gsl_vector_view Fj=gsl_matrix_row(Hats[0].Y, id);
@@ -363,7 +362,7 @@ int Summary::resampTest(void)
        GSL_ERROR("Invalid resampling option", GSL_EINVAL);
 
    // p-values 
-   size_t sid, sid0;
+   unsigned int sid, sid0;
    double *pj;
    for (i=0; i<nParam+1; i++) {
 //      printf("Pmultstat[%d]=%.3f\n", i, Pmultstat[i]);
@@ -401,7 +400,7 @@ int Summary::resampTest(void)
 
 int Summary::smrycase(gsl_matrix *bY, gsl_matrix *bX)
 {
-   size_t j;
+   unsigned int j;
    // if Y col is all zeros
    for ( j=0; j<nVars; j++ ){
        gsl_vector_view colj = gsl_matrix_column(bY, j);
@@ -409,7 +408,7 @@ int Summary::smrycase(gsl_matrix *bY, gsl_matrix *bX)
           return GSL_ERANGE;
    }
 
-   size_t i;
+   unsigned int i;
    double *sj, *pj, *bj;
 
    //Y = X*coef
@@ -460,7 +459,7 @@ int Summary::smrycase(gsl_matrix *bY, gsl_matrix *bX)
 
 int Summary::smryresi(gsl_matrix *bY)
 {
-    size_t i;
+    unsigned int i;
     // count the right-hand tails
     calcSS(bY, &(Hats[0]), mmRef, FALSE, FALSE, TRUE);
     calcSS(bY, &(Hats[1]), mmRef, FALSE, FALSE, TRUE);
@@ -510,7 +509,7 @@ int Summary::calcR2(void)
     // get fit
     gsl_matrix_memcpy (FminusM, Hats[0].Y);
     gsl_matrix_memcpy (YminusM, Yref);
-    size_t i, j;
+    unsigned int i, j;
     double mean;
     for (j=0; j<nVars; j++) {
        // get mean(Y)

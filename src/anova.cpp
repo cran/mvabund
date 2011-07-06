@@ -14,8 +14,8 @@
 
 AnovaTest::AnovaTest(mv_Method *mm, gsl_matrix *Y, gsl_matrix *X, gsl_matrix *isXvarIn):mmRef(mm), Yref(Y), Xref(X), inRef(isXvarIn)
 {
-    int hid, aid;
-    size_t i, j, count;
+    unsigned int hid, aid;
+    unsigned int i, j, count;
     nModels=inRef->size1, nParam=Xref->size2;
     nRows=Yref->size1, nVars=Yref->size2; 
 
@@ -32,7 +32,7 @@ AnovaTest::AnovaTest(mv_Method *mm, gsl_matrix *Y, gsl_matrix *X, gsl_matrix *is
 	Pmultstat = (double *)malloc((nModels-1)*sizeof(double));
         for (j=0; j<nModels-1; j++)
 	    *(Pmultstat+j)=0.0; 
-	dfDiff = (int *)malloc((nModels-1)*sizeof(int));
+	dfDiff = (unsigned int *)malloc((nModels-1)*sizeof(unsigned int));
 
 	statj = gsl_matrix_alloc(nModels-1, nVars);
 	Pstatj = gsl_matrix_alloc(nModels-1, nVars);
@@ -51,7 +51,7 @@ AnovaTest::AnovaTest(mv_Method *mm, gsl_matrix *Y, gsl_matrix *X, gsl_matrix *is
         Hats[i].Y = gsl_matrix_alloc(nRows, nVars);
 	count = 0;
 	for (j=0; j<nParam; j++){
-	    count+=(int)gsl_matrix_get(inRef, i, j);
+	    count+=(unsigned int)gsl_matrix_get(inRef, i, j);
 	}
 //	printf("count=%d \n", count);
 	Hats[i].X = gsl_matrix_alloc(nRows, count);
@@ -101,7 +101,7 @@ void AnovaTest::releaseTest()
     gsl_matrix_free(Pstatj);
 // The above commented out s.t. the results are passed out to R
 
-    size_t i;
+    unsigned int i;
     for ( i=0; i<nModels; i++ ){
         gsl_matrix_free(Hats[i].mat);
         gsl_matrix_free(Hats[i].SS);
@@ -125,7 +125,7 @@ void AnovaTest::releaseTest()
 
 void AnovaTest::display(void)
 {
-    size_t i, j, k;
+    unsigned int i, j, k;
     printf("Anova Table (resampling under H0):\n");
     printf("Hypo\t Alter\t df\t TestStat\t P-value\n");
     for ( i=0; i<nModels-1; i++ ){
@@ -153,8 +153,8 @@ void AnovaTest::display(void)
 int AnovaTest::resampTest(void)
 {
 //    printf("Start resampling test ...\n");
-    size_t i, j, p, id;
-    size_t maxiter=mmRef->nboot; 
+    unsigned int i, j, p, id;
+    unsigned int maxiter=mmRef->nboot; 
     double hii, score;
 
     gsl_matrix *bX, *bY;
@@ -168,10 +168,10 @@ int AnovaTest::resampTest(void)
     rnd=gsl_rng_alloc(T);
 
     // initialize permid
-    size_t *permid=NULL;
+    unsigned int *permid=NULL;
     if ( bootID == NULL ) {
        if ( mmRef->resamp == PERMUTE ){
-          permid = (size_t *)malloc(nRows*sizeof(size_t));
+          permid = (unsigned int *)malloc(nRows*sizeof(unsigned int));
           for (i=0; i<nRows; i++)
               permid[i] = i;
     } }
@@ -184,7 +184,7 @@ int AnovaTest::resampTest(void)
  	       if (bootID == NULL) 
 	          id = gsl_rng_uniform_int(rnd, nRows);
                else 
-	          id = (size_t) gsl_matrix_get(bootID, i, j);
+	          id = (unsigned int) gsl_matrix_get(bootID, i, j);
                // resample Y and X
                gsl_vector_view Yj=gsl_matrix_row(Yref, id);
                gsl_matrix_set_row (bY, j, &Yj.vector);
@@ -204,7 +204,7 @@ int AnovaTest::resampTest(void)
  	       if (bootID == NULL) 
 	          id = gsl_rng_uniform_int(rnd, nRows);
                else 
-	          id = (size_t) gsl_matrix_get(bootID, i, j);
+	          id = (unsigned int) gsl_matrix_get(bootID, i, j);
                // bootr by resampling resi=(Y-fit)
                gsl_vector_view Yj=gsl_matrix_row(Yref, id);
                gsl_vector_view Fj=gsl_matrix_row(Hats[p].Y, id);
@@ -259,13 +259,13 @@ int AnovaTest::resampTest(void)
         for (i=0; i<maxiter-1; i++) { //999
             for (p=1; p<nModels; p++){ 
                 if (bootID == NULL ) 
-                    gsl_ran_shuffle(rnd, permid, nRows, sizeof(size_t));
+                    gsl_ran_shuffle(rnd, permid, nRows, sizeof(unsigned int));
              // get bootr by permuting resi:Y-fit
                 for (j=0; j<nRows; j++){
  	            if (bootID == NULL) 
 	               id = permid[j];
                     else 
-	               id = (size_t) gsl_matrix_get(bootID, i, j);
+	               id = (unsigned int) gsl_matrix_get(bootID, i, j);
                    // bootr by resampling resi=(Y-fit)
                     gsl_vector_view Yj=gsl_matrix_row(Yref, id);
                     gsl_vector_view Fj=gsl_matrix_row(Hats[p].Y, id);
@@ -289,7 +289,7 @@ int AnovaTest::resampTest(void)
        GSL_ERROR("Invalid resampling option", GSL_EINVAL);
 
    // p-values 
-   size_t sid, sid0;
+   unsigned int sid, sid0;
    double *pj;  
    for (i=0; i<nModels-1; i++) { 
         Pmultstat[i]=(double) Pmultstat[i]/nSamp;
@@ -325,7 +325,7 @@ int AnovaTest::resampTest(void)
 
 int AnovaTest::anovacase(gsl_matrix *bY, gsl_matrix *bX)
 {
-   size_t j;
+   unsigned int j;
    // if Y col is all zeros
    for ( j=0; j<nVars; j++ ){
        gsl_vector_view colj = gsl_matrix_column(bY, j);
@@ -333,7 +333,7 @@ int AnovaTest::anovacase(gsl_matrix *bY, gsl_matrix *bX)
           return GSL_ERANGE;
    }
 
-   size_t i, k, hid, aid;
+   unsigned int i, k, hid, aid;
    double *sj, *pj, *bj;
    // Hats.X 
    for (i=0; i<nModels; i++){
@@ -371,9 +371,9 @@ int AnovaTest::anovacase(gsl_matrix *bY, gsl_matrix *bX)
   return 0;
 }
 
-int AnovaTest::anovaresi(gsl_matrix *bY, const size_t i)
+int AnovaTest::anovaresi(gsl_matrix *bY, const unsigned int i)
 {
-    size_t hid=i, aid = i-1;
+    unsigned int hid=i, aid = i-1;
 
     // count the right-hand tails
     calcSS(bY, &(Hats[aid]), mmRef, FALSE, FALSE, TRUE);

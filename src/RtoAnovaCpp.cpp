@@ -3,7 +3,7 @@
 // Author: Yi Wang (yi dot wang at unsw dot edu dot au)
 // Last modified: 20-April-2010
 
-#include "Rcpp.h"
+#include <Rcpp.h>
 extern "C"{
 #include "resampTest.h"
 #include "time.h"
@@ -18,16 +18,16 @@ RcppExport SEXP RtoAnovaCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
     List rparam(params);
     // pass parameters
     mv_Method mm;	
-    mm.tol = rparam["tol"];
-    mm.nboot = rparam["nboot"];
-    mm.corr = rparam["cor_type"];
-    mm.shrink_param = rparam["shrink_param"];
-    mm.test = rparam["test_type"];
-    mm.resamp = rparam["resamp"];
-    mm.reprand = rparam["reprand"];
-    mm.student = rparam["studentize"];
-    mm.punit = rparam["punit"];
-    mm.rsquare = rparam["rsquare"];
+    mm.tol = as<double>(rparam["tol"]);
+    mm.nboot = as<unsigned int>(rparam["nboot"]);
+    mm.corr = as<unsigned int>(rparam["cor_type"]);
+    mm.shrink_param = as<double>(rparam["shrink_param"]);
+    mm.test = as<unsigned int>(rparam["test_type"]);
+    mm.resamp = as<unsigned int>(rparam["resamp"]);
+    mm.reprand = as<unsigned int>(rparam["reprand"]);
+    mm.student = as<unsigned int>(rparam["studentize"]);
+    mm.punit = as<unsigned int>(rparam["punit"]);
+    mm.rsquare = as<unsigned int>(rparam["rsquare"]);
 
 // for debug
 //    Rprintf("Input param arguments:\n tol=%g, nboot=%d, cor_type=%d, shrink_param=%g, test_type=%d, resamp=%d, reprand=%d\n",mm.tol, mm.nboot, mm.corr, mm.shrink_param, mm.test, mm.resamp, mm.reprand);
@@ -35,15 +35,15 @@ RcppExport SEXP RtoAnovaCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
     IntegerMatrix Yr(Ysexp);
     NumericMatrix Xr(Xsexp);
     IntegerMatrix INr(INsexp);
-    int nRows = Yr.nrow();
-    int nVars = Yr.ncol();
-    int nParam = Xr.ncol();
-    int nModels = INr.nrow();
+    unsigned int nRows = Yr.nrow();
+    unsigned int nVars = Yr.ncol();
+    unsigned int nParam = Xr.ncol();
+    unsigned int nModels = INr.nrow();
 // for debug
 //    Rprintf("nRows=%d, nVars=%d, nParam=%d\n", nRows, nVars, nParam);
 
     // Rcpp -> gsl
-    int i, j, k;
+    unsigned int i, j, k;
     gsl_matrix *X = gsl_matrix_alloc(nRows, nParam);        
     gsl_matrix *Y = gsl_matrix_alloc(nRows, nVars);
     gsl_matrix *isXvarIn = gsl_matrix_alloc(nModels, nParam);
@@ -113,8 +113,8 @@ RcppExport SEXP RtoAnovaCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
 //    anova.display();
 
     clk_end = clock();
-    float dif = (float)(clk_end - clk_start)/(float)(CLOCKS_PER_SEC);
-    Rprintf("Time elapsed: %.4f seconds\n", dif);
+    double dif = (double)(clk_end - clk_start)/(double)(CLOCKS_PER_SEC);
+    Rprintf("Time elapsed: %d seconds\n", (unsigned int) dif);
 
     // Wrap the gsl objects with Rcpp 
     NumericVector Vec_mul(anova.multstat, anova.multstat+nModels-1);
@@ -133,11 +133,7 @@ RcppExport SEXP RtoAnovaCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
 //    std::copy(uj, uj+nVars*(nModels-1), Mat_statj.begin());
 //    std::copy(pj, pj+nVars*(nModels-1), Mat_Pstatj.begin());
 
-    // clear objects
-    anova.releaseTest(); 
-    gsl_matrix_free(Y);
-    gsl_matrix_free(X);
-    gsl_matrix_free(isXvarIn);
+    unsigned int nSamp = anova.nSamp;
 
     // Rcpp -> R
     List rs = List::create(
@@ -146,8 +142,15 @@ RcppExport SEXP RtoAnovaCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
 	 _["dfDiff"   ] = Vec_df,
 	 _["statj"    ] = Mat_statj,
 	 _["Pstatj"   ] = Mat_Pstatj,
-	 _["nSamp"    ] = anova.nSamp
+	 _["nSamp"    ] = nSamp
     );
+
+    // clear objects
+    anova.releaseTest(); 
+    gsl_matrix_free(Y);
+    gsl_matrix_free(X);
+    gsl_matrix_free(isXvarIn);
+
 
     return rs;
 }

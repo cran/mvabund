@@ -62,7 +62,7 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
    show <- rep.int(FALSE, times = 4)
    show[which] <- TRUE
     	
-   if(ncol(model.matrix(x)) > 0 ) empty <- FALSE 
+   if(ncol(x$x) > 0 ) empty <- FALSE 
    else empty <- TRUE
 
    if(empty && show[4]) {
@@ -129,7 +129,7 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
           warning("You have passed an invalid number of variables 'n.vars' to be included in the plot. All variables will be included instead.")        
           n.var <- p
        }      
-       y <- as.matrix(model.response(model.frame(x)))
+       y <- as.matrix(x$y)
        if(any(na.action.type == "pass") | is.null(na.action.type)) {
            if(length(which.na.pass)>0)  y <- y[, - which.na.pass]
        }

@@ -96,14 +96,14 @@
 //
 typedef struct MethodStruc {
     // hypo test methods
-    int nboot;
-    int corr;
-    int test;
-    int resamp;
-    int reprand;
-    int student;
-    int punit;
-    int rsquare;
+    unsigned int nboot;
+    unsigned int corr;
+    unsigned int test;
+    unsigned int resamp;
+    unsigned int reprand;
+    unsigned int student;
+    unsigned int punit;
+    unsigned int rsquare;
     // numeric
     double shrink_param;
     gsl_vector *smry_lambda;
@@ -129,9 +129,9 @@ typedef struct GroupMatrix{
 // ManyGlm related
 typedef struct RegressionMethod{
     // regression methods
-    int model;
-    int varStab;
-    int estiMethod;
+    unsigned int model;
+    unsigned int varStab;
+    unsigned int estiMethod;
     double tol;
 } reg_Method;
 
@@ -142,13 +142,13 @@ public: mv_Method *mmRef;
 	gsl_matrix *Yref;
 	gsl_matrix *Xref;
 	gsl_matrix *inRef;
-	int nSamp;
+	unsigned int nSamp;
 
 	double *multstat;
 	double *Pmultstat;
 	gsl_matrix *statj;
 	gsl_matrix *Pstatj;
-	int *dfDiff;
+	unsigned int *dfDiff;
 	gsl_matrix *bootID;	 
 
        // Methods
@@ -162,12 +162,11 @@ private: mv_mat *Hats;
          gsl_permutation **sortid;
 	 gsl_vector *bStatj;
 	 double bMultStat;
-	 size_t nModels, nRows, nVars, nParam;
+	 unsigned int nModels, nRows, nVars, nParam;
 
          // Methods
-//         int getBootID(void); // done in R
 	 int anovacase(gsl_matrix *bY, gsl_matrix *bX);
-         int anovaresi(gsl_matrix *bY, const size_t p);
+         int anovaresi(gsl_matrix *bY, const unsigned int p);
 };
 
 // summary.cpp
@@ -176,7 +175,7 @@ class Summary
 public: mv_Method *mmRef;
 	gsl_matrix *Yref;
 	gsl_matrix *Xref;
-	int nSamp;
+	unsigned int nSamp;
 
         double R2;	
 	double *multstat;
@@ -194,13 +193,12 @@ public: mv_Method *mmRef;
 
 private: mv_mat *Hats;
 	 gsl_permutation **sortid;
-	 size_t nRows, nVars, nParam;
+	 unsigned int nRows, nVars, nParam;
 	 double *bMultStat;
 	 gsl_matrix *bUnitStat;
 
 	 // Methods
          int calcR2(void);
-//         int getBootID(void); // done in R
 	 int smrycase(gsl_matrix *bY, gsl_matrix *bX);
          int smryresi(gsl_matrix *bY);
 
@@ -245,11 +243,12 @@ class glm
 	   gsl_matrix *wHalf;
 	   gsl_matrix *sqrt1_Hii;
 
-           int rdf;
+           unsigned int rdf;
 	   double *phi, *ll, *dev, *aic;
-	   int *iterconv;  
+	   unsigned int *iterconv;  
+           unsigned int maxiter;
 	   double mintol, lTol;
-           size_t maxiter, nRows, nVars, nParams;
+           unsigned int nRows, nVars, nParams;
    private: 
   	   // abstract 	
 	   virtual double link(double) const=0;	   
@@ -270,8 +269,8 @@ class PoissonGlm : public glm
 	   virtual int regression(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O) 
 	        { return EstIRLS ( Y, X, O, NULL); }
 	   int EstIRLS( gsl_matrix *, gsl_matrix *, gsl_matrix *, double * );
-	   int betaEst( size_t id, size_t iter, double *tol, double a );
-	   double getDisper( size_t id ) const;
+	   int betaEst( unsigned int id, unsigned int iter, double *tol, double a );
+	   double getDisper( unsigned int id ) const;
 
     private: 
            // Log-link and property functions
@@ -334,7 +333,7 @@ class NBinGlm : public PoissonGlm
 	   double devfunc(double yi, double mui, double a) const
                 { return 2*(yi*log(MAX(yi, mintol)/mui)-(yi+1/MAX(a,mintol))*log((1+yi*a)/(1+mui*a))); }
 
-	   int getfAfAdash (double a, size_t id, double *fA, double *fAdash);
+	   int getfAfAdash (double a, unsigned int id, double *fA, double *fAdash);
 };
 
 
@@ -348,9 +347,9 @@ class GlmTest
 	    gsl_matrix *smryStat, *Psmry;
 	    gsl_matrix *anovaStat, *Panova;
 	    gsl_matrix *bootID;
-            int nSamp;	    
+            unsigned int nSamp;	    
             double *aic;
-            int *dfDiff;
+            unsigned int *dfDiff;
 
             // methods
             GlmTest(const mv_Method *tm, glm *fit);
@@ -374,17 +373,17 @@ class GlmTest
 	    int subGeeScore(glm *, glm *, gsl_vector *, gsl_matrix *);
 	    int subGeeLR(glm *PtrAlt, glm *PtrNull, gsl_vector *teststat);
 
-            int resampData(glm *, gsl_matrix *, GrpMat *, GrpMat *, size_t i ); // summary
-	    int resampNonCase(glm *, gsl_matrix *, size_t i);
-	    int resampAnovaCase(glm *, gsl_matrix *, gsl_matrix *, gsl_matrix *, size_t i);
+            int resampData(glm *, gsl_matrix *, GrpMat *, GrpMat *, unsigned int i ); // summary
+	    int resampNonCase(glm *, gsl_matrix *, unsigned int i);
+	    int resampAnovaCase(glm *, gsl_matrix *, gsl_matrix *, gsl_matrix *, unsigned int i);
 	    int setMonteCarlo(glm *model, gsl_matrix *, gsl_matrix *);
 
             // intermediate data
-	    size_t nRows, nVars, nParam, nModels;
+	    unsigned int nRows, nVars, nParam, nModels;
 
 	    // the following used in resampling
             gsl_rng *rnd;
-            size_t *permid;   // only useful in permutation test
+            unsigned int *permid;   // only useful in permutation test
             double lambda;    // intermediate shrinkage parameter
                 
             // the following are used in geeCalc
@@ -414,31 +413,31 @@ double calcDet(gsl_matrix *SS);
 int is_sym_matrix(const gsl_matrix *mat);
 int subX(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi);
 int subX1(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi);
-int subX2(gsl_matrix *X, int id, gsl_matrix *Xi);
+int subX2(gsl_matrix *X, unsigned int id, gsl_matrix *Xi);
 int subXrow(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi);
 int subXrow2(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi);
 int subXrow1(gsl_matrix *X, gsl_vector *ref0, gsl_vector *ref1, gsl_matrix *Xi);
-int GetR(gsl_matrix *Res, size_t corr, gsl_vector *glmshrink, size_t k, gsl_matrix *R); 
+int GetR(gsl_matrix *Res, unsigned int corr, gsl_vector *glmshrink, unsigned int k, gsl_matrix *R); 
 int subtractMean(gsl_matrix *dat);
 // calctest.c - manylm related functions
-int testStatCalc(mv_mat *H0, mv_mat *H1, mv_Method *mmRef, const int ifcalcH1det, double *stat, gsl_vector *statj);
-int calcSS(gsl_matrix *Y, mv_mat *Hat, mv_Method *mmRef, const int ifcalcHat, const int ifcalcCoef, const int ifcalcSS);
-int calcAdjustP(const int punit, const int nVars, double *bj, double *sj, double *pj, gsl_permutation *sortid);
-int reinforceP(double *p, size_t nVars, gsl_permutation *sortid);
+int testStatCalc(mv_mat *H0, mv_mat *H1, mv_Method *mmRef, const unsigned int ifcalcH1det, double *stat, gsl_vector *statj);
+int calcSS(gsl_matrix *Y, mv_mat *Hat, mv_Method *mmRef, const unsigned int ifcalcHat, const unsigned int ifcalcCoef, const unsigned int ifcalcSS);
+int calcAdjustP(const unsigned int punit, const unsigned int nVars, double *bj, double *sj, double *pj, gsl_permutation *sortid);
+int reinforceP(double *p, unsigned int nVars, gsl_permutation *sortid);
 int getHat(gsl_matrix *X, gsl_matrix *W, gsl_matrix *Hat);
 int invLSQ(gsl_matrix *A, gsl_vector *b, gsl_vector *x);
-int rcalc(gsl_matrix *Res, double, int, gsl_matrix *SS);
+int rcalc(gsl_matrix *Res, double, unsigned int, gsl_matrix *SS);
 
 // simutility.cpp - functions used in simulation tests 
 int GetMean(gsl_matrix *X, gsl_matrix *Y, gsl_matrix *Mu);
-int GetPdstbtion(double *p, size_t nVars, size_t *isH0var, size_t *cnt, size_t *cntfwe);
-//int GetCov (gsl_matrix *Mu, gsl_matrix *Y, size_t AR1MAT, gsl_matrix *Sigma);
-//int GetMeanCov(gsl_matrix *X, gsl_matrix *Y, mv_Method *mm, size_t AR1MAT, gsl_matrix *Mu, gsl_matrix *Sigma);
+int GetPdstbtion(double *p, unsigned int nVars, unsigned int *isH0var, unsigned int *cnt, unsigned int *cntfwe);
+//int GetCov (gsl_matrix *Mu, gsl_matrix *Y, unsigned int AR1MAT, gsl_matrix *Sigma);
+//int GetMeanCov(gsl_matrix *X, gsl_matrix *Y, mv_Method *mm, unsigned int AR1MAT, gsl_matrix *Mu, gsl_matrix *Sigma);
 
 // rnd.c - functions to generate random numbers from multivariate (normal) distributions
 // MVN random number generator
-int rmvnorm(const gsl_rng *, const int, const gsl_matrix *, gsl_vector *);
+int rmvnorm(const gsl_rng *, const unsigned int, const gsl_matrix *, gsl_vector *);
 // MVN with positive-semi definite covariance matrix
-int semirmvnorm(const gsl_rng *, const int, const gsl_matrix *, gsl_vector *);
+int semirmvnorm(const gsl_rng *, const unsigned int, const gsl_matrix *, gsl_vector *);
 
 #endif

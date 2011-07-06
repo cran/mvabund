@@ -162,7 +162,7 @@ print.summary.manylm <- function (x, digits = max(getOption("digits") - 3, 3), s
        if(x$resamp!="none"){
           cat(statname, paste(formatC(x$statistic[1], digits = digits),",",sep=""),         "p-value:", format.pval(x$statistic[2], digits = dig.tst, eps = eps.Pvalue),"\n")
           if (x$p.uni == "none") 
-             cat("Arguments: with", x$overall.n.bootsdone, "resampling iterations using", x$resamp, "resampling and",corname, "\n")    
+             cat("Arguments: with", n.bootsdone, "resampling iterations using", x$resamp, "resampling and",corname, "\n")    
        } 
        else cat(statname, paste(formatC(x$statistic[1], digits = digits),"\n",sep=""))
     

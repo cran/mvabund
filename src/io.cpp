@@ -9,7 +9,7 @@
 int vector_filesize(FILE *f)
 {
 	float n;
-	int size = 0;
+	unsigned int size = 0;
 
 	while (EOF != fscanf(f, "%g", &n)) size++;
 
@@ -17,7 +17,7 @@ int vector_filesize(FILE *f)
         return size;
 }
 
-void matrix_filesize(FILE *f, int * row, int * col)
+void matrix_filesize(FILE *f, unsigned int * row, unsigned int * col)
 {
 	char line[MAX_LINE_LENGTH];
 
@@ -43,7 +43,7 @@ void matrix_filesize(FILE *f, int * row, int * col)
 gsl_matrix * load_m(const char * file)
 {
 	FILE * f = fopen(file, "r");
-	int row, col;
+	unsigned int row, col;
 	gsl_matrix * out;
 
 	matrix_filesize(f, &row, &col);
@@ -62,7 +62,7 @@ gsl_matrix * load_m(const char * file)
 gsl_vector * load_v(const char * file)
 {
 	FILE * f = fopen(file, "r");
-	int size = vector_filesize(f);
+	unsigned int size = vector_filesize(f);
 	gsl_vector * out;
 
 //        printf("size=%d.\n", size);
@@ -76,7 +76,7 @@ gsl_vector * load_v(const char * file)
 
 void displaymatrix(gsl_matrix * m, const char * name)
 {
-	size_t i, j;
+	unsigned int i, j;
 
 	printf("%s =\n", name);
 	for (i = 0; i < m->size1; i++)
@@ -91,7 +91,7 @@ void displaymatrix(gsl_matrix * m, const char * name)
 void displayvector(gsl_vector * v, const char * name)
 {
 	printf("%s =\n", name);
-	for (size_t i = 0; i < v->size; i++)
+	for (unsigned int i = 0; i < v->size; i++)
 	    printf("%.2f ", gsl_vector_get(v, i));
 	printf("\n");
 

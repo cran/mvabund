@@ -11,7 +11,7 @@ function (object, newdata, se.fit = FALSE, scale = NULL, df = Inf,
     mf <- model.frame(object, data=object$data)
     nvar <- NCOL(model.response(mf))
     ynames <- colnames(as.matrix(model.response(mf)))
-    
+
     tt <- terms(object)
     if (missing(newdata) || is.null(newdata)) {
         n <- NROW(object$residuals)

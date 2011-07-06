@@ -82,6 +82,7 @@ else {
     ##################### BEGIN Estimation ###################
     # Obtain the Designmatrix.
     X <- model.matrix(mt, mf)
+    assign <- attr(X, "assign")
     tX <- t(X)
     tX <- t(tX[!duplicated(tX),])  # remove duplicated col    
     if ( nrow(tX) == nrow(X) ) X <- tX
@@ -156,6 +157,7 @@ else {
     z$shrink.param  <- shrink.param
     z$call      <- cl
     z$terms     <- mt
+    z$assign    <- assign
     z$formula   <- formula
     z$rank      <- rank
     z$xlevels   <- .getXlevels(mt, mf)

@@ -2,7 +2,7 @@
 // Author: Yi Wang (yi dot wang at unsw dot edu dot au)
 // Last modified: 20-April-2010
 
-#include "Rcpp.h"
+#include <Rcpp.h>
 extern "C"{
 #include "resampTest.h"
 #include "time.h"
@@ -15,30 +15,31 @@ RcppExport SEXP RtoSmryCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
 
     // Get parameters in params.
     List rparam(params);
+
     // pass parameters
     mv_Method mm;	
-    mm.tol = rparam["tol"];
-    mm.nboot = rparam["nboot"];
-    mm.corr = rparam["cor_type"];
-    mm.shrink_param = rparam["shrink_param"];
-    mm.test = rparam["test_type"];
-    mm.resamp = rparam["resamp"];
-    mm.reprand = rparam["reprand"];
-    mm.student = rparam["studentize"];
-    mm.punit = rparam["punit"];
-    mm.rsquare = rparam["rsquare"];
+    mm.tol = as<double>(rparam["tol"]);
+    mm.nboot = as<unsigned int>(rparam["nboot"]);
+    mm.corr = as<unsigned int>(rparam["cor_type"]);
+    mm.shrink_param = as<double>(rparam["shrink_param"]);
+    mm.test = as<unsigned int>(rparam["test_type"]);
+    mm.resamp = as<unsigned int>(rparam["resamp"]);
+    mm.reprand = as<unsigned int>(rparam["reprand"]);
+    mm.student = as<unsigned int>(rparam["studentize"]);
+    mm.punit = as<unsigned int>(rparam["punit"]);
+    mm.rsquare = as<unsigned int>(rparam["rsquare"]);
 
-//    // for debug
-//   Rprintf("Input param arguments:\n tol=%g, nboot=%d, cor_type=%d, shrink_param=%g, test_type=%d, resamp=%d, reprand=%d\n",mm.tol, mm.nboot, mm.corr, mm.shrink_param, mm.test, mm.resamp, mm.reprand);
+   // for debug
+//    Rprintf("Input param arguments:\n tol=%g, nboot=%d, cor_type=%d, shrink_param=%g, test_type=%d, resamp=%d, reprand=%d\n",mm.tol, mm.nboot, mm.corr, mm.shrink_param, mm.test, mm.resamp, mm.reprand);
 
     IntegerMatrix Yr(Ysexp);
     NumericMatrix Xr(Xsexp);
-    int nRows = Yr.nrow();
-    int nVars = Yr.ncol();
-    int nParam = Xr.ncol();
+    unsigned int nRows = Yr.nrow();
+    unsigned int nVars = Yr.ncol();
+    unsigned int nParam = Xr.ncol();
 
     // Rcpp -> gsl
-    int i, j, k;
+    unsigned int i, j, k;
     gsl_matrix *X = gsl_matrix_alloc(nRows, nParam);        
     gsl_matrix *Y = gsl_matrix_alloc(nRows, nVars);    
     
@@ -56,8 +57,8 @@ RcppExport SEXP RtoSmryCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
     }
        
     // do stuff	
-//  clock_t clk_start, clk_end;
-//  clk_start = clock();
+  clock_t clk_start, clk_end;
+  clk_start = clock();
 
     // initialize summary class
     Summary smry(&mm, Y, X);
@@ -88,11 +89,11 @@ RcppExport SEXP RtoSmryCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
 
 // resampling test
     smry.resampTest();
-//    smry.display();
+    smry.display();
 
-//  clk_end = clock();
-//  float dif = (float)(clk_end - clk_start)/(float)(CLOCKS_PER_SEC);
-//  Rprintf("Time elapsed: %.4f seconds\n", dif);
+    clk_end = clock();
+    double dif = (double)(clk_end - clk_start)/(double)(CLOCKS_PER_SEC);
+    Rprintf("Time elapsed: %d seconds\n", (unsigned int) dif);
 
     // Wrap gsl vectors with Rcpp 
     NumericVector Vec_signific(smry.multstat+1, smry.multstat+nParam+1);
@@ -123,24 +124,30 @@ RcppExport SEXP RtoSmryCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
 //              Mat_Punitsign.begin());
 //    Rprintf("Done\n.");
 
-    // clear objects
-    smry.releaseSummary(); 
-    gsl_matrix_free(Y);
-    gsl_matrix_free(X);
-    
+    double multstat = smry.multstat[0];
+    double Pmultstat = smry.Pmultstat[0];
+    double R2 = smry.R2;
+    unsigned int nSamp = smry.nSamp;
+
     // Rcpp -> R
     List rs = List::create(
-	_["multstat"] = smry.multstat[0],
-	_["Pmultstat"] = smry.Pmultstat[0],
+	_["multstat"] = multstat,
+	_["Pmultstat"] = Pmultstat,
         _["unitmult"] = Vec_unitmult,
         _["Punitmult"]= Vec_Punitmult,
 	_["signific"]= Vec_signific,
 	_["Psignific"]= Vec_Psignific,
 	_["unitsign"]= Mat_unitsign,
 	_["Punitsign"]= Mat_Punitsign,
-	_["nSamp"]= smry.nSamp,
-	_["R2"]= smry.R2
+	_["nSamp"]= nSamp,
+	_["R2"]= R2
     );
+
+    // clear objects
+    smry.releaseSummary(); 
+    gsl_matrix_free(Y);
+    gsl_matrix_free(X);
+    
     return rs;
 }
 

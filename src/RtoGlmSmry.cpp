@@ -2,10 +2,11 @@
 // Author: Yi Wang (yi dot wang at unsw dot edu dot au)
 // 20-April-2011
 
-#include "Rcpp.h"
+#include <Rcpp.h>
 extern "C"{
 #include "resampTest.h"
-//#include "time.h"
+#include "time.h"
+//#include "math.h"
 }
 
 RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,  
@@ -16,35 +17,35 @@ RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
     // Get parameters in params.
     List sparam(mpar);
     reg_Method mm;
-    mm.tol = sparam["tol"];
-    mm.model = sparam["regression"];
-    mm.estiMethod = sparam["estimation"];
-    mm.varStab = sparam["stablizer"];
+    mm.tol = as<double>(sparam["tol"]);
+    mm.model = as<unsigned int>(sparam["regression"]);
+    mm.estiMethod = as<unsigned int>(sparam["estimation"]);
+    mm.varStab = as<unsigned int>(sparam["stablizer"]);
 
     List rparam(tpar);
     // pass parameters
     mv_Method tm;	
-    tm.tol = rparam["tol"];
-    tm.nboot = rparam["nboot"];
-    tm.corr = rparam["cor_type"];
-    tm.test = rparam["test_type"];
-    tm.resamp = rparam["resamp"];
-    tm.reprand = rparam["reprand"];
-    tm.punit = rparam["punit"];
+    tm.tol = as<double>(rparam["tol"]);
+    tm.nboot = as<unsigned int>(rparam["nboot"]);
+    tm.corr = as<unsigned int>(rparam["cor_type"]);
+    tm.test = as<unsigned int>(rparam["test_type"]);
+    tm.resamp = as<unsigned int>(rparam["resamp"]);
+    tm.reprand = as<unsigned int>(rparam["reprand"]);
+    tm.punit = as<unsigned int>(rparam["punit"]);
 
 //    // for debug
-//   Rprintf("Input param arguments:\n tol=%g, nboot=%d, cor_type=%d, shrink_param=%g, test_type=%d, resamp=%d, reprand=%d\n",mm.tol, mm.nboot, mm.corr, mm.shrink_param, mm.test, mm.resamp, mm.reprand);
+//    Rprintf("Input param arguments:\n tol=%.4f, nboot=%d, cor_type=%d, test_type=%d, resamp=%d, reprand=%d\n",tm.tol, tm.nboot, tm.corr, tm.test, tm.resamp, tm.reprand);
 
     IntegerMatrix Yr(Ysexp);
     NumericMatrix Xr(Xsexp);
     NumericVector lambda(LamSexp);
-    int nRows = Yr.nrow();
-    int nVars = Yr.ncol();
-    int nParam = Xr.ncol();
-    int nLambda = lambda.size();
+    unsigned int nRows = Yr.nrow();
+    unsigned int nVars = Yr.ncol();
+    unsigned int nParam = Xr.ncol();
+    unsigned int nLambda = lambda.size();
 
     // Rcpp -> gsl
-    int i, j, k;
+    unsigned int i, j, k;
     tm.smry_lambda = gsl_vector_alloc(nLambda);
     for (i=0; i<nLambda; i++)
         gsl_vector_set(tm.smry_lambda, i, lambda(i));	    
@@ -65,15 +66,15 @@ RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
     }
        
     // do stuff	
-//    clock_t clk_start, clk_end;
-//    clk_start = clock();
+    clock_t clk_start, clk_end;
+    clk_start = clock();
 
     // Glm fit
     PoissonGlm pfit(&mm);
     LogiGlm lfit(&mm);
     NBinGlm nbfit(&mm);
     glm *glmPtr[3] = { &pfit, &nbfit, &lfit };
-    size_t mtype = mm.model-1;
+    unsigned int mtype = mm.model-1;
     glmPtr[mtype]->regression(Y, X, NULL);
 //    glmPtr[mtype]->display();
 
@@ -106,9 +107,10 @@ RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
     myTest.summary();
 //    myTest.displaySmry();
 
-//    clk_end = clock();
-//    float dif = (float)(clk_end - clk_start)/(float)(CLOCKS_PER_SEC);
-//    Rprintf("Time elapsed: %.4f seconds\n", dif);
+    clk_end = clock();
+    double dif = (double)(clk_end - clk_start)/(double)(CLOCKS_PER_SEC);
+    unsigned int min = (unsigned int) floor(dif/60);
+    Rprintf("Time elapsed: %d minutes %d seconds\n", min, (unsigned int)(dif-min*60));
 
     // Wrap gsl vectors with Rcpp 
     double multstat, Pmultstat;
@@ -141,14 +143,8 @@ RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
 //              Mat_Punitsign.begin());
 //    Rprintf("Done\n.");
 
-    // clear objects
-    glmPtr[mtype]->releaseGlm();
-    myTest.releaseTest();    
-    gsl_matrix_free(Y);
-    gsl_matrix_free(X);
-    gsl_vector_free(tm.smry_lambda);
-    
-    
+    unsigned int nSamp = myTest.nSamp;
+
     // Rcpp -> R
     List rs = List::create(
 	_["multstat" ] = multstat,
@@ -159,9 +155,17 @@ RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
 	_["Psignific"] = Vec_Psigni,
 	_["unitsign" ] = Mat_unitsigni,
 	_["Punitsign"] = Mat_Punitsigni,
-	_["nSamp"    ] = myTest.nSamp,
+	_["nSamp"    ] = nSamp,
 	_["aic"      ] = Vec_aic
     );
+
+    // clear objects
+    glmPtr[mtype]->releaseGlm();
+    myTest.releaseTest();    
+    gsl_matrix_free(Y);
+    gsl_matrix_free(X);
+    gsl_vector_free(tm.smry_lambda);
+    
     return rs;
 }
 

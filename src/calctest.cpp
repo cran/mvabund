@@ -4,19 +4,19 @@
 
 #include "resampTest.h"
 
-int testStatCalc(mv_mat *H0, mv_mat *H1, mv_Method *mmRef, const int ifcalcH1det, double *stat, gsl_vector *statj)
+int testStatCalc(mv_mat *H0, mv_mat *H1, mv_Method *mmRef, const unsigned int ifcalcH1det, double *stat, gsl_vector *statj)
 {
-	size_t i, j;
+	unsigned int i, j;
         int s;
-        size_t nVars=H0->SS->size1;
-        size_t nRows=H0->mat->size1;
+        unsigned int nVars=H0->SS->size1;
+        unsigned int nRows=H0->mat->size1;
 	double ss0j, ss1j, sum;
         double logDetSS0, logDetSS1;
 
 	// calc test stats
 	if ( mmRef->test == LOGWILK ) {
 	   // statj = nRows*(log(diag(ss0)) - log(diag(ss1)));
-	    for ( j=0; j<statj->size; j++ ) {
+	    for ( j=0; j<nVars; j++ ) {
                  ss0j = gsl_matrix_get(H0->SS, j, j);
                  ss1j = gsl_matrix_get(H1->SS, j, j);
 	         gsl_vector_set(statj, j, nRows*(log(ss0j)-log(ss1j)));
@@ -88,12 +88,12 @@ int testStatCalc(mv_mat *H0, mv_mat *H1, mv_Method *mmRef, const int ifcalcH1det
 	return 0;
 }
 
-int calcSS(gsl_matrix *Y, mv_mat *Hat, mv_Method *mmRef, const int ifcalcHat, const int ifcalcCoef, const int ifcalcSS)
+int calcSS(gsl_matrix *Y, mv_mat *Hat, mv_Method *mmRef, const unsigned int ifcalcHat, const unsigned int ifcalcCoef, const unsigned int ifcalcSS)
 {
-    size_t j; 
-    size_t nP=Hat->X->size2;
-    size_t nRows=Hat->mat->size1;
-    size_t nVars=Hat->SS->size1;
+    unsigned int j; 
+    unsigned int nP=Hat->X->size2;
+    unsigned int nRows=Hat->mat->size1;
+    unsigned int nVars=Hat->SS->size1;
 
      // It is possible later to feed data with more varialbes (columns) 
      // than observations (rows). So better use SVD than QR
@@ -195,12 +195,12 @@ int calcSS(gsl_matrix *Y, mv_mat *Hat, mv_Method *mmRef, const int ifcalcHat, co
 double calcDet(gsl_matrix *SS)
 {
      // SS is a nVars x nVars real symmetric matric
-     int nVars = SS->size1;
+     unsigned int nVars = SS->size1;
      double result;
 /*     // det(A) = prod(eig(A))
      gsl_eigen_symm_workspace *ws = gsl_eigen_symm_alloc(nVars);
      gsl_vector *eval=gsl_vector_alloc(nVars);    
-     int j;
+     unsigned int j;
      double logDetSS=0.0;
      gsl_eigen_symm(SS, eval, ws);
 //     displayvector(eval, "SS eigen values");
@@ -216,7 +216,8 @@ double calcDet(gsl_matrix *SS)
      // fill SS
      gsl_matrix *LU=gsl_matrix_alloc(nVars, nVars);
      gsl_matrix_memcpy(LU, SS); 
-     int i, j, s;
+     unsigned int i, j;
+     int s;
      for (i=0;i<nVars; i++)
      for (j=i+1; j<nVars; j++)
          gsl_matrix_set(LU, i, j, gsl_matrix_get(LU, j, i));
@@ -234,7 +235,7 @@ double calcDet(gsl_matrix *SS)
 
 int is_sym_matrix(const gsl_matrix *mat)
 {
-     size_t i, j;
+     unsigned int i, j;
      if ( mat->size1 == mat->size2 ) {
         // test the upper triangle
         for ( i=0; i<mat->size1; i++)
@@ -249,11 +250,11 @@ int is_sym_matrix(const gsl_matrix *mat)
 
 int subX(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi)
 {   
-    size_t j, k=0;
-    size_t nP=ref->size;
+    unsigned int j, k=0;
+    unsigned int nP=ref->size;
 
     for (j=0; j<nP; j++) {
-        if ( (size_t)gsl_vector_get(ref, j) > 0 ){
+        if ( (unsigned int)gsl_vector_get(ref, j) > 0 ){
            gsl_vector_view col = gsl_matrix_column (X, j);
            gsl_matrix_set_col(Xi, k, &col.vector);
             k++;
@@ -264,11 +265,11 @@ int subX(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi)
 
 int subX1(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi)
 {   
-    size_t j, k=0;
-    size_t nP=ref->size;
+    unsigned int j, k=0;
+    unsigned int nP=ref->size;
 
     for (j=0; j<nP; j++) {
-        if ( (size_t)gsl_vector_get(ref, j) == 0 ){
+        if ( (unsigned int)gsl_vector_get(ref, j) == 0 ){
             gsl_vector_view col = gsl_matrix_column (X, j);
             gsl_matrix_set_col(Xi, k, &col.vector);
             k++;
@@ -279,10 +280,10 @@ int subX1(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi)
 }
 
 
-int subX2(gsl_matrix *X, int id, gsl_matrix *Xi)
+int subX2(gsl_matrix *X, unsigned int id, gsl_matrix *Xi)
 {   
-    size_t j, k=0;
-    size_t nParam=X->size2;
+    unsigned int j, k=0;
+    unsigned int nParam=X->size2;
 
     for (j=0; j<nParam; j++) {
         if ( j!=id ){
@@ -296,11 +297,11 @@ int subX2(gsl_matrix *X, int id, gsl_matrix *Xi)
 
 int subXrow(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi)
 {   
-    size_t j, k=0;
-    size_t n=X->size1;
+    unsigned int j, k=0;
+    unsigned int n=X->size1;
 
     for (j=0; j<n; j++) {       
-        if ( (size_t)gsl_vector_get(ref, j)==0 ){
+        if ( (unsigned int)gsl_vector_get(ref, j)==0 ){
            gsl_vector_view row = gsl_matrix_row (X, j);
            gsl_matrix_set_row(Xi, k, &row.vector);
            k++;
@@ -311,11 +312,11 @@ int subXrow(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi)
 
 int subXrow2(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi)
 {   
-    size_t j, k=0;
-    size_t n=X->size1;
+    unsigned int j, k=0;
+    unsigned int n=X->size1;
 
     for (j=0; j<n; j++) {       
-        if ( (size_t)gsl_vector_get(ref, j)>0 ){
+        if ( (unsigned int)gsl_vector_get(ref, j)>0 ){
            gsl_vector_view row = gsl_matrix_row (X, j);
            gsl_matrix_set_row(Xi, k, &row.vector);
            k++;
@@ -326,12 +327,12 @@ int subXrow2(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi)
 
 int subXrow1(gsl_matrix *X, gsl_vector *ref0, gsl_vector *ref1, gsl_matrix *Xi)
 { 
-    size_t j, k=0, id0, id1;
-    size_t n=X->size1;
+    unsigned int j, k=0, id0, id1;
+    unsigned int n=X->size1;
 
     for (j=0; j<n; j++) {       
-        id0 = (size_t) gsl_vector_get(ref0, j);
-        id1 = (size_t) gsl_vector_get(ref1, j);
+        id0 = (unsigned int) gsl_vector_get(ref0, j);
+        id1 = (unsigned int) gsl_vector_get(ref1, j);
         if ( (id0!=id1) & (id0==0) ){
            gsl_vector_view row = gsl_matrix_row (X, j);
            gsl_matrix_set_row(Xi, k, &row.vector);
@@ -341,9 +342,9 @@ int subXrow1(gsl_matrix *X, gsl_vector *ref0, gsl_vector *ref1, gsl_matrix *Xi)
      return 0;
 }     
 
-int calcAdjustP(const int punit, const int nVars, double *bj, double *sj, double *pj, gsl_permutation *sortid)
+int calcAdjustP(const unsigned int punit, const unsigned int nVars, double *bj, double *sj, double *pj, gsl_permutation *sortid)
 {
-    int k;
+    unsigned int k;
     
  //   printf("multiple test procedure [%d]\n", punit);
     if (punit == UNADJUST){
@@ -359,25 +360,25 @@ int calcAdjustP(const int punit, const int nVars, double *bj, double *sj, double
            *(pj+k)=*(pj+k)+1;
      }
     else if (punit == FREESTEP){
-       size_t sid, sid0;
+       unsigned int sid, sid0=0;
        // successive maxima
        //gsl_permutation_fprintf(stdout, sortid, " %u");
  //      printf("\n");
        for (k=0; k<nVars; k++){
            sid = gsl_permutation_get(sortid, nVars-1-k);
-//	   printf("%d ", (size_t)sid);
+//	   printf("%d ", (unsigned int)sid);
            if ( k>0 ) {
-//	      printf("%d ", (size_t)sid0);
+//	      printf("%d ", (unsigned int)sid0);
 	      *(bj+sid)=MAX(*(bj+sid), *(bj+sid0));
            }   
-//	   printf("%d ", (size_t)sid);
+//	   printf("%d ", (unsigned int)sid);
 	   if ( *(bj+sid) >= *(sj+sid) ) 
 	      *(pj+sid)=*(pj+sid)+1;
 //	   if ( k> 0)    
 //              printf("%.2f ", *(bj+sid0));   
 //	   printf("%.2f ", *(bj+sid));   
 //           printf("%.2f ", *(sj+sid));	  
-//           printf("%d\n", (size_t)*(pj+sid));
+//           printf("%d\n", (unsigned int)*(pj+sid));
 	   sid0 = sid;   
     }  }
 /*    else if (punit == STEPUP) {
@@ -388,7 +389,7 @@ int calcAdjustP(const int punit, const int nVars, double *bj, double *sj, double
 	      *(bj+sid)=MIN(*(bj+sid), *(bj+sid0));
 	   }
 //           printf("%.3f ", (double)*(bj+sid));
-	   //printf("%d ", (size_t)sid);
+	   //printf("%d ", (unsigned int)sid);
 	   if (*(bj+sid) >= *(sj+sid))
 	      *(pj+sid)=*(pj+sid)+1;
 	   sid0 = sid;   
@@ -402,10 +403,10 @@ int calcAdjustP(const int punit, const int nVars, double *bj, double *sj, double
 }
 
 
-int reinforceP(double *puj, size_t nVars, gsl_permutation *sortid)
+int reinforceP(double *puj, unsigned int nVars, gsl_permutation *sortid)
 {
 // re-enforce monotonicity for univaraite tests
-    size_t j, sid, sid0;
+    unsigned int j, sid, sid0;
     for (j=1; j<nVars; j++) {
         sid=gsl_permutation_get(sortid, j);
 	sid0=gsl_permutation_get(sortid, j-1);
@@ -415,11 +416,11 @@ int reinforceP(double *puj, size_t nVars, gsl_permutation *sortid)
 }
 
 
-int rcalc( gsl_matrix *Res, double shrink_param, int corr, gsl_matrix *SS)
+int rcalc( gsl_matrix *Res, double shrink_param, unsigned int corr, gsl_matrix *SS)
 {
-    size_t j;
-    size_t nRows = Res->size1;
-    size_t nVars = Res->size2;
+    unsigned int j;
+    unsigned int nRows = Res->size1;
+    unsigned int nVars = Res->size2;
     
     gsl_vector *e = gsl_vector_alloc(nRows);
     gsl_vector_set_all (e, 1.0); 
@@ -461,10 +462,10 @@ int getHat(gsl_matrix *X, gsl_matrix *W, gsl_matrix *Hat)
 {
      double hii;
  
-     size_t i, j;
-     size_t nRows = X->size1;
-     size_t nParam = X->size2;
-     size_t nVars = Hat->size2;
+     unsigned int i, j;
+     unsigned int nRows = X->size1;
+     unsigned int nParam = X->size2;
+     unsigned int nVars = Hat->size2;
 
      gsl_matrix *Xw = gsl_matrix_alloc(nRows, nParam);
      gsl_matrix *dW2 = gsl_matrix_alloc(nRows, nRows);
@@ -503,8 +504,8 @@ int getHat(gsl_matrix *X, gsl_matrix *W, gsl_matrix *Hat)
 
 int invLSQ(gsl_matrix *A, gsl_vector *b, gsl_vector *x)
 { 
-   size_t dim1 = A->size1;
-   size_t dim2 = A->size2;
+   unsigned int dim1 = A->size1;
+   unsigned int dim2 = A->size2;
    gsl_vector *t = gsl_vector_alloc(MIN(dim1, dim2));
    gsl_vector *r = gsl_vector_alloc(dim1);
 
@@ -518,15 +519,15 @@ int invLSQ(gsl_matrix *A, gsl_vector *b, gsl_vector *x)
 }
 
 // the manyglm version of rcalc
-int GetR(gsl_matrix *Res, size_t corr, gsl_vector *glmshrink, size_t k, gsl_matrix *R)
+int GetR(gsl_matrix *Res, unsigned int corr, gsl_vector *glmshrink, unsigned int k, gsl_matrix *R)
 {
     if (corr == IDENTITY) {
        gsl_matrix_set_identity (R);
     }
     else {
-       size_t j;
-       size_t nRows = Res->size1;
-       size_t nVars = Res->size2;
+       unsigned int j;
+       unsigned int nRows = Res->size1;
+       unsigned int nVars = Res->size2;
        double std, lambda;
        gsl_matrix *Sd =gsl_matrix_alloc(nVars, nVars);
        gsl_vector *s = gsl_vector_alloc(nVars);
@@ -571,8 +572,8 @@ int GetR(gsl_matrix *Res, size_t corr, gsl_vector *glmshrink, size_t k, gsl_matr
 int subtractMean(gsl_matrix *dat)
 {
 
-    size_t nRows = dat->size1;
-    size_t nVars = dat->size2;
+    unsigned int nRows = dat->size1;
+    unsigned int nVars = dat->size2;
 
 //    gsl_matrix *t1, *Mean;
 //    t1 = gsl_matrix_alloc(nRows, 1);

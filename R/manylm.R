@@ -153,9 +153,7 @@ z$cor.type      <- cor.type
 z$shrink.param  <- shrink.param
 z$call          <- cl
 z$terms         <- mt
-
-class(z) <- # c( if(is.matrix(abundances)|is.mvabund(abundances))
-c("manylm", "mlm", "lm" )
+z$data          <- data
 
 z$na.action <- attr(mf, "na.action")
 z$offset <- offset
@@ -165,6 +163,9 @@ if (model) z$model <- mf
 if (ret.x) z$x <- X
 if (ret.y) z$y <- abundances
 if (!ret.qr) z$qr <- NULL
+
+class(z) <- # c( if(is.matrix(abundances)|is.mvabund(abundances))
+c("manylm", "mlm", "lm" )
 
 return(z)
 
