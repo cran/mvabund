@@ -56,7 +56,7 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
    if (!inherits(x, c("manylm", "manyglm"))) warning("use 'plot.manylm' only with \"manylm\" or \"manyglm\" objects")
         
    if (!is.numeric(which) || any(which < 1) || any(which > 4)) 
-    	stop("'which' must be in 1:4")
+    	stop("'which' must be in 1:4")     
     
    isGlm <- inherits(x, "manyglm")
    show <- rep.int(FALSE, times = 4)
@@ -65,12 +65,13 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
    if(ncol(x$x) > 0 ) empty <- FALSE 
    else empty <- TRUE
 
-   if(empty && show[4]) {
+#   if(empty && show[4]) {
+   if(show[4]) {
      	if (length(which)==1) stop("Plot no. 4 cannot be drawn, as Cooks distance cannot be calculated for an empty model")
         else {
            warning("Plot no. 4 cannot be drawn, as Cooks distance cannot be calculated for an empty model")
 	   show[4] <- FALSE
-	   which   <- which[which==4]
+	   which   <- which[-which[which==4]]
 	}
     }
 
@@ -140,6 +141,7 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
        # Find abundance ranks OF MVABUND.OBJECT.1.
        var.subset <- order(sum.y, decreasing = TRUE)
        var.subset <- var.subset[1:n.vars]
+       typeofvarsubset <- " \n(the variables with highest total abundance)"   
     }       
     else {  # if var.subset is specified
        if ( p < max(var.subset) ) 
@@ -150,6 +152,7 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
           n.vars <- var.subset.dim
 	  warning("Number of variables 'n.var' is set to the length of 'var.subset'.")
        }
+       typeofvarsubset <- " (user selected)"   
    } 
    
    ############# Extract relevant data ###################
@@ -316,10 +319,6 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
       }
    }   
 
-   if ( show[4] ) { # plot cook distance
-      stop("cook's distance for glm is not implemented.") 
-   }
-    
    if (any(show[c(1, 3)])) 
        # l.fit <- "Fitted values"
        l.fit <- "Linear predictor value"
@@ -389,7 +388,7 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
        }               
       #SW - Reset mfrow to be approprite for one plot, set legend position    
       if (length(which)==1) {
-          dev.off()
+#          dev.off()
 	  if (legend == TRUE) {
              dev.new(height=6, width=8) # added for smaller window size    
              par(mfrow = c(1,1), oma=c(.5,.5,.5,4.5), mar=c(6, 4.5, 2, 5))
@@ -401,7 +400,7 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
 	  }   
       }	  
       else if (length(which)==2) {
-          dev.off()
+ #         dev.off()
 	  dev.new(height=6, width=12)
           par(mfrow=c(1,2),oma=c(0.5,0.5,1,10), mar=c(4, 4.5, 2, 2))
       }	  
@@ -411,29 +410,30 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
       }	
 
       # The residual vs. fitted value plot	
-      ylim <- range(r, na.rm = TRUE)
-      tmp <- c(yh)
-      is.zero <- tmp < (-9)
-      xlim <- range(tmp[!is.zero])
+      yhtmp <- c(yh)
+      yh.is.zero <- yhtmp < (-9)
+      yh0 <- yhtmp[!yh.is.zero]
+      xlim <- range(yh0)
 
       if (id.n > 0) # for compatibility with R2.2.1
           ylim <- ylim + c(-0.08, 0.08) * diff(ylim) 
           
       # drop small values in the response
       if (show[1]) {
-          # Use vector built of transposed x bzw y in order to plot in the right color
-#           colr <- c("red", "darkgreen", "orange", "black", "darkred", "darkblue","purple","rosybrown", "plum", "green", "hotpink", "gold", "brown","lightblue","darkgrey")
+          # Use vector built of transposed x bzw y to plot in the right color
+#	  yi.is.zero <- (yh[,1]<(-9)) # log(1e-4)
+#	  plot(x=t(yh[!yi.is.zero,1]), y=t(r[!yi.is.zero,1]),type="p",col=palette()[1], ylab = "Pearson residuals", xlab=l.fit, main = main, ylim=ylim, xlim=xlim, cex.lab=clab, cex.axis=caxis, cex=cex, lwd=lwd, font.main=2)	
+#          for (i in 2:n.vars) {	  
+#              yi.is.zero <- (yh[,i] < (-9)) # log(1e-4)
+#              points(x=t(yh[!yi.is.zero,i]), y=t(r[!yi.is.zero,i]),type="p",col=palette()[i], cex=cex, lwd=lwd)
+#          }	  
 
-	  yi.is.zero <- (yh[,1]<(-9)) # log(1e-4)
-	  plot(x=t(yh[!yi.is.zero,1]), y=t(r[!yi.is.zero,1]),type="p",col=palette()[1], ylab = "Pearson residuals", xlab=l.fit, main = main, ylim=ylim, xlim=xlim, cex.lab=clab, cex.axis=caxis, cex=cex, lwd=lwd, font.main=2)	
+          rtmp <- c(r)
+          r0 <- rtmp[!yh.is.zero]
+          ylim <- range(r0, na.rm = TRUE)
 
-          for (i in 2:n.vars) {	  
-              yi.is.zero <- (yh[,i] < (-9)) # log(1e-4)
-              points(x=t(yh[!yi.is.zero,i]), y=t(r[!yi.is.zero,i]),type="p",col=palette()[i], cex=cex, lwd=lwd)
-#              points(x=t(yh[!yi.is.zero,i]), y=t(r[!yi.is.zero,i]),type="p",col=colr[i], cex=cex, lwd=lwd)
-          }	  
-#	  do.call( "plot", c(list(t(yh), t(r), xlab = l.fit, ylab = "Pearson residuals", main = main, ylim = ylim, type = "p", asp=asp, col=color), dots))
-#          do.call( "panel", c(list(t(yh), t(r), col=color), dots))
+	  plot(yh0, r0, xlab = l.fit, ylab = "Pearson residuals", main = main, ylim = ylim, xlim=xlim, font.main=2, type = "n", asp=asp)
+          panel(yh0, r0, col=color, cex.lab=clab, cex.axis=caxis, cex=cex, lwd=lwd)
 
           # Add sub.caption, e.g, manyglm(tasm.cop ~ treatment)
           if (one.fig) 
@@ -459,9 +459,9 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
       
       # The normal QQ plot
       if (show[2]) { 
-         tmp <- c(rs)
-         is.zero <- tmp < (1e-9)
-	 rsn0 <- tmp[!is.zero]
+         rs.is.zero <- rs < (1e-9)
+         rstmp <- c(rs)
+	 rsn0 <- rstmp[!rs.is.zero]
          ylim <- range(rsn0, na.rm = TRUE)
 	 ylim[2] <- ylim[2] + diff(ylim) * 0.075	 
    	 qq <- do.call( "qqnorm", c(list(rsn0, main = main, ylab = ylab23, ylim=ylim, col=color, asp=1, cex.lab=1.5, cex=1.5, cex.axis=1.5, cex.main=1.5, lwd=2), dots))
@@ -484,27 +484,26 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
 
       # The scale vs. location plot
       if (show[3]) {
-          sqrtabsr <- sqrt(abs(rs))	  
-	  ylim <- c(0, max(sqrtabsr, na.rm = TRUE))
+          sqrtabsr <- c(sqrt(abs(rs)))
+          sqrtabsr0 <- sqrtabsr[!yh.is.zero]
+	  ylim <- c(0, max(sqrtabsr0, na.rm = TRUE))
 	  yl <- as.expression(substitute(sqrt(abs(YL)),list(YL = as.name(ylab23))))         
-	  yhn0 <- yh
 
-	  yi.is.zero <- (yh[,1]<(-9))
-	  plot(t(yh[!yi.is.zero,1]), t(sqrtabsr[!yi.is.zero,1]),type="p",col=palette()[1], ylab = yl, xlab=l.fit, main = main, ylim=ylim, xlim=xlim, cex=1.5, cex.lab=1.5, cex.axis=1.5)	            
-          for (i in 2:n.vars) {	  
-              yi.is.zero <- (yh[,i] < (-9))
-              points(t(yh[!yi.is.zero,i]), t(sqrtabsr[!yi.is.zero,i]),type="p",col=palette()[i], cex=1.5, lwd=2)
-          }	  
-#	  do.call( "plot", c(list(t(yhn0), t(sqrtabsr), xlab = l.fit, ylab=yl,
-#                    main = main, ylim = ylim, type = "n"), dots))
-            
-          # Use vector built of transposed x bzw y in order to plot
-	  # in the right colors.
-#	  do.call( "panel", c(list(t(yhn0), t(sqrtabsr), col=color), dots)) 
+#	  yi.is.zero <- (yh[,1]<(-9))
+#	  plot(t(yh[!yi.is.zero,1]), t(sqrtabsr[!yi.is.zero,1]),type="p",col=palette()[1], ylab = yl, xlab=l.fit, main = main, ylim=ylim, xlim=xlim, cex=1.5, cex.lab=1.5, cex.axis=1.5)	            
+#          for (i in 2:n.vars) {	  
+#              yi.is.zero <- (yh[,i] < (-9))
+#              points(t(yh[!yi.is.zero,i]), t(sqrtabsr[!yi.is.zero,i]),type="p",col=palette()[i], cex=1.5, lwd=2)
+#          }	  
+	  plot(yh0, sqrtabsr0, xlab = l.fit, ylab=yl,
+                    main = main, ylim = ylim, xlim=xlim, type = "n")
+	  panel(yh0, sqrtabsr0, col=color, cex=cex, cex.lab=clab, cex.axis=caxis, lwd=lwd) 
+
 	  if (one.fig) 
 	      do.call( "title", c(list(sub = sub.caption), dots))
           mtext(caption[3], 3, 0.25, col=colmain, cex=cex.caption)
-            
+       
+          yhn0 <- yh
 	  if (id.n > 0) 
 	     text.id(yhn0[show.rs], sqrtabsr[show.rs], (rep(labels.id,
 	             each=n.vars))[show.rs], col=rep(col, each=id.n))		    
@@ -515,7 +514,7 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
 
       # The cook distance plot
       if (show[4]) {
-         stop("cook's distance for glm is not implemented.") 
+#         stop("cook's distance for glm is not implemented.") 
 #         ymx <- max(cook, na.rm = TRUE) # error here, what is cook?
 #	 if (id.n > 0) {
 #	    show.r <- matrix(ncol=n.vars, nrow=id.n) 
@@ -548,9 +547,7 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
         
       if(n.vars < p) {
            if (missing(var.subset) | is.null(var.subset) | !is.numeric(var.subset))
-	      tmp <- " \n(the variables with highest total abundance)"   
-           else tmp <- " (user selected)"  
-	   message("Only the variables ",paste(colnames(r), collapse = ", "), " were included in the plot", tmp, ".")
+	   message("Only the variables ",paste(colnames(r), collapse = ", "), " were included in the plot", typeofvarsubset, ".")
       }
 
       return(invisible())
@@ -644,6 +641,7 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
         }
 	
         if (show[3]) {
+            yhn0 <- yh
 	    sqrtabsr <- sqrt(abs(rs[,i]))
 	    ylim <- c(0, max(sqrtabsr, na.rm = TRUE))
 	    yl <- as.expression( substitute(sqrt(abs(YL)),list(YL = as.name(ylab23))))
@@ -660,8 +658,8 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
 
 	    mtext(capt, 3, 0.8, col=colmain, cex=cex.caption)  # draw the title
             
-	    if (id.n > 0) # draw id.n labels in the plot
-	       text.id(yhn0[show.rs[,i]], sqrtabsr[show.rs[,i]],labels.id[show.rs[,i]] )
+#	    if (id.n > 0) # draw id.n labels in the plot
+#	       text.id(yhn0[show.rs[,i]], sqrtabsr[show.rs[,i]],labels.id[show.rs[,i]] )
             scapt <- scaption(scapt)
 	}
         

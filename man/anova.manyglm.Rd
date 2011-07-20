@@ -119,12 +119,13 @@ plot(tasm.cop ~ treatment, col=as.numeric(block))
 ## Fitting predictive models using a negative binomial model for counts:
 tasm.cop.nb <- manyglm(tasm.cop ~ block*treatment, family="negative.binomial")
 
-## Checking model assumptions
-plot(tasm.cop.nb)
-
 ## Testing hypotheses about the treatment effect and treatment-by-block interactions, 
 ## using the default settings of residual resampling and deviance as test statistics: 
 anova(tasm.cop.nb)
+
+## Checking model assumptions
+plot(tasm.cop.nb)
+
 
 ## Accounting for correlation between variables (with shrinkage):
 tasm.cop.nb2 <- manyglm(tasm.cop ~ block*treatment, family="negative.binomial", cor.type="shrink")

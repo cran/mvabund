@@ -4,7 +4,7 @@
 # 05-Jan-2010
 ###############################################################################
 
-summary.manylm <- function(object, nBoot=1000,resample="residual", test=object$test, cor.type=object$cor.type, shrink.param=NULL, p.uni="none", studentize=TRUE, R2="h", show.cor = FALSE, show.est=FALSE, show.residuals=FALSE, symbolic.cor = FALSE, tol=1.0e-10, ... ) 
+summary.manylm <- function(object, nBoot=1000,resamp="residual", test=object$test, cor.type=object$cor.type, shrink.param=NULL, p.uni="none", studentize=TRUE, R2="h", show.cor = FALSE, show.est=FALSE, show.residuals=FALSE, symbolic.cor = FALSE, tol=1.0e-10, ... ) 
 {
   # ld.perm and filename for debug use only
   # ld.perm=TRUE load bootID from file
@@ -42,11 +42,11 @@ summary.manylm <- function(object, nBoot=1000,resample="residual", test=object$t
     else stop("No such correlation type.") 
     
     # To exclude case resampling
-    #if (resample=="case") stop("Sorry, case resampling is not yet available.")
-    if (resample=="case") resam <- 0
-    else if (resample == "residual") resam <- 1
-    else if (resample == "score") resam <- 2
-    else if (resample == "perm.resid") resam <- 3
+    #if (resamp=="case") stop("Sorry, case resampling is not yet available.")
+    if (resamp=="case") resam <- 0
+    else if (resamp == "residual") resam <- 1
+    else if (resamp == "score") resam <- 2
+    else if (resamp == "perm.resid") resam <- 3
     else stop("No such resampling method.") 
  
     if (test=="LR") testype <- 0
@@ -80,9 +80,9 @@ summary.manylm <- function(object, nBoot=1000,resample="residual", test=object$t
     if (ld.perm) {
        if (is.null(filename)) {
           paths <- .find.package("mvabund")
-          if (resample == "score")
+          if (resamp == "score")
              filename <- file.path(getwd(), "data", "scores.dat")
-          else if (resample == "perm.resid")
+          else if (resamp == "perm.resid")
              filename <- file.path(getwd(), "data", "permID.dat")
           else
              filename <- file.path(getwd(), "data", "bootID.dat")
@@ -193,7 +193,7 @@ summary.manylm <- function(object, nBoot=1000,resample="residual", test=object$t
     smry$p.uni <- p.uni
     smry$test  <- test
     smry$cor.type <- cor.type
-    smry$resample <- resample
+    smry$resamp <- resamp
     # display flags
     smry$show.est <- show.est
     smry$show.cor <- show.cor

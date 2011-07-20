@@ -23,7 +23,7 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
 // for debug
 //    Rprintf("tol=%g, model=%d, estiMethod=%d, varStab=%d\n", mm.tol, mm.model, mm.estiMethod, mm.varStab);
 
-    IntegerMatrix Yr(Ysexp);
+    NumericMatrix Yr(Ysexp);
     NumericMatrix Xr(Xsexp);
     unsigned int nRows = Yr.nrow();
     unsigned int nVars = Yr.ncol();
@@ -43,10 +43,11 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
 //    std::copy( Xr.begin(), Xr.end(), X->data );
 //    std::copy( INr.begin(), INr.end(), isXvarIn->data );
 
+//    Rprintf("Y passed to C\n");
     for (i=0; i<nRows; i++){
         for (j=0; j<nVars; j++) {
             gsl_matrix_set(Y, i, j, Yr(i, j));
-//            Rprintf("%d ", (int)gsl_matrix_get(Y, i, j));
+//            Rprintf("%.2f ", gsl_matrix_get(Y, i, j));
         }
 //        Rprintf("\t");
 //
@@ -92,7 +93,8 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
     for (j=0; j<nVars; j++)
         Beta(i, j) = gsl_matrix_get(glmPtr[mtype]->Beta, i, j);
 
-    for (i=0; i<nRows; i++)
+//    Rprintf("Residuals calculated by C\n");
+    for (i=0; i<nRows; i++) //{
     for (j=0; j<nVars; j++){
 	Mu(i, j) = gsl_matrix_get(glmPtr[mtype]->Mu, i, j);        
 	Eta(i, j) = gsl_matrix_get(glmPtr[mtype]->Eta, i, j);        
@@ -100,7 +102,11 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
 	wHalf(i, j) = gsl_matrix_get(glmPtr[mtype]->wHalf, i, j);        
 	Res(i, j) = gsl_matrix_get(glmPtr[mtype]->Res, i, j);        
 	sqrt1_Hii(i, j) = gsl_matrix_get(glmPtr[mtype]->sqrt1_Hii, i, j);        
+//        Rprintf("%d ", (int)gsl_matrix_get(Y, i, j));
     }
+//        Rprintf("\t");
+//    }       
+
 //    double *uj = gsl_matrix_ptr(anova.statj, 0, 0);
 //    double *pj = gsl_matrix_ptr(anova.Pstatj, 0, 0);
 //    std::copy(uj, uj+nVars*(nModels-1), Mat_statj.begin());

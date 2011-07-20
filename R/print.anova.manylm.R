@@ -114,7 +114,7 @@ print.anova.manylm <- function( x, digits = max(getOption("digits") - 3, 3), sig
 
         uni.table <- matrix(NA, nrow(anova$uni.p), pmabund*2)
 
-        uni.table[,2*(1:pmabund)-1]  <- round(anova$uni.test, dig=dig.tst)
+        uni.table[,2*(1:pmabund)-1]  <- round(anova$uni.test, digits=dig.tst)
         uni.table[,2*(1:pmabund)]    <- anova$uni.p
 
         # rbind( colna, uni.table)

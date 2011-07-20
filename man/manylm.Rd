@@ -15,7 +15,7 @@ manylm(
    na.action=options("na.action"),  method="qr", model=FALSE, 
    x=TRUE, y=TRUE, qr=TRUE, singular.ok=TRUE, contrasts=NULL, 
    offset, test="LR" , cor.type= "I", shrink.param=NULL, 
-   tol=1.0e-10, \dots)
+   tol=1.0e-5, \dots)
 }
 \arguments{
   \item{formula}{

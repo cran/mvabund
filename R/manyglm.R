@@ -3,7 +3,7 @@
 # the (default) methods coef, residuals, fitted values can be used             
 ###############################################################################
 
-manyglm <- function (formula, family="negative.binomial", data=NULL, subset=NULL, na.action=options("na.action"), phi.method = "ML", model = FALSE, x = TRUE, y = TRUE, qr = TRUE, cor.type= "I", shrink.param=NULL, tol=1.0e-10, show.coef=FALSE, show.fitted=FALSE, show.residuals=FALSE, ... ) {
+manyglm <- function (formula, family="negative.binomial", data=NULL, subset=NULL, na.action=options("na.action"), phi.method = "ML", model = FALSE, x = TRUE, y = TRUE, qr = TRUE, cor.type= "I", shrink.param=NULL, tol=1.0e-5, show.coef=FALSE, show.fitted=FALSE, show.residuals=FALSE, ... ) {
 
 # tasmX <- as.matrix(tasmX, "numeric")  
 
@@ -66,8 +66,12 @@ else {
    labObs <- rownames(abundances)	
 
     Y <- abundances
+
+    if (any(!is.wholenumber(Y))) 
+        warning(paste("Non-integer data are fitted to the", familyname, "model."))
+
     if ( familyname == "binomial" ) { # binomial distribution
-       if(!is.null(labAbund) & all(substr(labAbund, 1,4) %in% c("succ", "fail")))
+       if(!is.null(labAbund) & all(substr(labAbund, 1,4)%in%c("succ", "fail")))
        {
           p <- p/2 
 	  labAbund <- labAbund[substr(labAbund, 1,4) == "succ"] 	  
@@ -75,9 +79,13 @@ else {
 	     stop("for each variable of the response a column of successes and ",             "a column of failures \nmust be provided ", 
 	     "(marked by 'succ' and 'fail', see 'binstruc')")
 	}     
-       Y[abundances>0] <- 1
-    }   
 
+       if (all(is.wholenumber(Y)) & (length(Y[Y>1]>0))) 
+           stop("Count data are fitted to the binomial regression. Conisder a transformation first.")
+       
+       if ( (length(Y[Y<0])>0) | (length(Y[Y>1]>0)) )
+           stop("Data exceeds the range [0, 1].")     
+    }   
 
     ##################### BEGIN Estimation ###################
     # Obtain the Designmatrix.
@@ -129,8 +137,7 @@ else {
          if (nrow(abundances)<=ncol(abundances))
              stop("An unstructured correlation matrix should only be used if N>>number of variables.") 
          if(nrow(abundances) < 2*ncol(abundances)) 
-             warning("the calculated p-values might be unreliable as the number of cases 
-                 is not much larger than the number of variables") 
+             warning("the calculated p-values might be unreliable as the number of cases is not much larger than the number of variables") 
          shrink.param <- 1
     }
 
@@ -175,4 +182,7 @@ else {
   }
 }
 
- 
+is.wholenumber <- function(x, tol = .Machine$double.eps^0.5)  
+{
+    return(abs(x - round(x)) < tol)
+}

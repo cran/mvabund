@@ -32,7 +32,7 @@ RcppExport SEXP RtoSmryCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
    // for debug
 //    Rprintf("Input param arguments:\n tol=%g, nboot=%d, cor_type=%d, shrink_param=%g, test_type=%d, resamp=%d, reprand=%d\n",mm.tol, mm.nboot, mm.corr, mm.shrink_param, mm.test, mm.resamp, mm.reprand);
 
-    IntegerMatrix Yr(Ysexp);
+    NumericMatrix Yr(Ysexp);
     NumericMatrix Xr(Xsexp);
     unsigned int nRows = Yr.nrow();
     unsigned int nVars = Yr.ncol();
@@ -89,7 +89,7 @@ RcppExport SEXP RtoSmryCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
 
 // resampling test
     smry.resampTest();
-    smry.display();
+//    smry.display();
 
     clk_end = clock();
     double dif = (double)(clk_end - clk_start)/(double)(CLOCKS_PER_SEC);

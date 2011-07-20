@@ -216,18 +216,6 @@ class glm
 	   virtual int EstIRLS(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, double *) = 0;
 	   int copyGlm(glm *src);
            void display(void); 	  
-	   double getMij( double eij ) 
-	          {return invLink(eij);}
-	   double getWij( double mij, double phi ) 
-	          { return weifunc(mij, phi); }
-	   double getVij( double mij, double phi ) 
-	          { return varfunc(mij, phi); }
-	   double getLij( double yij, double mij, double phi ) 
-	          { return llfunc(yij, mij, phi); }
-           double getDij( double yij, double mij, double phi)
-	          { return devfunc(yij, mij, phi); }
-
-	   void InitResampGlm(gsl_matrix *,gsl_matrix *,gsl_matrix *,glm *,gsl_matrix *);
 
            // input arguments
            const reg_Method *mmRef;
@@ -310,9 +298,11 @@ class LogiGlm : public PoissonGlm
 	   double varfunc(double mui, double a) const
 	        { return mui*(1-mui); }
 	   double llfunc(double yi, double mui, double a) const
-	        { return (yi * (log(mui)-log(1-mui)) + log(1-mui)); }
+//	        { return 2*(yi * (log(mui)-log(1-mui)) + log(1-mui)); }
+	        { return 2*(yi*log(MAX(mui, mintol)) + (1-yi)*log(MAX((1-mui),mintol))); }
 	   double devfunc(double yi, double mui, double a) const
-	        { return 2*((yi<=mintol)?(-log(1-MAX(mui, 1e-5))):(-log(MIN(mui, 1-1e-5)))); }
+//     { return 2*((yi<=mintol)?(-log(1-MAX(mui, 1e-5))):(-log(MIN(mui, 1-1e-5)))); }
+           { return 2*((yi==0)?0:yi*log(yi)+(yi==1)?0:(1-yi)*log(1-yi)) - llfunc(yi,mui,a);  }
 };
 
 // negative binomial regression

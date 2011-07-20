@@ -22,17 +22,17 @@ print.manyglm <- function( x, digits = max(3, getOption("digits") - 3), dig.tst=
 #       if (is.character(co <- x$contrasts)) 
 #          cat("  [contrasts: ", apply(cbind(names(co), co), 1, paste, collapse = "="), "]")
         cat(":\n")
-        print.default(format(round(x$coefficients, dig=dig.tst), digits = digits), print.gap = 2, quote = FALSE)
+        print.default(format(round(x$coefficients, digits=dig.tst), digits = digits), print.gap = 2, quote = FALSE)
       }
       else cat("No coefficients\n\n")   
   }      
   if (x$show.fitted==TRUE) {
         cat("Fitted Values\n")
-        print.default(format(round(x$fitted.values, dig=dig.tst), digits = digits), print.gap = 2, quote = FALSE)
+        print.default(format(round(x$fitted.values, digits=dig.tst), digits = digits), print.gap = 2, quote = FALSE)
   }
   if (x$show.residuals==TRUE) {
         cat("Standardized Pearson Residuals\n")
-        print.default(format(round(x$residuals, dig=dig.tst), digits = digits), print.gap = 2, quote = FALSE)
+        print.default(format(round(x$residuals, digits=dig.tst), digits = digits), print.gap = 2, quote = FALSE)
   }
 
   if (x$family=="quasipoisson" | x$family=="negative.binomial"){
@@ -40,14 +40,14 @@ print.manyglm <- function( x, digits = max(3, getOption("digits") - 3), dig.tst=
       cat("\nNuisance Parameter(s) phi estimated by the", x$phi.method, "method.\n")
 #          if(x$one.phi){  cat("\nNuisance Parameter(s) phi:", format(x$phi[1], digits = digits), "\n")
 #   } else {
-      print.default(format(round(x$phi,dig=dig.tst)),print.gap=2,quote=FALSE)
+      print.default(format(round(x$phi,digits=dig.tst)),print.gap=2,quote=FALSE)
   }		
 
   cat("\nDegrees of Freedom:", NROW(x$y)-1, "Total (i.e. Null);", x$df.residual, "Residual\n")
 
   if (nchar(mess <- naprint(x$na.action))) cat("  (", mess, ")\n", sep = "")
 
-  table <- rbind(round(x$two.loglike, dig=dig.tst), round(x$deviance, dig=dig.tst), round(x$aic, dig=dig.tst))
+  table <- rbind(round(x$two.loglike, digits=dig.tst), round(x$deviance, digits=dig.tst), round(x$aic, digits=dig.tst))
   rownames(table) <- c("2*log-likelihood:", "Residual Deviance:", "AIC:")
   colnames(table) <- colnames(x$coefficients)
   cat("\n")

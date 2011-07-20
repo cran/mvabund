@@ -112,13 +112,20 @@ anova.manylm <- function(object, ..., resamp="perm.resid", test="F", p.uni="none
         resdf  <- resdev <- NULL
 
         XvarIn <- matrix(ncol=nParam, nrow=nterms, 1)
-        for ( i in 0L:(nterms-2)){ # exclude object itself
-            XvarIn[nterms-i, varseq>i] <- 0 # in reversed order
-            Xi <- X[, varseq<=i, drop=FALSE]
-            fit <- manylm(Y~Xi)
-            deviance <- as.numeric(deviance.manylm(fit))
-            resdev <- c(resdev, deviance)
-            resdf <- c(resdf, nRows-dim(fit$coefficients)[1])
+        XvarIn[nterms, varseq>0] <- 0
+        fit <- manylm(Y~1) # to avoid double intercept column: something to improve for manylm.R
+        resdev <- c(resdev, as.numeric(deviance.manylm(fit)))
+        resdf <- c(resdf, nRows-dim(fit$coefficients)[1])
+        if ((nterms-2)>1) {
+           for ( i in 1:(nterms-2)){ # exclude object itself
+               XvarIn[nterms-i, varseq>i] <- 0 # in reversed order            
+               Xi <- X[, varseq<=i, drop=FALSE] 
+               if (all(Xi[,1]==1)) Xi <- Xi[, -1] # remove intercept
+               fit <- manylm(Y~Xi)
+               deviance <- as.numeric(deviance.manylm(fit))
+               resdev <- c(resdev, deviance)
+               resdf <- c(resdf, nRows-dim(fit$coefficients)[1])
+           }
         }
         resdf <- c(resdf, object$df.residual)
         deviance <- as.numeric(deviance.manylm(object))
@@ -126,22 +133,28 @@ anova.manylm <- function(object, ..., resamp="perm.resid", test="F", p.uni="none
 
         nModels <- nterms
 
-        ord <- nterms:1
+        ord <- (nterms-1):1
         topnote <- paste("Model:", deparse(object$call) )
         tl <- attr(object$terms, "term.labels")
         tl <- c("Null", tl)
     }
     else {
+        targs <- match.call(call = sys.call(which = 1), expand.dots = FALSE)
+        modelnamelist <- as.character(c(targs[[2]], targs[[3]]))
+
         resdf <- as.numeric(sapply(objects, function(x) x$df.residual))
         resdev <- as.numeric(sapply(objects, function(x) deviance.manylm(x)))
         ####### check input arguments #######
         # each model is tested against the next smaller one
-        ord <- order(resdf)
+        ord <- order(resdf, decreasing=TRUE)
         objects <- objects[ord]
+        resdf <- resdf[ord]
+        modelnamelist <- modelnamelist[ord]
+
         # construct a list of nested models
-        XNull <- as.matrix(objects[[nModels]]$x, "numeric")
+        XNull <- as.matrix(objects[[1]]$x, "numeric")
         ind <- matrix(ncol=1, nrow=nModels)
-        for ( i in nModels-c(2:nModels-1) ) {
+        for ( i in 2:nModels ) {
             XAlt  <- as.matrix(objects[[i]]$x, "numeric")
             Xarg  <- cbind(XAlt, XNull)
             tmp <- qr(Xarg)
@@ -155,11 +168,11 @@ anova.manylm <- function(object, ..., resamp="perm.resid", test="F", p.uni="none
                set <- if(tmp$rank == 0) 1:ncol(Beta) else  - (1:tmp$rank)
                LT <- qr.Q(tmp, complete = TRUE)[, set, drop = FALSE]
                # to get the dimension of Xnull
-               ind[i+1, 1] <- dim(XNull)[2]
+               ind[nModels+2-i, 1] <- dim(XNull)[2]
                XNull <- cbind(XNull, XAlt%*%LT)
             } 
             else
-               stop(paste("Model", ord[i+1], "is note nested in Model", ord[i]))
+               stop(paste(modelnamelist[i-1], "is note nested in Model", modelnamelist[i]))
         }
         # the full matrix template X, note that Xnull and Xalt are reconstructed from X and XvarIn in the resampling process
         X <- XNull
@@ -170,10 +183,9 @@ anova.manylm <- function(object, ..., resamp="perm.resid", test="F", p.uni="none
 
         Xnames <- lapply(objects, function(x) paste(deparse(formula(x), 
                   width.cutoff=500), collapse = "\n")) 
-        topnote <- paste("Model ", format(1:nModels), ": ", 
-                  Xnames, sep = "", collapse = "\n")
-     
-        tl <- paste("Model", 1:nModels)
+        topnote <- paste(modelnamelist, ": ", Xnames, sep = "", collapse = "\n")
+        tl <- modelnamelist
+        ord <- (nModels-1):1
     }
 
     ######## call resampTest Rcpp #########
@@ -208,11 +220,11 @@ anova.manylm <- function(object, ..., resamp="perm.resid", test="F", p.uni="none
     anova$RSS$RSS <- RSS
     anova$RSS$Diff <- Diff
     # test statistics
-    anova$table <- data.frame(resdf[ord], c(NA, val$dfDiff), c(NA, val$multstat), c(NA, val$Pmultstat)) 
+    anova$table <- data.frame(resdf, c(NA, val$dfDiff[ord]), c(NA, val$multstat[ord]), c(NA, val$Pmultstat[ord])) 
     anova$uni.p <- matrix(ncol=nVars,nrow=nModels) 
     anova$uni.test <- matrix(ncol=nVars, nrow=nModels)
-    anova$uni.p[2:nModels, ] <- val$Pstatj
-    anova$uni.test[2:nModels, ] <- val$statj
+    anova$uni.p[2:nModels, ] <- val$Pstatj[ord,]
+    anova$uni.test[2:nModels, ] <- val$statj[ord,]
 
     ########### formal displays #########
     # Title and model formulas

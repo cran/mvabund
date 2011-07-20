@@ -8,7 +8,7 @@ in a linear model fitted to high-dimensional data, such as multivariate
 abundance data in ecology.}
 
 \usage{
-\method{summary}{manylm}(object, nBoot=1000, resample="residual", 
+\method{summary}{manylm}(object, nBoot=1000, resamp="residual", 
    test=object$test, cor.type=object$cor.type, shrink.param=NULL, 
    p.uni="none", studentize=TRUE, R2="h", show.cor = FALSE, 
    show.est=FALSE, show.residuals=FALSE, symbolic.cor=FALSE, 
@@ -25,7 +25,7 @@ abundance data in ecology.}
 \item{object}{an object of class "manylm", usually, a result of a call to
 \code{\link{manylm}}.}
 \item{nBoot}{the number of Bootstrap iterations, default is \code{nBoot=1000}.}
-\item{resample}{the method of resampling used. Can be one of "case" (not yet available),"residual" (default), "perm.resid", "score" or "none". See Details.}
+\item{resamp}{the method of resampling used. Can be one of "case" (not yet available),"residual" (default), "perm.resid", "score" or "none". See Details.}
 \item{test}{ the test to be used. Possible values are: "LR" = likelihood ratio statistic (default) and "F" = Lawley-Hotelling trace statistic.\cr
 Note that if all variables are assumed independent (\code{cor.shrink="I"}) then "LR" is equivalent to LR-IND and "F" is the sum-of-F statistics from Warton & Hudson (2004).}
 \item{cor.type}{ structure imposed on the estimated correlation matrix under the fitted model. Can be "I"(default), "shrink", or "R". See Details.}
@@ -67,7 +67,7 @@ The \code{summary.manylm} function returns a table summarising the statistical
 significance of each multivariate term specified in the fitted manylm model. 
 For each model term, it returns a test statistic as determined by the argument 
 \code{test}, and a P-value calculated by resampling rows of the data using a 
-method determined by the argument \code{resample}. The four possible resampling methods are residual-permutation (Anderson and Robinson (2001)), score resampling (Wu (1986)), case and residual resampling (Davison and Hinkley (1997, chapter 6)), and involve resampling under the alternative hypothesis. These methods ensure approximately valid inference even when the correlation between variables has been misspecified, and for case and score resampling, even when the equal variance assumption of linear models is invalid. By default, studentized residuals (r_i/sqrt(1-h_ii)) are used in residual and score resampling, although raw residuals could be used via the argument \code{studentize=FALSE}. If \code{resample="none"}, p-values cannot be calculated, however the test statistics are returned.
+method determined by the argument \code{resamp}. The four possible resampling methods are residual-permutation (Anderson and Robinson (2001)), score resampling (Wu (1986)), case and residual resampling (Davison and Hinkley (1997, chapter 6)), and involve resampling under the alternative hypothesis. These methods ensure approximately valid inference even when the correlation between variables has been misspecified, and for case and score resampling, even when the equal variance assumption of linear models is invalid. By default, studentized residuals (r_i/sqrt(1-h_ii)) are used in residual and score resampling, although raw residuals could be used via the argument \code{studentize=FALSE}. If \code{resamp="none"}, p-values cannot be calculated, however the test statistics are returned.
 
 If you have a specific hypothesis of primary interest that you want to test,
 then you should use the \code{anova.manylm} function, which can resample rows

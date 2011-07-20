@@ -500,38 +500,34 @@ default.plot.manylm  <- function(x,
 		}
 		
 		if (show[1]) {
-            	ylim <- range(r, na.rm = TRUE)
-            
-			if (id.n > 0) 
-                		# for compatibility with R 2.2.1
-                		ylim <- ylim + c(-0.08, 0.08) * diff(ylim)
-
-            	do.call( "plot", c(list( t(yh), t(r), xlab = l.fit, ylab = "Residuals",
-                					main = main, ylim = ylim, type = "n", asp=asp ), dots))
-            
-			# Use vector built of transposed x bzw y in order to plot
+                   xlim <- range(yh)
+                   ylim <- range(r, na.rm = TRUE)
+                   if (id.n > 0) 
+                      # for compatibility with R 2.2.1
+                      ylim <- ylim + c(-0.08, 0.08) * diff(ylim)
+                      do.call( "plot", c(list( t(yh), t(r), xlab = l.fit, ylab = "Residuals", main = main, ylim = ylim, xlim=xlim, type = "n", asp=asp ), dots))
+          
+		# Use vector built of transposed x bzw y in order to plot
             	# in the right colors.
-            	do.call( "panel", c(list(t(yh), t(r), col=color), dots))
+            	      do.call( "panel", c(list(t(yh), t(r), col=color), dots))
             
-			if (one.fig) 
-                  	do.call( "title", c(list(sub = sub.caption), dots))
+		      if (one.fig) 
+                      do.call( "title", c(list(sub = sub.caption), dots))
+                      mtext(caption[1], 3, 0.25, col=colmain, cex=cex.caption) # the title
             
-			mtext(caption[1], 3, 0.25, col=colmain, cex=cex.caption) # the title
-            
-            	if (id.n > 0) {
+                      if (id.n > 0) {
             		# add id.n labels
                     	y.id <- (c(r))[show.r]
                     	y.id[y.id < 0] <- y.id[y.id < 0] - strheight(" ")/3
-                    	text.id( (c(yh))[show.r], y.id, (rep(labels.id,
-               				times=n.vars))[show.r], col=rep(col, each=id.n))
-            	}
+                    	text.id( (c(yh))[show.r], y.id, (rep(labels.id,              				times=n.vars))[show.r], col=rep(col, each=id.n))
+                      }
 
-            	abline(h = 0, lty = 3, col = "grey")
+                      abline(h = 0, lty = 3, col = "grey")
             	
-			if(substr(legend.pos, 1,1)[1]!="n"){    
-				# add a legend
-                		legend(legend.pos, legend=leg, col=color, pch=1, ncol=ncoll, cex=cexl,inset=-0.15,xpd=NA)
-            	}
+		      if(substr(legend.pos, 1,1)[1]!="n"){    
+			# add a legend
+                	legend(legend.pos, legend=leg, col=color, pch=1, ncol=ncoll, cex=cexl,inset=-0.15,xpd=NA)
+                      }
         	}
 
         
@@ -641,12 +637,11 @@ default.plot.manylm  <- function(x,
         	}
         
        	if(n.vars < p) {
-      		if(miss.varsubset) tmp <- " \n(the variables with highest total abundance)"   
-			else  {
-            		tmp <- " (user selected)"  
-			}
-	         	message("Only the variables ",paste(colnames(r), collapse = ", "),
-        				" were included in the plot", tmp, ".")
+      		if(miss.varsubset) 
+                   tmp <- " \n(the variables with highest total abundance)"   
+		else 
+            	   tmp <- " (user selected)"  
+		message("Only the variables ",paste(colnames(r), collapse = ", "), " were included in the plot", tmp, ".")
       	}
 
         	return(invisible())
@@ -687,43 +682,41 @@ default.plot.manylm  <- function(x,
     		scapt <- 1
 	
 		for (i in 1:n.vars){  
-			# draw plots for all variables
-    
-        		if (show[1]) {
+                    xlim <- range(yh)
+		# draw plots for all variables
+       		    if (show[1]) {
             		ri <- r[,i]
             		yhi <- yh[,i]
             		ylim <- range(ri, na.rm = TRUE)
             
-				if (id.n > 0) 
-                			# for compatibility with R 2.2.1
-                			ylim <- ylim + c(-0.08, 0.08) * diff(ylim)
+			if (id.n > 0) 
+                	# for compatibility with R 2.2.1
+                           ylim <- ylim + c(-0.08, 0.08) * diff(ylim)
                 
-            		do.call( "plot", c(list(yhi, ri, xlab = l.fit, ylab = "Residuals",
-                					main = main, ylim = ylim, type = "n", asp=asp), dots))
+            		do.call( "plot", c(list(yhi, ri, xlab = l.fit, ylab = "Residuals", main = main, ylim = ylim, xlim=xlim, type = "n", asp=asp), dots))
             
             		do.call( "panel", c(list(yhi, ri, col=color[i]), dots))
             
-				if (one.fig) 
-                			do.call( "title", c(list(sub = sub.caption), dots))
-            
-				if (missing(caption)) capt <- paste(var.names[i], caption[1], sep="\n") 
+			if (one.fig) 
+             		do.call( "title", c(list(sub = sub.caption), dots))
+            		if (missing(caption)) 
+                            capt <- paste(var.names[i], caption[1], sep="\n") 
              		else capt <- caption[1]
             
-				mtext(capt, 3, 0.8, col=colmain, cex=cex.caption)  # draw the title
+			mtext(capt, 3, 0.8, col=colmain, cex=cex.caption)  # draw the title
             
-				if (id.n > 0) {                
-					# draw id.n labels in the plot
-                			y.id <- ri[show.r[,i]]
-                			y.id[y.id < 0] <- y.id[y.id < 0] - strheight(" ")/3
-
-                			text.id(yhi[show.r[,i]], y.id, labels.id[show.r[,i]])
+			if (id.n > 0) {                
+			# draw id.n labels in the plot
+                	   y.id <- ri[show.r[,i]]
+                	   y.id[y.id < 0] <- y.id[y.id < 0] - strheight(" ")/3
+       			   text.id(yhi[show.r[,i]], y.id, labels.id[show.r[,i]])
             		}
             
-				abline(h = 0, lty = 3, col = "grey")
+			abline(h = 0, lty = 3, col = "grey")
             		scapt <- scaption(scapt)
-        		}
+          	}
         		
-			if (show[2]) {
+		if (show[2]) {
             		rsi <- rs[,i]
             		ylim <- range(rsi, na.rm = TRUE)
             		ylim[2] <- ylim[2] + diff(ylim) * 0.075

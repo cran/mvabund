@@ -70,7 +70,7 @@ anova.manyglm <- function(object, ..., resamp="residual", test="LR", p.uni="none
 
     if (substr(resamp,1,1)=="c") resampnum <- 0  #case
     # To exclude case resampling
-    #if (resample=="case") stop("Sorry, case resampling is not yet available.")
+    #if (resamp=="case") stop("Sorry, case resampling is not yet available.")
     else if (substr(resamp,1,1)=="r") resampnum <- 1  # residual
     else if (substr(resamp,1,1)=="s") resampnum <- 2  # score
     else if (substr(resamp,1,1) =="p") resampnum <- 3 # permuation
@@ -146,17 +146,22 @@ anova.manyglm <- function(object, ..., resamp="residual", test="LR", p.uni="none
 #       resdev <- c(resdev, object$deviance) 
        nModels <- nterms
 
-       ord <- nterms:1
+       ord <- (nterms-1):1
        topnote <- paste("Model:", deparse(object$call))
        tl <- attr(object$terms, "term.labels")
        tl <- c("Null", tl)
     }   
     else {
+        targs <- match.call(call = sys.call(which = 1), expand.dots = FALSE)
+        modelnamelist <- as.character(c(targs[[2]], targs[[3]]))
+
         resdf   <- as.numeric(sapply(objects, function(x) x$df.residual))
         ####### check input arguments #######
-        # check the order of models, so that each model is tested against the next smaller one
-        ord <- order(resdf)
+        # check the order of models, so that each model is tested against the next smaller one 
+        ord <- order(resdf, decreasing=TRUE) 
         objects <- objects[ord]
+        resdf <- resdf[ord]
+        modelnamelist <- modelnamelist[ord]
 
         # get the shrinkage estimates
         if (cor.type == "I") shrink.param <- c(rep(0,nModels))
@@ -172,9 +177,9 @@ anova.manyglm <- function(object, ..., resamp="residual", test="LR", p.uni="none
         else stop("'cor.type' not defined. Choose one of 'I', 'R', 'shrink'")  
 
         # Test if models are nested, construct the full matrix and XvarIn 
-        XNull <- as.matrix(objects[[nModels]]$x, "numeric")
+        XNull <- as.matrix(objects[[1]]$x, "numeric")
         ind <- matrix(ncol=1, nrow=nModels)
-        for ( i in nModels-c(2:nModels-1) ) {
+        for ( i in 2:nModels ) {
             XAlt  <- as.matrix(objects[[i]]$x, "numeric")
             Xarg  <- cbind(XAlt, XNull)
             tmp <- qr(Xarg)
@@ -188,11 +193,11 @@ anova.manyglm <- function(object, ..., resamp="residual", test="LR", p.uni="none
                set <- if(tmp$rank == 0) 1:ncol(Beta) else  - (1:tmp$rank)
                LT <- qr.Q(tmp, complete = TRUE)[, set, drop = FALSE]
                # to get the dimension of Xnull
-               ind[i+1, 1] <- dim(XNull)[2]
+               ind[nModels+2-i, 1] <- dim(XNull)[2]
                XNull <- cbind(XNull, XAlt%*%LT)
             } 
             else
-              stop(paste("Model", ord[i+1], "is note nested in Model", ord[i]))
+              stop(paste(modelnamelist[i-1], "is note nested in Model", modelnamelist[i]))
         }
         # the full matrix template X, note that Xnull and Xalt are reconstructed from X and XvarIn in the resampling process
         X <- XNull
@@ -203,22 +208,22 @@ anova.manyglm <- function(object, ..., resamp="residual", test="LR", p.uni="none
 
         Xnames <- lapply(objects, function(x) paste(deparse(formula(x), 
                          width.cutoff=500), collapse = "\n")) 
-        topnote <- paste("Model ", format(1:nModels), ": ", 
-                     Xnames, sep = "", collapse = "\n")
-        tl <- paste("Model", 1:nModels)				 
+        topnote <- paste(modelnamelist, ": ", Xnames, sep = "", collapse = "\n")
+        tl <- modelnamelist	
+        ord <- (nModels-1):1
      }
-
+#browser()
     ######## call resampTest Rcpp #########
     val <- .Call("RtoGlmAnova", modelParam, testParams, Y, X, 
                  XvarIn, bootID, shrink.param, PACKAGE="mvabund")
 
     # prepare output summary
-    table <- data.frame(resdf[ord], c(NA, val$dfDiff), 
-                 c(NA, val$multstat), c(NA, val$Pmultstat)) 
+    table <- data.frame(resdf, c(NA, val$dfDiff[ord]), 
+                 c(NA, val$multstat[ord]), c(NA, val$Pmultstat[ord])) 
     uni.p <- matrix(ncol=nVars,nrow=nModels) 
     uni.test <- matrix(ncol=nVars, nrow=nModels)
-    uni.p[2:nModels, ] <- val$Pstatj
-    uni.test[2:nModels, ] <- val$statj
+    uni.p[2:nModels, ] <- val$Pstatj[ord,]   
+    uni.test[2:nModels, ] <- val$statj[ord,]
 
     anova <- list()
     # Supplied arguments

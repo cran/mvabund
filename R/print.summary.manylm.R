@@ -57,12 +57,12 @@ print.summary.manylm <- function (x, digits = max(getOption("digits") - 3, 3), s
 	       acs <- format(round(coef.gv, max(1, digits-digmin)), digits=digits)
 	    }
 	    # format the estimates values
-	    estimates <- format(round(est[, 2:ncol(est)], dig = dig.tst),digits = digits)
+	    estimates <- format(round(est[, 2:ncol(est)], digits = dig.tst),digits = digits)
 	}
 	
 	if(!is.null(test)) {
   	    # format the test statistic
-	    testvalue <- format(round(coefs[,1], dig = dig.tst), digits = digits)
+	    testvalue <- format(round(coefs[,1], digits = dig.tst), digits = digits)
             if (!is.logical(signif.stars) || is.na(signif.stars)) {
                 warning("option \"show.signif.stars\" is invalid: assuming TRUE")
                 signif.stars <- TRUE
@@ -116,7 +116,7 @@ print.summary.manylm <- function (x, digits = max(getOption("digits") - 3, 3), s
             ok <- !(is.na(uni.p))
 		uni.p[ok]<- format.pval(uni.p[ok], digits = dig.tst, eps = eps.Pvalue)
 	    if(x$resamp=="none")  uni.p[] <- ""
-            coeffs.j[,2*(1:cols)-1]  <- format(round(x$uni.test, dig = dig.tst), digits = digits)
+            coeffs.j[,2*(1:cols)-1]  <- format(round(x$uni.test, digits = dig.tst), digits = digits)
             coeffs.j[,2*(1:cols)]    <- uni.p
             colna <- rep.int("", times=2*cols)
             colna[2*(1:cols)-1] <- colnames(x$uni.p)
@@ -172,7 +172,7 @@ print.summary.manylm <- function (x, digits = max(getOption("digits") - 3, 3), s
 	  ok <- !(is.na(pvalj))
 	  pvalj[ok]<- format.pval(pvalj[ok], digits = dig.tst, eps = eps.Pvalue)
 	  if(x$resamp=="none") pvalj[] <- ""
-	  x$statistic.j[,1] <- format(round(x$statistic.j[,1], dig = dig.tst), digits = digits)
+	  x$statistic.j[,1] <- format(round(x$statistic.j[,1], digits = dig.tst), digits = digits)
 	  x$statistic.j[,2] <- pvalj
           cat("\nUnivariate test statistic: \n")
           if(x$resamp!="none"){
@@ -212,7 +212,7 @@ print.summary.manylm <- function (x, digits = max(getOption("digits") - 3, 3), s
         if (p > 1) {
            cat("\nCorrelation of Coefficients:\n")
            if (is.logical(symbolic.cor) && symbolic.cor)
-              print(symnum(correl, abbr.col = NULL))
+              print(symnum(correl, abbr.colnames = NULL))
            else {
                correl <- format(round(correl, 2), nsmall = 2, digits = digits)
                correl[!lower.tri(correl)] <- ""

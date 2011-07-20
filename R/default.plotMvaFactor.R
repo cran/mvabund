@@ -33,6 +33,7 @@ default.plotMvaFactor <- function(	x,
 
 dev <- dev.list()
 dev.name <- getOption("device")
+#if (!is.null(dev)) dev.off() # close previous window
     
 if(is.null(dev.name))
      stop("Make sure that the 'device' option has a valid value, e.g. 'options(device = 'windows')'.	Allowed values here are 'windows', 'win.graph', 'x11', 'X11'.")

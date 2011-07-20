@@ -58,7 +58,7 @@ default.print.anova.manyglm <- function( x, digits = max(getOption("digits") - 3
 
     if(substr(anova$resamp,1,1)=="n") colnames(x)[nc[has.P]]  <- ""
     # "no p-values calculated as 'resample=none'
-    printCoefmat(round(x, dig=dig.tst), digits = digits, signif.stars = signif.stars, has.Pvalue = has.P, P.values = has.P, cs.ind = NULL, zap.ind = zap.i, tst.ind = tst.i, na.print = "", ...)
+    printCoefmat(round(x, digits=dig.tst), digits = digits, signif.stars = signif.stars, has.Pvalue = has.P, P.values = has.P, cs.ind = NULL, zap.ind = zap.i, tst.ind = tst.i, na.print = "", ...)
     
     if(!is.null(test) & substr(anova$resamp,1,1)!="n"){
        if(substr(anova$p.uni,1,1)=="n") {
@@ -92,8 +92,8 @@ default.print.anova.manyglm <- function( x, digits = max(getOption("digits") - 3
 
         uni.table <- matrix(NA, nrow(anova$uni.p), pmabund*2)
 
-        uni.table[,2*(1:pmabund)-1]  <- round(anova$uni.test, dig=dig.tst)
-        uni.table[,2*(1:pmabund)]    <- round(anova$uni.p, dig=digits)
+        uni.table[,2*(1:pmabund)-1]  <- round(anova$uni.test, digits=dig.tst)
+        uni.table[,2*(1:pmabund)]    <- round(anova$uni.p, digits=digits)
 
         # rbind( colna, uni.table)
 	dimnames(uni.table) <- list(c( rownames(anova$uni.p)), col.dimnab)
@@ -120,7 +120,7 @@ default.print.anova.manyglm <- function( x, digits = max(getOption("digits") - 3
          zap.iuni <- which(substr(col.names, 1, 3) == "Pr(" ) # pvalues 
          pvalj <- uni.table[, zap.iuni, drop = FALSE]
          ok <- !(is.na(pvalj))
-         pvalj[ok]<- format.pval(round(pvalj[ok], dig=dig.tst), digits = dig.tst, eps=eps.Pvalue)   
+         pvalj[ok]<- format.pval(round(pvalj[ok], digits=dig.tst), digits = dig.tst, eps=eps.Pvalue)   
 #         if(!anova$one) uni.table[1,] <- first.line
          uni.table[,zap.iuni]   <- pvalj # [ok]  
 

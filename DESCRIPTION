@@ -1,7 +1,7 @@
 Package: mvabund
 Title: statistical methods for analysing multivariate abundance data
-Version: 2.2-5.3
-Date: 06-07-2011
+Version: 2.2-5.6
+Date: 20-07-2011
 Author: Yi Wang, Ulrike Naumann, Stephen Wright and David Warton
 Maintainer: Yi Wang <yi.wang@unsw.edu.au>
 Description: A set of tools for displaying, modeling and analysing
@@ -15,5 +15,5 @@ LinkingTo: Rcpp (>= 0.8.6)
 SystemRequirements: GNU GSL (>= 1.10)
 License: LGPL (>= 2.1)
 Repository: CRAN
-Packaged: 2011-07-06 11:13:06 UTC; z3069443
-Date/Publication: 2011-07-06 18:56:34
+Packaged: 2011-07-20 07:28:10 UTC; z3069443
+Date/Publication: 2011-07-23 13:57:54

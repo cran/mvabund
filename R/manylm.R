@@ -25,7 +25,7 @@ function (x, digits = max(3, getOption("digits") - 3), ...)
 # the (default) methods coef, residuals, fitted values can be used             #
 ################################################################################
 
-manylm <- function (formula, data=NULL, subset=NULL, weights=NULL, na.action=options("na.action"), method = "qr", model = FALSE, x = TRUE, y = TRUE, qr = TRUE, singular.ok = TRUE, contrasts = NULL, offset, test="LR", cor.type= "I", shrink.param=NULL, tol=1.0e-10, ...) {
+manylm <- function (formula, data=NULL, subset=NULL, weights=NULL, na.action=options("na.action"), method = "qr", model = FALSE, x = TRUE, y = TRUE, qr = TRUE, singular.ok = TRUE, contrasts = NULL, offset, test="LR", cor.type= "I", shrink.param=NULL, tol=1.0e-5, ...) {
 ret.x <- x
 ret.y <- y
 ret.qr <- qr

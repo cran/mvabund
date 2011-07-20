@@ -36,7 +36,7 @@ RcppExport SEXP RtoGlmAnova(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
 // for debug
 // Rprintf("Input param arguments:\n tol=%g, nboot=%d, cor_type=%d, shrink_param=%g, test_type=%d, resamp=%d, reprand=%d\n", tm.tol, tm.nboot, tm.corr, tm.shrink_param, tm.test, tm.resamp, tm.reprand);
 
-    IntegerMatrix Yr(Ysexp);
+    NumericMatrix Yr(Ysexp);
     NumericMatrix Xr(Xsexp);
     IntegerMatrix INr(INsexp);
     NumericVector lambda(LamSexp);
@@ -132,8 +132,10 @@ RcppExport SEXP RtoGlmAnova(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
 
     clk_end = clock();
     double dif = (double)(clk_end - clk_start)/(double)(CLOCKS_PER_SEC);    
-    unsigned int min = (unsigned int) floor(dif/60);   
-    Rprintf("Time elapsed: %d minutes %d seconds\n", min, (unsigned int)(dif-min*60));
+    unsigned int hours = floor(dif/3600);
+    unsigned int min = floor((dif-hours*3600)/60);
+    unsigned int sec = dif - hours*3600 - min*60;   
+    Rprintf("Time elapsed: %d:%d:%d\n", hours, min, sec);
 
     // Wrap the gsl objects with Rcpp 
     NumericVector Vec_df(myTest.dfDiff, myTest.dfDiff+nModels-1);

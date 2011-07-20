@@ -17,23 +17,21 @@ glm::glm(const reg_Method *mm)
      Var(NULL), wHalf(NULL), sqrt1_Hii(NULL), phi(NULL),
      ll(NULL), dev(NULL), aic(NULL), iterconv(NULL) 
 { 
+//     mintol = 1e-4;    
+     mintol = mmRef->tol;
+     lTol=-log(mintol);
+     maxiter = 50;
      //    printf("glm constructor called.\n"); 
 }
 
 PoissonGlm::PoissonGlm(const reg_Method *mm):glm(mm)
 {
-    maxiter = 50;
-    mintol = 1e-4;    
-    lTol=-log(mintol);
 //    printf("Poisson constructor called.\n");
 }
 
 LogiGlm::LogiGlm(const reg_Method *mm):PoissonGlm(mm) {
-    maxiter = 1000;    
-//    maxiter = 100;    
-    mintol = 1e-10;
-//    mintol = 1e-4;
-    lTol=-log(mintol);
+//    mintol = 1e-10;
+//    lTol = -log(mintol);
 //    printf("Logi constructor called.\n");
 }
 
@@ -136,46 +134,6 @@ void glm::initialGlm(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)
 
 }
 
-void glm::InitResampGlm(gsl_matrix *T, gsl_matrix *X, gsl_matrix *O, glm *src, gsl_matrix *Hii)
-{
-    releaseGlm();
-
-    Yref = NULL;
-    Xref = X;
-    Oref = O;
-
-    nRows = X->size1;
-    nParams = X->size2;
-    nVars = T->size2;
-
-    //Xref = gsl_matrix_alloc(nRows, nParams);
-    Beta = gsl_matrix_alloc(nParams, nVars);
-    Mu = gsl_matrix_alloc(nRows, nVars);
-    Eta = gsl_matrix_alloc(nRows, nVars);
-    Res = gsl_matrix_alloc(nRows, nVars);
-    Var = gsl_matrix_alloc(nRows, nVars);
-    wHalf = gsl_matrix_alloc(nRows, nVars);
-    sqrt1_Hii = gsl_matrix_alloc(nRows, nVars);
-
-    phi = new double [nVars];
-    ll = new double [nVars];
-    dev = new double [nVars];
-    aic = new double[nVars];
-    iterconv = new unsigned int [nVars]; 
-   
-    rdf = nRows - nParams;
-
-    //gsl_matrix_memcpy(Xref, X);
-    gsl_matrix_set_zero (Beta);
-    gsl_matrix_memcpy(Mu, src->Mu);
-    gsl_matrix_memcpy(Eta, src->Eta);
-    gsl_matrix_memcpy(Var, src->Var);
-    gsl_matrix_memcpy(wHalf, src->wHalf);
-    gsl_matrix_memcpy(Res, T);
-    if ( Hii!=NULL )
-       gsl_matrix_memcpy(sqrt1_Hii, Hii);
-    
-}
 
 int glm::copyGlm(glm *src)
 {    
@@ -523,7 +481,6 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)
 //		crtold = dev[j];
 //		crtold = ll[j];
 	        betaEst(j, 1, &tol, phi[j]);
-		gsl_vector_view bj=gsl_matrix_column(Beta, j);
                 getfAfAdash(MAX(phi[j], mintol), j, &fA, &fAdash);
                 phi[j] = phi[j]-fA/fAdash;
                 tol = tol + ABS(phi[j]-crtold);
