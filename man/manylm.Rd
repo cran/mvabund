@@ -145,7 +145,8 @@ Yi Wang, Ulrike Naumann and David Warton <David.Warton@unsw.edu.au>.
 \code{\link{anova.manylm}}, \code{\link{summary.manylm}}, \code{\link{plot.manylm}}}
 \examples{
 data(spider)
-spiddat <- mvabund(spider$abund)
+spiddat <- log(spider$abund+1)
+spiddat <- mvabund(spiddat)
 X <- spider$x
 
 lm.spider <- manylm(spiddat~X)

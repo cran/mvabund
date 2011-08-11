@@ -25,13 +25,12 @@ RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
     List rparam(tpar);
     // pass parameters
     mv_Method tm;	
-    tm.tol = as<double>(rparam["tol"]);
-    tm.nboot = as<unsigned int>(rparam["nboot"]);
     tm.corr = as<unsigned int>(rparam["cor_type"]);
     tm.test = as<unsigned int>(rparam["test_type"]);
     tm.resamp = as<unsigned int>(rparam["resamp"]);
     tm.reprand = as<unsigned int>(rparam["reprand"]);
     tm.punit = as<unsigned int>(rparam["punit"]);
+    tm.nboot = as<unsigned int>(rparam["nboot"]);
 
 //    // for debug
 //    Rprintf("Input param arguments:\n tol=%.4f, nboot=%d, cor_type=%d, test_type=%d, resamp=%d, reprand=%d\n",tm.tol, tm.nboot, tm.corr, tm.test, tm.resamp, tm.reprand);
@@ -108,11 +107,11 @@ RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
 //    myTest.displaySmry();
 
     clk_end = clock();
-    double dif = (double)(clk_end - clk_start)/(double)(CLOCKS_PER_SEC);
+    unsigned int dif = floor((double)(clk_end - clk_start)/(double)(CLOCKS_PER_SEC));
     unsigned int hours = floor(dif/3600);
     unsigned int min = floor((dif-hours*3600)/60);
     unsigned int sec = dif - hours*3600 - min*60;
-    Rprintf("Time elapsed: %d:%d:%d\n", hours, min, sec);
+    Rprintf("Time elapsed: %d hr %d min %d sec (%d seconds)\n", hours, min, sec, dif);
 
     // Wrap gsl vectors with Rcpp 
     double multstat, Pmultstat;

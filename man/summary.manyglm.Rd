@@ -4,13 +4,13 @@
 \title{Summarizing Multivariate Generalized Linear Model Fits for Abundance Data}
 \description{\code{summary} method for class "manyglm". }
 \usage{
-\method{summary}{manyglm}(object, resamp="residual", test="LR", p.uni="none", nBoot=1000, cor.type=object$cor.type, show.cor = FALSE, show.est=FALSE, show.residuals=FALSE, symbolic.cor = FALSE, \dots)
+\method{summary}{manyglm}(object, resamp="montecarlo", test="LR", p.uni="none", nBoot=1000, cor.type=object$cor.type, show.cor = FALSE, show.est=FALSE, show.residuals=FALSE, symbolic.cor = FALSE, \dots)
 \method{print}{summary.manyglm}(x, \dots)
 }
 \arguments{
 \item{object}{an object of class \code{manyglm}, typically the result of a call to \code{\link{manyglm}}.
 }
-\item{resamp}{the method of resampling used. Can be one of "case", "residual" (default), "perm.resid", "score" or "montecarlo". See Details.}
+\item{resamp}{the method of resampling used. Can be one of "case", "residual", "perm.resid", "score" or "montecarlo" (default). See Details.}
 \item{test}{the test to be used. If \code{test="I"}, this can be one of "wald" for a Wald-Test or "score" for a Score-Test or "LR" for a Likelihood-Ratio-Test, otherwise only "wald" and "score" is allowed. The default value is "LR".
 }
 \item{p.uni}{whether to calculate univariate test statistics and their P-values, and if so, what type. This can be one of the following options. \cr
@@ -193,12 +193,12 @@ X <- spider$x
 glm.spid <- manyglm(spiddat[,1:3]~X, family="negative.binomial")
 
 ## Estimate the statistical significance of different multivariate terms in
-## the model, using the default settings of LR test, residual resampling and
-## 1000 bootstrap resamples
+## the model, using the default settings of LR test, parametric resampling and
+## 100 bootstrap resamples
 summary(glm.spid)
 
-## Repeat summary with montecarlo parametric bootstrap and wald statistics
-summary(glm.spid, resamp="montecarlo", test="wald")
+## Repeat summary with residual resampling and wald statistics
+summary(glm.spid, resamp="residual", test="wald", nBoot=500)
 
 }
 \keyword{models}

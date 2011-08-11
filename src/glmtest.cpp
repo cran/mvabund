@@ -267,18 +267,6 @@ int GlmTest::anova(gsl_matrix *isXvarIn)
     gsl_matrix_set_zero (Panova);
     gsl_vector_set_zero (bStat);
 
-    rdf[0] = fit->rdf;
-//    printf("%.f ", rdf[0]);
-    for (i=1; i<nModels; i++) {
-        nP = 0;
-        for (k=0; k<nParam; k++) 
-	     if (gsl_matrix_get(Xin,i,k)!=FALSE) nP++;   
-        rdf[i] = nRows-nP;
-//	printf("%.f ", rdf[i]);
-    }
-//    printf("\n");
-       
-    unsigned int mtype = fit->mmRef->model-1;
     PoissonGlm pNull(fit->mmRef), pAlt(fit->mmRef);
     LogiGlm lNull(fit->mmRef), lAlt(fit->mmRef);
     NBinGlm nbNull(fit->mmRef), nbAlt(fit->mmRef);
@@ -301,7 +289,25 @@ int GlmTest::anova(gsl_matrix *isXvarIn)
     gsl_matrix *Beta0=NULL, *L1=NULL, *tmp1=NULL;
     gsl_vector *e=NULL, *ref=NULL;
 
-    PtrAlt[mtype]->copyGlm(fit);
+    // get the alt model 
+    for (i=0; i<nModels; i++) {
+        nP = 0;
+        for (k=0; k<nParam; k++) 
+	     if (gsl_matrix_get(Xin,i,k)!=FALSE) nP++;   
+        rdf[i] = nRows-nP;
+//	printf("%.f ", rdf[i]);
+    }
+//    printf("\n");
+       
+    unsigned int mtype = fit->mmRef->model-1;
+//    PtrAlt[mtype]->copyGlm(fit);
+    nP1 = nRows-(unsigned int)rdf[0];
+    gsl_vector_view ref1=gsl_matrix_row(Xin, 0);
+    gsl_matrix_view X1=gsl_matrix_submatrix(fit->Xref,0,0,nRows,nP1);
+//    displaymatrix(&X1.matrix, "X1");
+    PtrAlt[mtype]->EstIRLS(fit->Yref, &X1.matrix, NULL, fit->phi); 
+//    PtrAlt[mtype]->regression(fit->Yref, &X1.matrix, NULL ); 
+//    PtrAlt[mtype]->display();
     for (i=1; i<nModels; i++) {       
         // ======== fit the nulll model ======//
         ID0 = i; ID1 = i-1;
@@ -312,12 +318,18 @@ int GlmTest::anova(gsl_matrix *isXvarIn)
      // ref0 refs to the full X
         gsl_vector_view ref0=gsl_matrix_row(Xin, ID0);
         X0 = gsl_matrix_alloc(nRows, nP0);
-    //  displayvector(&ref0.vector, "ref0");
+//        displayvector(&ref0.vector, "ref0");
+//        printf("\n");
+
         subX(fit->Xref, &ref0.vector, X0);
-	PtrNull[mtype]->EstIRLS(fit->Yref, X0, NULL, PtrAlt[mtype]->phi);	
+//        PtrNull[mtype]->regression(fit->Yref, X0, NULL ); 
+	PtrNull[mtype]->EstIRLS(fit->Yref, X0, NULL, PtrAlt[mtype]->phi);    
 
         teststat = gsl_matrix_row(anovaStat, i-1);
         gsl_vector_view ref1=gsl_matrix_row(Xin, ID1);
+//        displayvector(&ref1.vector, "ref1");
+//        printf("\n");
+
         if (tm->test == WALD) {
            // L1 encodes info between X0 and X1
            L1 = gsl_matrix_alloc (nP1-nP0, nP1);
@@ -325,9 +337,9 @@ int GlmTest::anova(gsl_matrix *isXvarIn)
            subX(L, &ref1.vector, tmp1);
            // ref = xor(ref0, ref1)
            subXrow1(tmp1, &ref0.vector, &ref1.vector, L1);
-           // displaymatrix(L1, "L1");
+           //displaymatrix(L1, "L1");
            // update Rlambda with the alt model
-           GetR(PtrAlt[mtype]->Res,tm->corr,tm->anova_lambda,ID1,Rlambda);   
+           GetR(PtrAlt[mtype]->Res,tm->corr,tm->anova_lambda,ID1,Rlambda); 
            subGeeWald(PtrAlt[mtype], L1, &teststat.vector, Rlambda);
         }
         else if (tm->test == SCORE) {
@@ -336,6 +348,10 @@ int GlmTest::anova(gsl_matrix *isXvarIn)
            subGeeScore(PtrAlt[mtype],PtrNull[mtype],&teststat.vector,Rlambda);
         }
         else { // LR
+//           printf("PtrAlt\n");
+//           PtrAlt[mtype]->display();
+//           printf("PtrNull\n");
+//           PtrNull[mtype]->display();
            subGeeLR(PtrAlt[mtype], PtrNull[mtype], &teststat.vector);	
         }
 
@@ -344,6 +360,8 @@ int GlmTest::anova(gsl_matrix *isXvarIn)
             gsl_sort_vector_index (sortid, &unitstat.vector);
             gsl_permutation_reverse(sortid);        
 	}
+//        displayvector(&teststat.vector, "teststat");
+//        printf("\n");
 
         // ======== Get resampling distribution ======//
 	if ( tm->resamp == CASEBOOT ) {
@@ -372,15 +390,22 @@ int GlmTest::anova(gsl_matrix *isXvarIn)
         // get the mean of residuals
 	if (tm->resamp == MONTECARLO)  {
             // the null model
-            if (tm->corr != SHRINK) 
-               GetR(PtrNull[mtype]->Res, SHRINK, tm->anova_lambda, ID0, Rlambda);
+            if (tm->corr != SHRINK) { 
+               if (tm->test == WALD)
+                   GetR(PtrAlt[mtype]->Res, SHRINK, tm->anova_lambda, ID1, Rlambda);
+               else
+                   GetR(PtrNull[mtype]->Res, SHRINK, tm->anova_lambda, ID0, Rlambda);
+            }     
 	    setMonteCarlo (PtrNull[mtype], NULL, Rlambda);
         }
+//        displaymatrix(Rlambda, "Rlambda");
+//        printf("det(R) = %.4f\n", calcDet(Rlambda));
+//        displaymatrix(Sigma, "Sigma");
 
         //============= resampling procedure begins ===========//
 	nSamp=0;
         for (unsigned int j=0; j<tm->nboot; j++) {	
-//        for (j=0; j<1; j++) {	
+//        for (unsigned int j=0; j<1; j++) {	
 	    gsl_vector_set_zero (bStat);
 	    if ( tm->resamp == CASEBOOT ) {
 	        // get resampling data
@@ -399,17 +424,19 @@ int GlmTest::anova(gsl_matrix *isXvarIn)
            }		
            else {
 		resampNonCase(PtrNull[mtype], bY, j);
+//                displaymatrix(bY, "bY");
 	        // refit the alt model 
                 bAlt[mtype]->regression(bY, PtrAlt[mtype]->Xref, NULL ); 
                 if (tm->test != WALD)
                    // refit the null model
+//                   bNull[mtype]->regression(bY, PtrNull[mtype]->Xref, NULL ); 
                    bNull[mtype]->EstIRLS(bY,PtrNull[mtype]->Xref,NULL,bAlt[mtype]->phi);
 	   }
            
            if ( tm->test == WALD ) {
-              // update Rlambda with the alt model
-             GetR(bAlt[mtype]->Res,tm->corr,tm->anova_lambda,ID1,bRlambda);   
-             subGeeWald(bAlt[mtype], L1, bStat, bRlambda);
+               // update Rlambda with the alt model
+               GetR(bAlt[mtype]->Res,tm->corr,tm->anova_lambda,ID1,bRlambda);   
+               subGeeWald(bAlt[mtype], L1, bStat, bRlambda);
            }    
            else if ( tm->test == SCORE ) {
                GetR(bNull[mtype]->Res,tm->corr,tm->anova_lambda,ID0,bRlambda);
@@ -437,6 +464,7 @@ int GlmTest::anova(gsl_matrix *isXvarIn)
          reinforceP(puj, nVars, sortid);
       }
 //      displaymatrix(Panova, "Panova");
+//      printf("\n");
 
       // Degrees of freedom
       rdf[i] = PtrNull[mtype]->rdf;
@@ -644,6 +672,7 @@ int GlmTest::subGeeLR(glm *PtrAlt, glm *PtrNull, gsl_vector *teststat)
     for ( unsigned int j=0; j<nVars; j++ ) { // univariates
         val = PtrAlt->ll[j] - PtrNull->ll[j];
         gsl_vector_set(teststat, j+1, val);
+//        printf("LR += ll1 - ll0 = %.2f + (%.2f) - (%.2f) = %.2f\n", result, PtrAlt->ll[j], PtrNull->ll[j], result+val);
         result = result+val;	     
     }
     gsl_vector_set(teststat, 0, result); // multivariate
@@ -680,25 +709,34 @@ int GlmTest::subGeeScore(glm *PtrAlt, glm *PtrNull, gsl_vector *teststat, gsl_ma
         gsl_blas_dgemv(CblasTrans, 1, Z[j].matrix, &rj.vector, 0, &uj.vector);
 //        displayvector(&uj.vector, "uj");	     
 
-        // univariate test stat
-        if ( tm->punit > 0 ) {
-           gsl_blas_dsyrk(CblasLower, CblasTrans, 1, Z[j].matrix, 0, XwX);
-//           displaymatrix(XwX, "X'WX");
-           // inv(vNaive)
-	   gsl_vector_view tmp2=gsl_vector_subvector(tmp, 0, nP);             
+        // Get X'wX
+        if ( (tm->punit>0) || (tm->corr==IDENTITY) ) {
+            gsl_matrix_set_zero(XwX);
+            gsl_blas_dsyrk(CblasLower, CblasTrans, 1, Z[j].matrix, 0, XwX);
+//          displaymatrix(XwX, "X'WX");
+        }
+        // Get kappaRlNull ready for multivariate test
+        if ( tm->corr==IDENTITY ) { //kappaRlNull = X'WX
+           gsl_matrix_view Rl=gsl_matrix_submatrix(kRlNull,j*nP,j*nP,nP,nP);
+           gsl_matrix_memcpy (&Rl.matrix, XwX); 
+        }
+        else { // kappaRlNull = R(j, l)*w0X{j}'*w0X{l}                 
+             for (l=0; l<=j; l++) { // lower half
+                 alpha = gsl_matrix_get(R, j, l);
+                 gsl_matrix_view Rl=gsl_matrix_submatrix(kRlNull,j*nP,l*nP,nP,nP);
+                 gsl_blas_dgemm(CblasTrans, CblasNoTrans, alpha, Z[j].matrix, Z[l].matrix, 0, &Rl.matrix);  
+            }   
+        }      
+        // Get univariate teststat
+        if ( (tm->punit>0) ) { // inv(vNaive)
            gsl_linalg_cholesky_decomp(XwX); 
+	   gsl_vector_view tmp2=gsl_vector_subvector(tmp, 0, nP);             
            gsl_linalg_cholesky_solve(XwX, &uj.vector, &tmp2.vector); 
 
            gsl_blas_ddot(&uj.vector, &tmp2.vector, &result);
            gsl_vector_set(teststat, j+1, result);
 	}
-	// kappaRlNull = R(j, l)*w0X{j}'*w0X{l}
-	for (l=0; l<=j; l++){ // lower half
-           alpha = gsl_matrix_get(R, j, l);
-           gsl_matrix_view Rl=gsl_matrix_submatrix(kRlNull,j*nP,l*nP,nP,nP);
-           gsl_blas_dgemm(CblasTrans, CblasNoTrans, alpha, Z[j].matrix, Z[l].matrix, 0, &Rl.matrix);  
-//	   if ( l==j ) displaymatrix(&Rl.matrix, "Rl");	   
-        }   
+
     } // end for j=1:nVars
       
     // multivariate test stat	
@@ -736,7 +774,7 @@ int GlmTest::subGeeWald(glm *Alt, gsl_matrix *LL, gsl_vector *teststat, gsl_matr
     gsl_matrix *IinvN = gsl_matrix_alloc(nDF, nDF);
     gsl_matrix *IinvRl = gsl_matrix_alloc(nVars*nDF, nVars*nDF);
     gsl_vector *tmp2 = gsl_vector_alloc(nVars*nDF);
-    gsl_vector_view tmp, tmp3, dw, wj, wXj, zj, LBj, bj, li, rl;
+    gsl_vector_view tmp, dw, wj, wXj, zj, LBj, bj, li, rl;
 
     gsl_matrix_set_zero(IinvRl);
     GrpMat *Z = (GrpMat*)malloc(nVars*sizeof(GrpMat)); 
@@ -752,9 +790,9 @@ int GlmTest::subGeeWald(glm *Alt, gsl_matrix *LL, gsl_vector *teststat, gsl_matr
        gsl_blas_dtrmm(CblasLeft,CblasLower,CblasNoTrans,CblasNonUnit,1,Wj,w1jX1);
        // X^T WX
        gsl_blas_dsyrk (CblasLower, CblasTrans, 1.0, w1jX1, 0.0, XwX);
-       // Z = (X^T W X)^-1 * X^T W^1/2. 
+//       displaymatrix(XwX, "XwX");
        gsl_linalg_cholesky_decomp (XwX);  // note XwX has to be positive def
-
+       // Z = (X^T W X)^-1 * X^T W^1/2. 
        for (i=0; i<nRows; i++) {
            wXj=gsl_matrix_row (w1jX1, i);
            zj=gsl_matrix_column(Z[j].matrix, i );
@@ -763,62 +801,72 @@ int GlmTest::subGeeWald(glm *Alt, gsl_matrix *LL, gsl_vector *teststat, gsl_matr
        // LBeta = L*Beta       
        LBj=gsl_vector_subvector (LBeta, j*nDF, nDF);
        bj=gsl_matrix_column (Alt->Beta, j);
-
-//       displaymatrix(L, "L");
 //       displayvector(&bj.vector, "bj");
-//       displayvector(&LBj.vector, "LBj");
        gsl_blas_dgemv(CblasNoTrans,1,LL,&bj.vector,0,&LBj.vector);
-       // Get univariate test stat
-       if ( tm->punit > 0 ) {
-          tmp=gsl_vector_subvector(tmp2, 0, nDF);
-          // Rl2 = inv(X^T W X) * L^T
+//       displayvector(&LBj.vector, "LBj");
+
+       // Get Naive estimator for IinvN = L*inv(X'*W*X)*L'
+       if ( (tm->punit>0) || (tm->corr==IDENTITY) ){
+          gsl_matrix_set_zero(IinvN);
+          gsl_matrix_set_zero(Rl2);
+          // Rl2 = (X^T W X)^-1 * L^T
           for (i=0; i<nDF; i++){
               li=gsl_matrix_row (LL, i);
               rl=gsl_matrix_column (Rl2, i);
               gsl_linalg_cholesky_solve(XwX, &li.vector, &rl.vector);
           }
-          // IinvN = L * Rl2
+          // IinvN = L*inv(vNaive)*L^T = L * Rl2 
           gsl_blas_dgemm(CblasNoTrans,CblasNoTrans,1.0,LL,Rl2,0.0,IinvN);
-          // statj = LBeta^T * inv(IinvN) * LBeta		 
-          gsl_vector_memcpy (&tmp.vector, &LBj.vector);	  
-	  tmp3=gsl_matrix_row (Rl2, 0); // borrow space
+       }
+
+       // Get multivariate teststat
+       if ( tm->corr==IDENTITY ) { // Diag(IinvRl) = IinvN
+          gsl_matrix_view Rl=gsl_matrix_submatrix(IinvRl,j*nDF,j*nDF,nDF,nDF);
+          gsl_matrix_memcpy(&Rl.matrix, IinvN);
+       }
+       else { // Get IinvRl=L*vSandRl*L^T 
+          for (l=0; l<=j; l++) {
+              gsl_matrix_set_zero(XwX);
+              gsl_matrix_set_zero(Rl2);
+              alpha = gsl_matrix_get(R, j, l);
+              gsl_matrix_view Rl=gsl_matrix_submatrix(IinvRl,j*nDF,l*nDF,nDF,nDF);
+              gsl_blas_dgemm(CblasNoTrans,CblasTrans,alpha,Z[j].matrix,Z[l].matrix, 0.0, XwX);  // borrow XwX to accommodate vSandRl
+//	      displaymatrix(XwX, "vSandRl");
+              gsl_blas_dgemm(CblasNoTrans,CblasTrans,1.0,XwX,LL,0.0,Rl2); // borrow Rl2 space to accommodate vSandRl*L^T 
+              gsl_blas_dgemm(CblasNoTrans,CblasNoTrans,1.0,LL,Rl2,0.0,&Rl.matrix); // L*vSandRl*L^T
+          } // end l
+       }  // end if (tm->corr) 
+
+       // Get univariate teststat: statj=LBeta'*inv(IinvN)*LBeta
+       if ( tm->punit>0 ){
+          tmp=gsl_vector_subvector(tmp2, 0, nDF);
 	  gsl_linalg_cholesky_decomp(IinvN);	  
-	  gsl_linalg_cholesky_solve(IinvN, &tmp.vector, &tmp3.vector);
-          gsl_blas_ddot (&LBj.vector, &tmp3.vector, &result);
+	  gsl_linalg_cholesky_solve(IinvN, &LBj.vector, &tmp.vector);
+          gsl_blas_ddot (&LBj.vector, &tmp.vector, &result);
           gsl_vector_set(teststat, j+1, sqrt(result));
        }
-       // IinvRl = L*vSandRl*L' 
-       for (l=0; l<=j; l++) {
-          alpha = gsl_matrix_get(R, j, l);
-          gsl_matrix_view Rl=gsl_matrix_submatrix(IinvRl,j*nDF,l*nDF,nDF,nDF);
-          gsl_blas_dgemm(CblasNoTrans,CblasTrans,alpha,Z[j].matrix,Z[l].matrix, 0.0, XwX);  // borrow XwX to accommodate vSandRl
-//	  displaymatrix(XwX, "vSandRl");
-          gsl_blas_dgemm (CblasNoTrans, CblasTrans, 1.0, XwX, LL, 0.0, Rl2);
-          gsl_blas_dgemm (CblasNoTrans, CblasNoTrans, 1.0, LL, Rl2, 0.0, &Rl.matrix);
-       } // end l
+    } // end for j=1:nVars	 
 
-     } // end for j=1:nVars	 
-
-     // Get multivariate test stat = LBeta^T * inv(IinvRl) * LBeta
-     gsl_linalg_cholesky_decomp (IinvRl); 
-     gsl_linalg_cholesky_solve (IinvRl, LBeta, tmp2);     
-     gsl_blas_ddot (LBeta, tmp2, &result);
-     gsl_vector_set(teststat, 0, sqrt(result));	  
+    // Get multivariate test stat = LBeta^T * inv(IinvRl) * LBeta
+    gsl_linalg_cholesky_decomp (IinvRl); 
+    gsl_linalg_cholesky_solve (IinvRl, LBeta, tmp2);     
+    gsl_blas_ddot (LBeta, tmp2, &result);
+    gsl_vector_set(teststat, 0, sqrt(result));	  
     // displayvector(teststat, "teststat");
    
-     // clean memory
-     for (j=0; j<nVars; j++)
-         gsl_matrix_free(Z[j].matrix);
-     free(Z);    
-     gsl_vector_free(LBeta);
-     gsl_matrix_free(w1jX1);
-     gsl_matrix_free(XwX);
-     gsl_matrix_free(Rl2);
-     gsl_matrix_free(IinvN);
-     gsl_vector_free(tmp2);
-     gsl_matrix_free(IinvRl);
+    // clean memory
+    for (j=0; j<nVars; j++)
+        gsl_matrix_free(Z[j].matrix);
+    free(Z);    
+    gsl_vector_free(LBeta);
+    gsl_matrix_free(w1jX1);
+    gsl_matrix_free(XwX);
+    gsl_matrix_free(Rl2);
+    gsl_matrix_free(IinvN);
+    gsl_matrix_free(IinvRl);
+    gsl_vector_free(tmp2);
 
-     return SUCCESS;
+    return SUCCESS;
 }
 
 int GlmTest::resampData(glm *model, gsl_matrix *bT, GrpMat *oriXs, GrpMat *oriOs, unsigned int i )
@@ -891,7 +939,7 @@ int GlmTest::resampNonCase(glm *model, gsl_matrix *bT, unsigned int i)
            else id = (unsigned int) gsl_matrix_get(bootID, i, j);
            // bY = mu+(bootr*sqrt(variance))
            for (k=0; k<nVars; k++) { 
-               bt=gsl_matrix_get(model->Mu,j,k)+sqrt(gsl_matrix_get(model->Var,j,k))*gsl_matrix_get(model->Res, id, k);
+               bt=gsl_matrix_get(model->Mu,j,k)+sqrt(gsl_matrix_get(model->Var,j,k))*gsl_matrix_get(model->Res, id, k);               
                bt = MAX(bt, 0.0);
                if (model->mmRef->model == LOGIT) bt = MIN(bt, 1.0);
                gsl_matrix_set(bT, j, k, bt);
@@ -944,10 +992,13 @@ int GlmTest::resampNonCase(glm *model, gsl_matrix *bT, unsigned int i)
                 gsl_matrix_set(bT, j, k, yij);
         }   }
         else if (model->mmRef->model == LOGIT) {
+//           displaymatrix(Sigma, "Sigma");
+//           displaymatrix(XBeta, "Xbeta");
            for (j=0; j<nRows; j++) {
                yj = gsl_matrix_row(bT, j);
                // get random effect ej*         
-               rmvnorm(rnd, nVars, Sigma, &yj.vector);
+            //   rmvnorm(rnd, nVars, Sigma, &yj.vector);
+               semirmvnorm(rnd, nVars, Sigma, &yj.vector);
                for (k=0; k<nVars; k++) {
                    eij = gsl_matrix_get (XBeta, j, k); // logit(m)
                    eij = eij + gsl_vector_get(&yj.vector, k); 

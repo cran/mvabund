@@ -4,7 +4,7 @@
 # 11-Nov-2011
 ###############################################################################
 
-anova.manyglm <- function(object, ..., resamp="residual", test="LR", p.uni="none", nBoot=1000, cor.type=object$cor.type, ld.perm=FALSE, filename=NULL ) 
+anova.manyglm <- function(object, ..., resamp="montecarlo", test="LR", p.uni="none", nBoot=1000, cor.type=object$cor.type, ld.perm=FALSE, filename=NULL ) 
 {
     if (cor.type!="I" & test=="LR") {
         warning("The likelihood ratio test can only be used if correlation matrix of the abundances is is assumed to be the Identity matrix. The Wald Test will be used.")
@@ -153,7 +153,10 @@ anova.manyglm <- function(object, ..., resamp="residual", test="LR", p.uni="none
     }   
     else {
         targs <- match.call(call = sys.call(which = 1), expand.dots = FALSE)
-        modelnamelist <- as.character(c(targs[[2]], targs[[3]]))
+        if (targs[[1]] == "example")
+            modelnamelist <- paste("Model ", format(1:nModels))
+        else    
+            modelnamelist <- as.character(c(targs[[2]], targs[[3]]))
 
         resdf   <- as.numeric(sapply(objects, function(x) x$df.residual))
         ####### check input arguments #######
@@ -229,9 +232,9 @@ anova.manyglm <- function(object, ..., resamp="residual", test="LR", p.uni="none
     # Supplied arguments
     anova$family <- object$family
     anova$p.uni <- p.uni
-    anova$test  <- test
+    anova$test  <- if (test=="LR") "Dev" else test
     anova$cor.type <- cor.type
-    anova$resamp <- resamp
+    anova$resamp <- if (resamp=="montecarlo") "parametric" else resamp
     anova$nBoot <- nBoot 
     # estimated parameters
     anova$shrink.param <- shrink.param
@@ -243,13 +246,14 @@ anova.manyglm <- function(object, ..., resamp="residual", test="LR", p.uni="none
 
     ########### formal displays #########
     # Title and model formulas
-    title <- "Analysis of Variance Table\n" 
+    title <- if (test=="LR") "Analysis of Deviance Table\n"
+             else "Analysis of Variance Table\n" 
     attr(anova$table, "heading") <- c(title, topnote) 
-    attr(anova$table, "title") <- "\nThe overall test:\n" 
+    attr(anova$table, "title") <- "\nMultivariate test:\n" 
     # make multivariate table 
     if (!is.null(test)) {
-       testname <- paste("val(",test,")",sep="")
-       pname    <- paste("Pr(>",test,")", sep="")
+       testname <- anova$test
+       pname    <- paste("Pr(>",anova$test,")", sep="")
     } else {
        testname <- "no test"
        pname    <- ""
@@ -258,7 +262,7 @@ anova.manyglm <- function(object, ..., resamp="residual", test="LR", p.uni="none
     dimnames(anova$table) <- list(tl, c("Res.Df", "Df.diff", testname, pname))
    
     # make several univariate tables 
-    attr(anova$uni.test, "title") <- attr(anova$uni.p, "title") <- "\nThe univariate Tests:\n"
+    attr(anova$uni.test, "title") <- attr(anova$uni.p, "title") <- "\nUnivariate Tests:\n"
     dimnames(anova$uni.p) <- dimnames(anova$uni.test) <- list(tl, dimnam.a)
 
     class(anova) <- "anova.manyglm"

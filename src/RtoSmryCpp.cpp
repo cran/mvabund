@@ -18,7 +18,6 @@ RcppExport SEXP RtoSmryCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
 
     // pass parameters
     mv_Method mm;	
-    mm.tol = as<double>(rparam["tol"]);
     mm.nboot = as<unsigned int>(rparam["nboot"]);
     mm.corr = as<unsigned int>(rparam["cor_type"]);
     mm.shrink_param = as<double>(rparam["shrink_param"]);

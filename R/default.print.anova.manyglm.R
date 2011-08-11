@@ -87,7 +87,7 @@ default.print.anova.manyglm <- function( x, digits = max(getOption("digits") - 3
         col.dimnab[2*(1:length(dimnam.ab))-1] <- dimnam.ab
         pmabund  <- ncol(anova$uni.p)
         testname <- anova$test
-        pname    <- paste("Pr(>",anova$test,")", sep="")
+        pname    <- paste("Pr(>",testname,")", sep="")
         colna    <- c(rep.int(c(testname, pname), times=pmabund))
 
         uni.table <- matrix(NA, nrow(anova$uni.p), pmabund*2)
@@ -132,7 +132,6 @@ default.print.anova.manyglm <- function( x, digits = max(getOption("digits") - 3
               right = TRUE, na.print = "", ...)
          } else print.default(uni.table, quote = FALSE, right = TRUE,
               na.print = "", ...)
-
 
         if( substr(anova$resamp,1,1)!="n"){
            if(inherits(anova, "anova.manyglm") )

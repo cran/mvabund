@@ -6,7 +6,7 @@ Fits for Abundance Data}
 \description{Compute an analysis of deviance table for one or more multivariate
 generalized linear model fits.}
 \usage{
-\method{anova}{manyglm}(object, \dots, resamp="residual", test="LR", 
+\method{anova}{manyglm}(object, \dots, resamp="montecarlo", test="LR", 
     p.uni="none", nBoot=1000, cor.type=object$cor.type, ld.perm=FALSE, filename=NULL) 
 \method{print}{anova.manyglm}(x, \dots) 
 }
@@ -15,7 +15,7 @@ generalized linear model fits.}
 }
 \item{\dots}{for the \code{anova.manyglm} method, these are optional further objects of class \code{manyglm}, which are usually a result of a call to \code{\link{manyglm}}
 for the \code{print.anova.manyglm} method these are optional further arguments passed to or from other methods. See \code{\link{print.summary.glm}} for more details.}        
-\item{resamp}{the method of resampling used. Can be one of "case", "residual" (default), "perm.resid", "score", or "montecarlo". See Details.}
+\item{resamp}{the method of resampling used. Can be one of "case", "residual", "perm.resid", "score", or "montecarlo" (default). See Details.}
 \item{test}{the test to be used. If \code{test="I"}, this can be one of "wald" for a Wald-Test or "score" for a Score-Test or "LR" for a Likelihood-Ratio-Test, otherwise only "wald" and "score" is allowed. The default value is "LR".
 }
 \item{p.uni}{whether to calculate univariate test statistics and their P-values, and if so, what type. This can be one of the following options. \cr
@@ -120,7 +120,7 @@ plot(tasm.cop ~ treatment, col=as.numeric(block))
 tasm.cop.nb <- manyglm(tasm.cop ~ block*treatment, family="negative.binomial")
 
 ## Testing hypotheses about the treatment effect and treatment-by-block interactions, 
-## using the default settings of residual resampling and deviance as test statistics: 
+## using the default settings of parametric resampling and deviance as test statistics: 
 anova(tasm.cop.nb)
 
 ## Checking model assumptions
@@ -129,8 +129,8 @@ plot(tasm.cop.nb)
 
 ## Accounting for correlation between variables (with shrinkage):
 tasm.cop.nb2 <- manyglm(tasm.cop ~ block*treatment, family="negative.binomial", cor.type="shrink")
-## Repeat ANOVA test with P-values adjusted for multiple testing, using montecarlo parametric bootstrap and wald statistics:
-anova(tasm.cop.nb2, p.uni="adjusted", resamp="montecarlo", test="wald")
+## Repeat ANOVA test with P-values adjusted for multiple testing, using parametric bootstrap and wald statistics:
+anova(tasm.cop.nb2, p.uni="adjusted", nBoot=500)
 
 }
 \keyword{models}

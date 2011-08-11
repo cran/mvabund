@@ -78,7 +78,7 @@
 #define HOOPER 0
 #define VECTOR 1
 // others
-#define TOL 1e-5 
+#define TOL 1e-8
 #define MAXITER 999 
 #define LAMBDA 0.8  // no shrinkage 
 #define NaN -100000
@@ -276,7 +276,7 @@ class PoissonGlm : public glm
 	        { if (yi==0) return 2*(-mui); else
 		  return 2*(yi*log(mui) - mui - gsl_sf_lngamma(yi+1)); }
 	   double devfunc(double yi, double mui, double a) const
-	        { return 2*(yi*log(MAX(yi, mintol)/mui)-yi+mui); }
+	        { return 2*(yi*log(GSL_MAX(yi, mintol)/mui)-yi+mui); }
 };
 
 // logistic regression 
@@ -298,11 +298,11 @@ class LogiGlm : public PoissonGlm
 	   double varfunc(double mui, double a) const
 	        { return mui*(1-mui); }
 	   double llfunc(double yi, double mui, double a) const
-//	        { return 2*(yi * (log(mui)-log(1-mui)) + log(1-mui)); }
-	        { return 2*(yi*log(MAX(mui, mintol)) + (1-yi)*log(MAX((1-mui),mintol))); }
+//	   { return 2*((yi==0)?0:yi*log(mui) + (yi==1)?0:(1-yi)*log(1-mui)); }
+	        { return 2*(yi*log(mui) + (1-yi)*log(1-mui)); }
 	   double devfunc(double yi, double mui, double a) const
 //     { return 2*((yi<=mintol)?(-log(1-MAX(mui, 1e-5))):(-log(MIN(mui, 1-1e-5)))); }
-           { return 2*((yi==0)?0:yi*log(yi)+(yi==1)?0:(1-yi)*log(1-yi)) - llfunc(yi,mui,a);  }
+           { return 2*(yi*log((yi==0)?1:yi)+(1-yi)*log((yi==1)?1:(1-yi)))-llfunc(yi,mui,a);  }
 };
 
 // negative binomial regression
@@ -321,11 +321,10 @@ class NBinGlm : public PoissonGlm
 	        { return (mui*(1+a*mui)); }
 	   double llfunc(double yi, double mui, double a) const;
 	   double devfunc(double yi, double mui, double a) const
-                { return 2*(yi*log(MAX(yi, mintol)/mui)-(yi+1/MAX(a,mintol))*log((1+yi*a)/(1+mui*a))); }
+                { return 2*((yi==0)?0:yi*log(yi/mui)-(yi+1/GSL_MAX(a,mintol))*log((1+yi*a)/(1+mui*a))); }
 
 	   int getfAfAdash (double a, unsigned int id, double *fA, double *fAdash);
 };
-
 
 // base test class
 class GlmTest

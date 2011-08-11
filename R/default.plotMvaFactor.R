@@ -365,7 +365,8 @@ if( write.plot!= "show")  {
 }
 
 ######### BEGIN some calculations for better axis scaling #########
-if (missing(xlab)) xlab <- transf.lab
+#if (missing(xlab)) 
+   xlab <- transf.lab
 
 # Get minimum value for correction of posx.
 minmva <- min(mvabund.object,na.rm=TRUE)

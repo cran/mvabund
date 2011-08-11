@@ -9,7 +9,7 @@ extern "C"{
 }
 
 RcppExport SEXP RtoGlmAnova(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,  
-                            SEXP INsexp, SEXP bIDsexp, SEXP LamSexp ) 
+                            SEXP INsexp, SEXP bIDsexp, SEXP LamSexp) 
 {
     using namespace Rcpp;
 
@@ -25,7 +25,6 @@ RcppExport SEXP RtoGlmAnova(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
     List rparam(tpar);
     // pass parameters
     mv_Method tm;	
-    tm.tol = as<double>(rparam["tol"]);
     tm.nboot = as<unsigned int>(rparam["nboot"]);
     tm.corr = as<unsigned int>(rparam["cor_type"]);
     tm.test = as<unsigned int>(rparam["test_type"]);
@@ -131,11 +130,11 @@ RcppExport SEXP RtoGlmAnova(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
 //    myTest.displayAnova();
 
     clk_end = clock();
-    double dif = (double)(clk_end - clk_start)/(double)(CLOCKS_PER_SEC);    
+    unsigned int dif = floor((double)(clk_end - clk_start)/(double)(CLOCKS_PER_SEC));  
     unsigned int hours = floor(dif/3600);
-    unsigned int min = floor((dif-hours*3600)/60);
-    unsigned int sec = dif - hours*3600 - min*60;   
-    Rprintf("Time elapsed: %d:%d:%d\n", hours, min, sec);
+    unsigned int min = floor((dif%3600)/60);
+    unsigned int sec = dif%60;   
+    Rprintf("Time elapsed: %d hr %d min %d sec (%d seconds)\n", hours, min, sec, dif);
 
     // Wrap the gsl objects with Rcpp 
     NumericVector Vec_df(myTest.dfDiff, myTest.dfDiff+nModels-1);

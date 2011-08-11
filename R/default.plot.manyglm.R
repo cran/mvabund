@@ -411,7 +411,8 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
 
       # The residual vs. fitted value plot	
       yhtmp <- c(yh)
-      yh.is.zero <- yhtmp < (-9)
+#      yh.is.zero <- yhtmp < (-8)
+      yh.is.zero <- yhtmp < (-max(yhtmp))
       yh0 <- yhtmp[!yh.is.zero]
       xlim <- range(yh0)
 
@@ -432,8 +433,7 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
           r0 <- rtmp[!yh.is.zero]
           ylim <- range(r0, na.rm = TRUE)
 
-	  plot(yh0, r0, xlab = l.fit, ylab = "Pearson residuals", main = main, ylim = ylim, xlim=xlim, font.main=2, type = "n", asp=asp)
-          panel(yh0, r0, col=color, cex.lab=clab, cex.axis=caxis, cex=cex, lwd=lwd)
+	  plot(yh0, r0, xlab = l.fit, ylab = "Pearson residuals", main=main, ylim=ylim, xlim=xlim, font.main=2, asp=asp, col=color, cex.lab=clab, cex.axis=caxis, cex=cex, lwd=lwd)
 
           # Add sub.caption, e.g, manyglm(tasm.cop ~ treatment)
           if (one.fig) 
@@ -503,9 +503,8 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
 	      do.call( "title", c(list(sub = sub.caption), dots))
           mtext(caption[3], 3, 0.25, col=colmain, cex=cex.caption)
        
-          yhn0 <- yh
 	  if (id.n > 0) 
-	     text.id(yhn0[show.rs], sqrtabsr[show.rs], (rep(labels.id,
+	     text.id(yh[show.rs], sqrtabsr[show.rs], (rep(labels.id,
 	             each=n.vars))[show.rs], col=rep(col, each=id.n))		    
 #          ncoll <- ceiling(n.vars/6)
           if(legend==TRUE & substr(legend.pos, 1,1)[1]!="n") # add a legend  
@@ -641,13 +640,12 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
         }
 	
         if (show[3]) {
-            yhn0 <- yh
 	    sqrtabsr <- sqrt(abs(rs[,i]))
 	    ylim <- c(0, max(sqrtabsr, na.rm = TRUE))
 	    yl <- as.expression( substitute(sqrt(abs(YL)),list(YL = as.name(ylab23))))
-	    do.call( "plot", c(list(yhn0, sqrtabsr, xlab = l.fit, ylab = yl, main = main, ylim = ylim, type = "n", cex=1.5), dots)) 
+	    do.call( "plot", c(list(yh, sqrtabsr, xlab = l.fit, ylab = yl, main = main, ylim = ylim, type = "n", cex=1.5), dots)) 
             
-	    do.call( "panel", c(list(yhn0, sqrtabsr, col=color[i]), dots) )
+	    do.call( "panel", c(list(yh, sqrtabsr, col=color[i]), dots) )
 
             if (one.fig) 
 	       do.call( "title", c(list(sub = sub.caption), dots))

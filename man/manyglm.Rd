@@ -8,7 +8,7 @@
 manyglm(formula, family="negative.binomial", data=NULL, subset=NULL, 
     na.action=options("na.action"), phi.method = "ML", model = FALSE,
     x = TRUE, y = TRUE, qr = TRUE, cor.type= "I", shrink.param=NULL, 
-    tol=1.0e-5, show.coef=FALSE, show.fitted=FALSE, 
+    tol=1.0e-8, show.coef=FALSE, show.fitted=FALSE, 
     show.residuals=FALSE, \dots )
 }
 \arguments{
@@ -243,7 +243,16 @@ X <- spider$x
 glm.spid <- manyglm(spiddat~X, family="poisson")
 glm.spid 
 
-summary(glm.spid)
+summary(glm.spid, resamp="residual")
+
+#To fit a binomial regression model to presence/absence data:
+pres.abs <- spiddat
+pres.abs[pres.abs>0] = 1
+glm.spid.bin <- manyglm(pres.abs~X, family="binomial")
+glm.spid.bin
+
+summary(glm.spid.bin, nBoot=500)
+
 
 }
 \keyword{models}

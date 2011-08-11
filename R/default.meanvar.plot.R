@@ -334,7 +334,7 @@ default.meanvar.plot.mvformula <- function(  x,
   					overall.main=NULL, 
 					overlay=TRUE, 
 					all.labels=FALSE,
-  					legend=TRUE, 
+  					legend=FALSE, 
 					legend.horiz, ... ) {
 
 dev 	<- dev.list()

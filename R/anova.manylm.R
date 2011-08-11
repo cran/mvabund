@@ -140,7 +140,11 @@ anova.manylm <- function(object, ..., resamp="perm.resid", test="F", p.uni="none
     }
     else {
         targs <- match.call(call = sys.call(which = 1), expand.dots = FALSE)
-        modelnamelist <- as.character(c(targs[[2]], targs[[3]]))
+     #   print(targs[[1]])
+        if ( targs[[1]] == "example" )
+            modelnamelist <- paste("Model ", format(1:nModels))
+        else
+            modelnamelist <- as.character(c(targs[[2]], targs[[3]]))
 
         resdf <- as.numeric(sapply(objects, function(x) x$df.residual))
         resdev <- as.numeric(sapply(objects, function(x) deviance.manylm(x)))
