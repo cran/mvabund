@@ -74,6 +74,7 @@ gsl_vector * load_v(const char * file)
 	return out;
 }
 
+/*
 void displaymatrix(gsl_matrix * m, const char * name)
 {
 	unsigned int i, j;
@@ -96,6 +97,7 @@ void displayvector(gsl_vector * v, const char * name)
 	printf("\n");
 
 }
+*/
 
 int getBootID (mv_Method *tm, char *fname, gsl_matrix *bootID)
 {

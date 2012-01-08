@@ -20,13 +20,14 @@ default.print.anova.manyglm <- function( x, digits = max(getOption("digits") - 3
  
     nModels <- nrow(x)
 
+    modelnames <- dimnames(anova$table)[[1]]
     if(anova$resamp == "perm.resid")
        anova$resamp <- "residual permutation (without replacement)"
 
     if (anova$cor.type=="R")  corname <- "unconstrained correlation"
     else if (anova$cor.type=="I")  corname <- "response assumed to be uncorrelated"
     else if (anova$cor.type=="shrink") 
-        corname <- paste("correlation matrix of model", 1:nModels, "shrunk by parameter", round(anova$shrink.param, digits = dig.tst))	  
+        corname <- paste("correlation matrix of model", modelnames[nModels:2], "is shrunk by parameter", round(anova$shrink.param[1:nModels-1], digits = dig.tst))	  
     else if (anova$cor.type=="blockdiag")
       corname <- paste("blockdiagonal correlation matrix with", anova$shrink.param, "variables in each block")
     else if (anova$cor.type=="augvar")

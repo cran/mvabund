@@ -124,7 +124,8 @@ if(length(pch)==p)  pch <- pch[var.subset]
 ## END edit var.subset, n.vars and mvabund.objects
 
 ## BEGIN calculate overall means and variances for the abundances
-mean.mvabund.overall <- mean(mvabund.object, na.rm=na.rm)
+mean.mvabund.overall <- colMeans(mvabund.object, na.rm=na.rm)
+#mean.mvabund.overall <- mean(as.matrix(mvabund.object), na.rm=na.rm)
 var.mvabund.overall  <- diag(var(mvabund.object, na.rm=na.rm))
 ## END calculate means and variances
 
@@ -520,8 +521,8 @@ if(!nofactor) {
 				var.mvabund[[index]][j,] <- diag(var(mvabund.object[iref[[index]]==j,,
 										drop = FALSE], na.rm=na.rm))
 
-				mean.mvabund[[index]][j,] <- mean(mvabund.object[iref[[index]]==j,,
-										drop = FALSE], na.rm=na.rm)
+#				mean.mvabund[[index]][j,] <- mean(as.matrix(mvabund.object)[iref[[index]]==j,,
+				mean.mvabund[[index]][j,] <- colMeans(mvabund.object[iref[[index]]==j,, drop = FALSE], na.rm=na.rm)
 
 				n[[index]][j] <- sum(iref[[index]]==j)
 			}
@@ -622,6 +623,7 @@ namesub	<- deparse(terms(formula.mvabund)[[2]])
 if (index==0) {
 cat("START SECTION 1\n")
 	## BEGIN calculate overall means and variances for the abundances
+	# mean.mvabund.overall <- mean( as.matrix(mvabund.object), na.rm=na.rm )
 	mean.mvabund.overall <- mean( mvabund.object, na.rm=na.rm )
 	var.mvabund.overall  <- diag( var( mvabund.object, na.rm=na.rm ) )
 	## END calculate overallmeans and variances   

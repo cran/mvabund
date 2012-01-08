@@ -132,6 +132,7 @@ void Summary::releaseSummary()
 
 }
 
+/*
 void Summary::display(void)
 {
     unsigned int i;
@@ -230,6 +231,8 @@ void Summary::display(void)
          }    
      }	 
 }
+*/
+
 
 int Summary::resampTest(void)
 {

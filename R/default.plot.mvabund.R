@@ -224,7 +224,7 @@ if (missing(x)) { stop("The mvabund object 'x' is missing.") }
  if(!miss.varsubset){
  	if(is.logical(var.subset) & any(!is.na(list(var.subset)))) var.subset <- which(var.subset[!is.na(list(var.subset))])
  }
- if(length(dots)>0) {
+ if(length(dots)>0) { 
  # Delete arguments in ... that are defined lateron and cannot be used twice
  # in the plot function.
  	if(type=="bx") { 
@@ -250,7 +250,6 @@ if (missing(x)) { stop("The mvabund object 'x' is missing.") }
  mvabund.object.1 <- as.matrix(unabund(x))
 
  # Initiate n.vars before deleting x.
- n.vars <- n.vars
  if(!any(is.na(subset))) mvabund.object.1 <- mvabund.object.1[c(subset),, drop=FALSE]
   
  N <- nrow(mvabund.object.1)     # number of sites
@@ -268,6 +267,7 @@ if (missing(x)) { stop("The mvabund object 'x' is missing.") }
  ############################################################################
  
  if( !two.objects ) {
+        n.vars <- min(n.vars, p)
         cat("Kicking off BoxPlot sequence \n")
  	rm(x)
     	mvabund.colnames <- colnames(mvabund.object.1)

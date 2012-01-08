@@ -10,7 +10,7 @@
 \arguments{
 \item{object}{an object of class \code{manyglm}, typically the result of a call to \code{\link{manyglm}}.
 }
-\item{resamp}{the method of resampling used. Can be one of "case", "residual", "perm.resid", "score" or "montecarlo" (default). See Details.}
+\item{resamp}{the method of resampling used. Can be one of "residual", "perm.resid", "score" or "montecarlo" (default). See Details.}
 \item{test}{the test to be used. If \code{test="I"}, this can be one of "wald" for a Wald-Test or "score" for a Score-Test or "LR" for a Likelihood-Ratio-Test, otherwise only "wald" and "score" is allowed. The default value is "LR".
 }
 \item{p.uni}{whether to calculate univariate test statistics and their P-values, and if so, what type. This can be one of the following options. \cr
@@ -40,7 +40,7 @@ The \code{summary.manyglm} function returns a table summarising the statistical
 significance of each multivariate term specified in the fitted manyglm model (Warton (2011)).
 For each model term, it returns a test statistic as determined by the argument
 \code{test}, and a P-value calculated by resampling rows of the data using a
-method determined by the argument \code{resamp}. The five possible resampling methods (case, residual, score resampling, residual permutation, and parametric boostrap) are described in more detail in Davison and Hinkley (1997, chapter 6) and Wu (1986), and involve resampling under the alternative hypothesis. These methods ensure approximately valid inference even when the mean-variance relationship or the correlation between variables has been misspecified. Standardized pearson residuals (see \code{\link{manyglm}} are used in residual and score resampling, and where necessary, resampled response values are truncated so that they fall in the required range (e.g. counts cannot be negative). If \code{resamp="none"}, p-values cannot be calculated, however the test statistics are returned. For abundance data with a very high dimension and lots of zero values it is not recommended to use \code{residual} resampling with an \code{LR} test.
+method determined by the argument \code{resamp}. The four possible resampling methods (residual, score resampling, residual permutation, and parametric boostrap) are described in more detail in Davison and Hinkley (1997, chapter 6) and Wu (1986), and involve resampling under the alternative hypothesis. These methods ensure approximately valid inference even when the mean-variance relationship or the correlation between variables has been misspecified. Standardized pearson residuals (see \code{\link{manyglm}} are used in residual and score resampling, and where necessary, resampled response values are truncated so that they fall in the required range (e.g. counts cannot be negative). If \code{resamp="none"}, p-values cannot be calculated, however the test statistics are returned. For abundance data with a very high dimension and lots of zero values it is not recommended to use \code{residual} resampling with an \code{LR} test.
 
 If you have a specific hypothesis of primary interest that you want to test, then you should use the \code{\link[mvabund:anova.manyglm]{anova.manyglm}} function, which can resample rows of the data under the null hypothesis and so usually achieves a better approximation to the true significance level.
 

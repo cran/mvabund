@@ -1,2 +1,0 @@
-stopifnot(require(mvabund))
-

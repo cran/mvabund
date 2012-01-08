@@ -21,7 +21,8 @@ default.print.summary.manyglm <- function (x, digits = max(getOption("digits") -
     else if (x$cor.type=="I")  
          corname <- "response assumed to be uncorrelated"
     else if (x$cor.type=="shrink") 
-         corname <- paste("correlation matrix shrunk by parameter",round(x$shrink.param, digits = 2) )
+         # Change note: the parameter is estimated under the alternative regardless of the test type
+         corname <- paste("correlation matrix shrunk by parameter",round(x$shrink.param[1], digits = 2) )
     else if (x$cor.type=="blockdiag")
       corname <- paste("blockdiagonal correlation matrix with", x$shrink.param,"variables in each block")
     else if (x$cor.type=="augvar")
@@ -42,14 +43,18 @@ default.print.summary.manyglm <- function (x, digits = max(getOption("digits") -
 	   coefs <- x$coefficients
 	}
 	est <- x$est
+        est.stderr <- x$est.stderr
 		
         if (!is.null(aliased <- x$aliased) && any(aliased)) {
 	    cn <- names(aliased)
             if (show.est) {
 		est <- matrix(NA, length(aliased), NCOL(est) , dimnames = list(cn,               colnames(est)))
 		est[!aliased, ] <- x$est 
+		est.stderr <- matrix(NA, length(aliased), NCOL(est) , dimnames = list(cn,               colnames(est)))
+		est.stderr[!aliased, ] <- x$est.stderr
 	}    } 
 	if (show.est) {
+
 	    acs <- abs(coef.gv <- est[,1, drop = FALSE])
 	    if (any(is.finite(acs)))  {
 		# format the Generalised Variance Values
@@ -58,6 +63,7 @@ default.print.summary.manyglm <- function (x, digits = max(getOption("digits") -
 	    }
 	    # format the estimates values
 	    estimates <- format(round(est[, 2:ncol(est)], digits = dig.tst),digits = digits)
+	    estimates.stderr <- format(round(est.stderr, digits = dig.tst),digits = digits)
 	}
 	
 	if(!is.null(test)) {
@@ -106,6 +112,9 @@ default.print.summary.manyglm <- function (x, digits = max(getOption("digits") -
       if (show.est) {
 	  cat("\nCoefficients:\n")
           print.default( cbind(acs, estimates), quote = FALSE, right = TRUE,
+          na.print = "NA",...)
+	  cat("\nStandard Errors of Coefficient: \n")
+          print.default( estimates.stderr, quote = FALSE, right = TRUE,
           na.print = "NA",...)
       } 
      if (x$p.uni != "none" & !is.null(test)) { 

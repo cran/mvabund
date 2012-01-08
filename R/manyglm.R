@@ -144,6 +144,7 @@ else {
     # parameters that are needed for tests in anova.manylm and summary.manylm.
     dimnames(z$fitted.values) <- list(labObs, labAbund)
     dimnames(z$coefficients) <- list(colnames(X), labAbund)
+    dimnames(z$var.coefficients) <- list(colnames(X), labAbund)
     dimnames(z$linear.predictor) <- list(labObs, labAbund)    
     dimnames(z$residuals) <- list(labObs, labAbund)
     dimnames(z$sqrt.1_Hii) <- list(labObs, labAbund)
@@ -155,6 +156,8 @@ else {
     names(z$aic) <- labAbund
     names(z$iter) <- labAbund
 
+    z$stderr.coefficients <- sqrt(z$var.coefficients)
+    dimnames(z$stderr.coefficients) <- list(colnames(X), labAbund)
     z$tol <- tol
     z$prior.weight <- NULL
     z$AICsum <- sum(z$aic)

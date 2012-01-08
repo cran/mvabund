@@ -123,6 +123,7 @@ void AnovaTest::releaseTest()
 
 }
 
+/*
 void AnovaTest::display(void)
 {
     unsigned int i, j, k;
@@ -149,6 +150,7 @@ void AnovaTest::display(void)
         }
      }	
 }
+*/
 
 int AnovaTest::resampTest(void)
 {

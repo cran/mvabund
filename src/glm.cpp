@@ -13,7 +13,7 @@
 
 glm::glm(const reg_Method *mm)
    : mmRef(mm), Yref(NULL), Xref(NULL), Oref(NULL), 
-     Beta(NULL), Mu(NULL), Eta(NULL), Res(NULL), 
+     Beta(NULL), varBeta(NULL), Mu(NULL), Eta(NULL), Res(NULL), 
      Var(NULL), wHalf(NULL), sqrt1_Hii(NULL), phi(NULL),
      ll(NULL), dev(NULL), aic(NULL), iterconv(NULL) 
 { 
@@ -70,6 +70,8 @@ void glm::releaseGlm(void)
         gsl_matrix_free(wHalf);
     if (sqrt1_Hii!=NULL)
         gsl_matrix_free(sqrt1_Hii);
+    if (varBeta!=NULL)
+        gsl_matrix_free(varBeta);
     if (phi!=NULL)
         delete[] phi;
     if (ll!=NULL)	
@@ -110,8 +112,10 @@ void glm::initialGlm(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)
     Var = gsl_matrix_alloc(nRows, nVars);
     wHalf = gsl_matrix_alloc(nRows, nVars);
     sqrt1_Hii = gsl_matrix_alloc(nRows, nVars);
+    varBeta = gsl_matrix_alloc(nParams, nVars);
 
     gsl_matrix_set_zero (Beta);
+    gsl_matrix_set_zero (varBeta);
 //  Note: setting the initial value is important
 //  e.g., using mean(Y) for binomial regression doesn't work
 //    gsl_matrix *t1;
@@ -156,6 +160,7 @@ int glm::copyGlm(glm *src)
     gsl_matrix_memcpy(Var, src->Var);
     gsl_matrix_memcpy(wHalf, src->wHalf);
     gsl_matrix_memcpy(sqrt1_Hii, src->sqrt1_Hii);
+    gsl_matrix_memcpy(varBeta, src->varBeta);
     
     for (unsigned int i=0; i<nVars; i++) {
         phi[i] = src->phi[i];	
@@ -218,15 +223,17 @@ int PoissonGlm::betaEst( unsigned int id, unsigned int iter, double *tol, double
    unsigned int i, isConv=FALSE, step=0;
    double eij, mij, yij, oij, wij, zij;
    double dev_old, diff;
-
    gsl_vector *z = gsl_vector_alloc(nRows);
-   gsl_matrix *Xw = gsl_matrix_alloc(nRows, nParams);   
+   gsl_matrix *wX = gsl_matrix_alloc(nRows, nParams);   
+   gsl_matrix *XwX = gsl_matrix_alloc(nParams, nParams);   
+   gsl_vector *Xwz = gsl_vector_alloc(nParams);
 
-   gsl_vector_view yj, mj, ej, bj, oj, Xwi;
+   gsl_vector_view yj, mj, ej, bj, oj, Xwi, vj, dj;
    yj=gsl_matrix_column(Yref, id);
    mj=gsl_matrix_column(Mu, id);
    ej=gsl_matrix_column(Eta, id);
    bj=gsl_matrix_column (Beta, id);   
+   vj=gsl_matrix_column (varBeta, id);   
    if ( Oref==NULL ) oij=0;
    else  oj = gsl_matrix_column(Oref, id);
 
@@ -234,7 +241,7 @@ int PoissonGlm::betaEst( unsigned int id, unsigned int iter, double *tol, double
    while ( isConv != TRUE ) {
        step++;
        dev_old = dev[id];
-       gsl_matrix_memcpy( Xw, Xref );
+       gsl_matrix_memcpy( wX, Xref );
        for (i=0; i<nRows; i++) {
            eij = gsl_vector_get(&ej.vector, i);
            mij = gsl_vector_get(&mj.vector, i);
@@ -247,10 +254,20 @@ int PoissonGlm::betaEst( unsigned int id, unsigned int iter, double *tol, double
 	   zij = eij + (yij-mij)/rcpLinkDash(mij) - oij;
            gsl_vector_set( z, i, wij*zij ); // z = wHalf * z
            // get Xw
-	   Xwi = gsl_matrix_row (Xw, i);
+	   Xwi = gsl_matrix_row (wX, i);
            gsl_vector_scale (&Xwi.vector, wij); // Xw = WHalf * X
         }
-	invLSQ(Xw, z, &bj.vector);  // least square inverse
+        // X^T * W * X
+        gsl_blas_dsyrk (CblasLower, CblasTrans, 1.0, wX, 0.0, XwX);
+        // solve X^T * W * X * bj = X^T * W * z
+        gsl_linalg_cholesky_decomp (XwX); // provided XwX is non-singular 
+        // X^T * W * z = (Xw)^T * z
+        gsl_blas_dgemv (CblasTrans, 1.0, wX, z, 0.0, Xwz);
+        gsl_linalg_cholesky_solve (XwX, Xwz, &bj.vector);
+        //displaymatrix(XwX, "XwX");
+        // XwX can be singular so use QR LSQ instead
+	//invLSQ(wX, z, &bj.vector);   
+
 	// update eta = X*beta + offset
         gsl_blas_dgemv (CblasNoTrans, 1.0, Xref, &bj.vector, 0.0, &ej.vector);
 	if (Oref!=NULL) gsl_vector_add (&ej.vector, &oj.vector);	   
@@ -272,8 +289,16 @@ int PoissonGlm::betaEst( unsigned int id, unsigned int iter, double *tol, double
         if ( (*tol < mintol) | (step == iter )) break;
    } 
 
+   // Get variance for the jth column of beta hat
+//   gsl_linalg_cholesky_decomp (XwX); // provided XwX is non-singular 
+   gsl_linalg_cholesky_invert (XwX);
+   dj = gsl_matrix_diagonal (XwX); 
+   gsl_vector_memcpy (&vj.vector, &dj.vector);
+
    gsl_vector_free(z);
-   gsl_matrix_free(Xw); 
+   gsl_matrix_free(wX); 
+   gsl_matrix_free(XwX); 
+   gsl_vector_free(Xwz);
 
    return step;
 }
@@ -288,7 +313,7 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)
     double yij, mij, vij;
     double a, tol, fA, fAdash;
     double initphi=1e-4;
-    gsl_vector_view b0j, m0j, e0j;
+    gsl_vector_view b0j, m0j, e0j, v0j;
 
     // Get initial estimates from Poisson    
     PoissonGlm fit0( mmRef );
@@ -297,12 +322,15 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)
     for (j=0; j<nVars; j++) {  
         // Get initial beta estimates from Poisson
         fit0.betaEst(j, maxiter, &tol, 0);
+// printf("done\n");
 	b0j = gsl_matrix_column(fit0.Beta, j);
 	gsl_matrix_set_col(Beta, j, &b0j.vector);
         m0j = gsl_matrix_column(fit0.Mu, j);
 	gsl_matrix_set_col(Mu, j, &m0j.vector);
         e0j = gsl_matrix_column(fit0.Eta, j);
 	gsl_matrix_set_col(Eta, j, &e0j.vector);
+        v0j = gsl_matrix_column(fit0.varBeta, j);
+	gsl_matrix_set_col(varBeta, j, &v0j.vector);
         dev[j] = fit0.dev[j];
 
         // Get initial phi estimates 
@@ -341,6 +369,7 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)
             gsl_matrix_set_col (Beta, j, &b0j.vector);
             gsl_matrix_set_col (Mu, j, &m0j.vector);
             gsl_matrix_set_col (Eta, j, &e0j.vector);
+            gsl_matrix_set_col (varBeta, j, &v0j.vector);
             dev[j]=fit0.dev[j];
        }
        // other properties based on mu and phi
@@ -439,6 +468,8 @@ int NBinGlm::getfAfAdash(double a, unsigned int id, double *fAPtr, double *fAdas
     return SUCCESS;
     
 }
+
+/*
 void glm::display(void)
 {   
     unsigned int j;
@@ -462,12 +493,10 @@ void glm::display(void)
 	      break;
           default: 
               printf("no such method available.\n");
-              exit(1);
        }
     }   
     else {
         printf("regression not available.\n");
-	exit(1);
     }
 
     printf("Two-log-like=\n " );
@@ -493,9 +522,12 @@ void glm::display(void)
 //    displaymatrix(Xref, "X");
 //    displaymatrix(Eta, "Eta");
 //    displaymatrix(Beta, "Beta");
+    displaymatrix(varBeta, "varBeta");
 //    displaymatrix(Mu, "Mu");
 //    displaymatrix(Var, "Var");    
 //    displaymatrix(Res, "Res");    
-//    displaymatrix(wHalf, "wHalf");
+    displaymatrix(wHalf, "wHalf");
     
 }
+
+*/

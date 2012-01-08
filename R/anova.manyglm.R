@@ -83,8 +83,8 @@ anova.manyglm <- function(object, ..., resamp="montecarlo", test="LR", p.uni="no
     else if (substr(test,1,1) == "L") testnum <- 4 #LR
     else stop("'test'not defined. Choose one of 'wald', 'score', 'LR' for an manyglm object.")  
 
-    if (cor.type == "I") corrnum <- 1
-    else if (cor.type == "R") corrnum <- 0
+    if (cor.type == "R") corrnum <- 0
+    else if (cor.type == "I") corrnum <- 1
     else if (cor.type == "shrink") corrnum <- 2
     else stop("'cor.type' not defined. Choose one of 'I', 'R', 'shrink'")  
 
@@ -124,32 +124,39 @@ anova.manyglm <- function(object, ..., resamp="montecarlo", test="LR", p.uni="no
        varseq <- object$assign
        nterms <- max(0, varseq)+1
        resdev <- resdf <- NULL
-       # get the shrinkage estimates
-       if (cor.type == "R") shrink.param <- c(rep(1,nterms))
-       else shrink.param <- c(rep(0, nterms))
-       if (cor.type=="shrink") shrink.param[1] <- object$shrink.param
-       tX <- matrix(1, nrow=nRows, ncol=1)
-
-       XvarIn <- matrix(ncol=nParam, nrow=nterms, 1)  
-       for ( i in 0L:(nterms-2)){ # exclude object itself
-           fit <- .Call("RtoGlm", modelParam, Y, X[,varseq<=i,drop=FALSE], 
-	             PACKAGE="mvabund")
+       XvarIn <- matrix(ncol=nParam, nrow=nterms, 1)
+       for ( i in 0L:(nterms-2)) { # exclude object itself
            XvarIn[nterms-i, varseq>i] <- 0 # in reversed order
-           if (cor.type=="shrink") { 
-               shrink.param[nterms-i] <- ridgeParamEst(dat=fit$residuals, 
-                      X=tX, only.ridge=TRUE)$ridgeParam # in reversed order
-           }
-#           resdev <- c(resdev, fit$deviance)
-           resdf <- c(resdf, nRows-dim(fit$coefficients)[1])
+           ncoef <- nParam-length(varseq[varseq>i])
+           resdf <- c(resdf, nRows-ncoef)
        }
        resdf <- c(resdf, object$df.residual)
+#browser()       
+       # get the shrinkage estimates
+       tX <- matrix(1, nrow=nRows, ncol=1)
+       if (corrnum==2 | resampnum==5){ # shrinkage or montecarlo bootstrap
+          shrink.param <- c(rep(NA, nterms))
+          if (object$cor.type == "shrink") 
+       	      shrink.param[1] <- object$shrink.param	 
+	  else    
+              shrink.param[1] <- ridgeParamEst(dat=object$residuals, X=tX, 
+	                     only.ridge=TRUE)$ridgeParam
+          for ( i in 0:(nterms-2)){ # exclude object itself
+              fit <- .Call("RtoGlm", modelParam, Y, X[,varseq<=i,drop=FALSE], 
+	              PACKAGE="mvabund")
+              shrink.param[nterms-i] <- ridgeParamEst(dat=fit$residuals, 
+                      X=tX, only.ridge=TRUE)$ridgeParam # in reversed order
+           }
+       }   
+       else if (corrnum == 0) shrink.param <- c(rep(1, nterms))
+       else if (corrnum == 1) shrink.param <- c(rep(0, nterms))
 #       resdev <- c(resdev, object$deviance) 
        nModels <- nterms
 
        ord <- (nterms-1):1
        topnote <- paste("Model:", deparse(object$call))
        tl <- attr(object$terms, "term.labels")
-       tl <- c("Null", tl)
+       tl <- c("(Intercept)", tl)
     }   
     else {
         targs <- match.call(call = sys.call(which = 1), expand.dots = FALSE)
@@ -167,17 +174,17 @@ anova.manyglm <- function(object, ..., resamp="montecarlo", test="LR", p.uni="no
         modelnamelist <- modelnamelist[ord]
 
         # get the shrinkage estimates
-        if (cor.type == "I") shrink.param <- c(rep(0,nModels))
-        else if (cor.type == "R") shrink.param <- c(rep(1,nModels))
-        else if (cor.type == "shrink") {
-	    shrink.param <- c(rep(0,nModels))
+        if (corrnum == 2 | resampnum == 5) { # shrinkage or parametric bootstrap
+	    shrink.param <- c(rep(NA,nModels))
     	    tX <- matrix(1, nrow=nRows, ncol=1)
 	    for ( i in 1:nModels ) {
-	        if (objects[[i]]$cor.type == "shrink") shrink.param[i] <- objects[[i]]$shrink.param
+	        if (objects[[i]]$cor.type == "shrink") 
+                    shrink.param[i] <- objects[[i]]$shrink.param
 	        else shrink.param[i] <- ridgeParamEst(dat=objects[[i]]$residuals, X=tX, only.ridge=TRUE)$ridgeParam 
 	    }
 	}
-        else stop("'cor.type' not defined. Choose one of 'I', 'R', 'shrink'")  
+        else if (corrnum == 0) shrink.param <- c(rep(1,nModels))
+        else if (corrnum == 1) shrink.param <- c(rep(0,nModels))
 
         # Test if models are nested, construct the full matrix and XvarIn 
         XNull <- as.matrix(objects[[1]]$x, "numeric")

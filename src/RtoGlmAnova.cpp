@@ -131,8 +131,8 @@ RcppExport SEXP RtoGlmAnova(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
 
     clk_end = clock();
     unsigned int dif = floor((double)(clk_end - clk_start)/(double)(CLOCKS_PER_SEC));  
-    unsigned int hours = floor(dif/3600);
-    unsigned int min = floor((dif%3600)/60);
+    unsigned int hours = floor((double)(dif/(double)3600));
+    unsigned int min = floor((double)(dif%3600)/(double)60);
     unsigned int sec = dif%60;   
     Rprintf("Time elapsed: %d hr %d min %d sec (%d seconds)\n", hours, min, sec, dif);
 

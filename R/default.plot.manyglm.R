@@ -428,12 +428,15 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
 #              yi.is.zero <- (yh[,i] < (-9)) # log(1e-4)
 #              points(x=t(yh[!yi.is.zero,i]), y=t(r[!yi.is.zero,i]),type="p",col=palette()[i], cex=cex, lwd=lwd)
 #          }	  
-
+          
           rtmp <- c(r)
           r0 <- rtmp[!yh.is.zero]
           ylim <- range(r0, na.rm = TRUE)
 
-	  plot(yh0, r0, xlab = l.fit, ylab = "Pearson residuals", main=main, ylim=ylim, xlim=xlim, font.main=2, asp=asp, col=color, cex.lab=clab, cex.axis=caxis, cex=cex, lwd=lwd)
+          colortmp <- rep(color, each=n)
+          color0 <- colortmp[!yh.is.zero]
+
+	  plot(yh0, r0, xlab = l.fit, ylab = "Pearson residuals", main=main, ylim=ylim, xlim=xlim, font.main=2, asp=asp, col=color0, cex.lab=clab, cex.axis=caxis, cex=cex, lwd=lwd)
 
           # Add sub.caption, e.g, manyglm(tasm.cop ~ treatment)
           if (one.fig) 

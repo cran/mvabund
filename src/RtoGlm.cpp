@@ -82,6 +82,7 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
     NumericVector iterconv(glmPtr[mtype]->iterconv, glmPtr[mtype]->iterconv+nVars);
     
     NumericMatrix Beta(nParam, nVars);
+    NumericMatrix varBeta(nParam, nVars);
     NumericMatrix Mu(nRows, nVars);
     NumericMatrix Eta(nRows, nVars);
     NumericMatrix Vars(nRows, nVars);
@@ -90,9 +91,10 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
     NumericMatrix sqrt1_Hii(nRows, nVars);
 
     for (i=0; i<nParam; i++)
-    for (j=0; j<nVars; j++)
+    for (j=0; j<nVars; j++) {
         Beta(i, j) = gsl_matrix_get(glmPtr[mtype]->Beta, i, j);
-
+        varBeta(i, j) = gsl_matrix_get(glmPtr[mtype]->varBeta, i, j);
+    }
 //    Rprintf("Residuals calculated by C\n");
     for (i=0; i<nRows; i++) //{
     for (j=0; j<nVars; j++){
@@ -115,6 +117,7 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
     // Rcpp -> R
     List rs = List::create(
          _["coefficients"] = Beta,
+         _["var.coefficients"] = varBeta,
          _["fitted.values"] = Mu,
          _["linear.predictor"] = Eta,
 	 _["residuals"] = Res,

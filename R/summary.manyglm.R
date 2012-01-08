@@ -40,33 +40,22 @@ summary.manyglm <- function(object, resamp="montecarlo", test="LR", p.uni="none"
     Y <- matrix(as.integer(object$y), nrow=nRows, ncol=nVars)
     X <- as.matrix(object$x, "numeric")
 
-    ######## Construct Summary Input Arguments ########
-    # the following values need to be converted to integer types 
-    if (cor.type == "I") {
-        corrnum <- 1
-        shrink.param <- c(rep(0,nParam+2))
-    }	
-    else if (cor.type == "R") {
-        corrnum <- 0
-        shrink.param <- c(rep(1,nParam+2))
-    }	
-    else if (cor.type == "shrink") {
-       corrnum <- 2
-       # get the shrinkage estimates
-       shrink.param <- c(rep(0,nParam+2))
-       tX <- matrix(1, nRows, 1)
-       if ( object$cor.type=="shrink") shrink.param[1] <- object$shrink.param
-       else shrink.param[1] <- ridgeParamEst(dat=Y, X=X, weights=w, only.ridge=TRUE, tol=tol)$ridgeParameter
-       objH0 <- manyglm(Y~tX, family=object$family, cor.type="shrink")       
-       shrink.param[2] <- objH0$shrink.param
-       objH0 <- manyglm(Y~0+X[,-1],family=object$family,cor.type="shrink")
-       shrink.param[3] <- objH0$shrink.param
-       for (i in 2:nParam) {
-           objH0 <- manyglm(Y~X[,-i], family=object$family, cor.type="shrink")
-           shrink.param[i+2] <- objH0$shrink.param
-       }
+    w <- object$weights
+    if (is.null(w)) w  <- rep(1, times=nRows)
+    else {     
+        if (!is.numeric(w))  stop("'weights' must be a numeric vector")
+        if (any(w < 0)) stop("negative 'weights' not allowed")
     }
-    
+
+    if (object$family == "poisson") familynum <- 1
+    else if (object$family == "negative.binomial") familynum <- 2
+    else if (object$family == "binomial") familynum <- 3 
+    else stop("'family' not defined. Choose one of 'poisson', 'negative.binomial', 'binomial' for an manyglm object") 
+
+    if (object$phi.method == "ML") methodnum <- 0
+    else if (object$phi.method == "Chi2") methodnum <- 1 
+    else stop("'method' not defined. Choose one of 'ML', 'Chi2' for an manyglm object") 
+
     if (substr(resamp,1,1)=="c") resampnum <- 0  #case
     else if (substr(resamp,1,1)=="r") resampnum <- 1  # residual
     else if (substr(resamp,1,1)=="s") resampnum <- 2  # score
@@ -80,6 +69,20 @@ summary.manyglm <- function(object, resamp="montecarlo", test="LR", p.uni="none"
     else if (substr(test,1,1) == "L") testnum <- 4 #LR
     else stop("'test'not defined. Choose one of 'wald', 'score', 'LR' for an manyglm object.") 
  
+    if (cor.type == "R") corrnum <- 0
+    else if (cor.type == "I") corrnum <- 1
+    else if (cor.type == "shrink") corrnum <- 2
+    else stop("'cor.type' not defined. Choose one of 'I', 'R', 'shrink'")
+
+    if (ld.perm && !is.null(filename)) {
+        bootID <- as.matrix(read.table(filename), nrow=nBoot, ncol=nRows)
+        rep <- 1
+    }
+    else {
+        bootID <- c(FALSE)
+        rep <- 0
+    }
+
     if (substr(p.uni,1,1) == "n"){
        pu <- 0
        calc.pj <- FALSE
@@ -95,32 +98,24 @@ summary.manyglm <- function(object, resamp="montecarlo", test="LR", p.uni="none"
     } else
        stop("'p.uni' not defined. Choose one of 'single', 'adjusted', 'unadjusted', 'none'.")
 
-    w <- object$weights
-    if (is.null(w))  w <- rep(1, times=nRows) # fit the multivariate lm
-    else {
-       if (!is.numeric(w))  stop("'weights' must be a numeric vector")
-       if (any(w < 0)) stop("negative 'weights' not allowed")
+    if (corrnum == 2 | resampnum==5 ) {
+       # get the shrinkage estimates
+       shrink.param <- c(rep(NA,nParam+2))
+       tX <- matrix(1, nRows, 1)
+       if ( object$cor.type=="shrink") shrink.param[1] <- object$shrink.param
+       else shrink.param[1] <- ridgeParamEst(dat=Y, X=X, weights=w, only.ridge=TRUE, tol=tol)$ridgeParameter
+       objH0 <- manyglm(Y~tX, family=object$family, cor.type="shrink")       
+       shrink.param[2] <- objH0$shrink.param
+       objH0 <- manyglm(Y~0+X[,-1],family=object$family,cor.type="shrink")
+       shrink.param[3] <- objH0$shrink.param
+       for (i in 2:nParam) {
+           objH0 <- manyglm(Y~X[,-i], family=object$family, cor.type="shrink")
+           shrink.param[i+2] <- objH0$shrink.param
+       }
     }
-
-    if (ld.perm & !is.null(filename)) {
-       bootID <- as.matrix(read.table(filename), nrow=nBoot, ncol=nRows)
-       rep <- 1
-    }
-    else {
-       bootID <- c(FALSE)
-       rep <- 0
-    }
-
-    # construct for param list     
-    if (object$family == "poisson") familynum <- 1
-    else if (object$family == "negative.binomial") familynum <- 2
-    else if (object$family == "binomial") familynum <- 3 
-    else stop("'family' not defined. Choose one of 'poisson', 'negative.binomial', 'logistic' for an manyglm object") 
-
-    if (object$phi.method == "ML") methodnum <- 0
-    else if (object$phi.method == "Chi2") methodnum <- 1 
-    else stop("'method' not defined. Choose one of 'ML', 'Chi2' for an manyglm object") 
-
+    else if (corrnum == 0) shrink.param <- c(rep(1,nParam+2))
+    else if (corrnum == 1) shrink.param <- c(rep(0,nParam+2))
+    
     modelParam <- list(tol=tol, regression=familynum, estimation=methodnum, stablizer=0)
     # note that nboot excludes the original dataset
     testParams <- list(tol=tol, nboot=nBoot-1, cor_type=corrnum, test_type=testnum, resamp=resampnum, reprand=rep, punit=pu)
@@ -231,7 +226,8 @@ summary.manyglm <- function(object, resamp="montecarlo", test="LR", p.uni="none"
     smry$residuals <- object$residuals 
     smry$df <- c(rankX, rdf, NCOL(Qr$qr))
     smry$genVar <- genVar 
-    smry$est <- est 
+    smry$est <- est     # coefficient estimates, i.e. Beta
+    smry$est.stderr <- object$stderr.coefficients
     smry$cov.unscaled <- R
     smry$correlation <- correlation
     # test stats
