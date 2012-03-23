@@ -37,13 +37,13 @@ step-down resampling procedure.
 \details{
 The \code{anova.manyglm} function returns a table summarising the statistical significance of a fitted manyglm model (Warton (2011)), or of the differences between several nested models. If one model is specified, sequential test statistics (and P values) are returned for that fit. If more than one object is specified, the table contains test statistics (and P values) comparing their fits, provided that the models are fitted to the same dataset.
 
-The test statistics are determined by the argument \code{test}, and the P-values are calculated by resampling rows of the data using a method determined by the argument \code{resamp}. The five possible resampling methods (residual, score resampling, residual permutation and parametric bootstrap) are described in more detail in Davison and Hinkley (1997, chapter 6) and Wu (1986), and involve resampling under the null hypothesis. These methods ensure approximately valid inference even when the mean-variance relationship or the correlation between variables has been misspecified. Standardized pearson residuals (see \code{\link{manyglm}} are used in residual and score resampling, and where necessary, resampled response values are truncated so that they fall in the required range (e.g. counts cannot be negative). If \code{resamp="none"}, p-values cannot be calculated, however the test statistics are returned. For abundance data with a very high dimension and lots of zero values it is not recommended to use \code{residual} resampling with an \code{LR} test.
+The test statistics are determined by the argument \code{test}, and the P-values are calculated by resampling rows of the data using a method determined by the argument \code{resamp}. The five possible resampling methods (residual, score resampling, residual permutation and parametric bootstrap) are described in more detail in Davison and Hinkley (1997, chapter 6) and Wu (1986), and involve resampling under the null hypothesis. These methods ensure approximately valid inference even when the mean-variance relationship or the correlation between variables has been misspecified. Standardized pearson residuals (see \code{\link{manyglm}} are used in residual and score resampling, and where necessary, resampled response values are truncated so that they fall in the required range (e.g. counts cannot be negative). However, this can introduce bias, especially for \code{family=binomial}, so we have disabled \code{residual} and \code{score} options in this case, advise extreme caution using \code{perm.resid} for presence/absence data, and recommend \code{case} or \code{parametric} in this context. If \code{resamp="none"}, p-values cannot be calculated, however the test statistics are returned.
 
 If you do not have a specific hypothesis of primary interest that you want to test, and are instead interested in which model terms are statistically significant, then the \code{summary.manyglm} function is more appropriate. Whereas \code{summary.manyglm} tests the significance of each explanatory variable, \code{anova.manyglm}, given one \code{manyglm} object tests each  term of the formula, e.g. if the formula is 'y~a+b' then a and b, that can be vectors or matrices, are tested for significance.
 
 For information on the different types of data that can be modelled using manyglm, see \code{\link{manyglm}}. To check model assumptions, use \code{\link{plot.manyglm}}.
 
-Multivariate test statistics are constructed using one of three methods: a log-likelihood ratio statistic \code{test="LR"} or a Wald statistic \code{test="wald"} or a Score statistic \code{test="score"}. "LR" has good properties, but is only available when \code{cor.type="I"}. 
+Multivariate test statistics are constructed using one of three methods: a log-likelihood ratio statistic \code{test="LR"}, for example as in Warton et. al. (2012) or a Wald statistic \code{test="wald"} or a Score statistic \code{test="score"}. "LR" has good properties, but is only available when \code{cor.type="I"}. 
 %Also recommended, but only for multi-sample testing, is a Wald statistic using the variance-stabilising link function (e.g. \code{family=negative.binomial(varstab)}), which has been shown to have good power properties (Warton 2008b). However use of this link function is only reasonable for multi-sample tests, a special case where changing link function can be considered as a reparameterisation of the model (rather than a change of model). 
 
 The default Wald test statistic makes use of a generalised estimating equations (GEE) approach, estimating the covariance matrix of parameter estimates using a sandwich-type estimator that assumes the mean-variance relationship in the data is correctly specified and that there is an unknown but constant correlation across all observations. Such assumptions allow the test statistic to account for correlation between variables but to do so in a more efficient way than traditional GEE sandwich estimators (Warton 2008a). The common correlation matrix is estimated from standardized Pearson residuals, and the method specified by \code{cor.type} is used to adjust for high dimensionality. 
@@ -84,14 +84,17 @@ The comparison between two or more models by \code{anova.manyglm} will only be v
 }
 
 \references{
+
 Warton D.I. (2011). Regularized sandwich estimators for analysis of high dimensional data using generalized estimating equations. \emph{Biometrics}, 67(1), 116-123.
 
 Warton D.I. (2008a). Which Wald statistic?  Choosing a parameterisation of the Wald statistic to maximise power in \emph{k}-sample generalised estimating equations. \emph{Journal of Statistical Planning and Inference}, 138, 3269-3282.
 
 Warton D.I. (2008b). Penalized normal likelihood and ridge regularization of correlation and covariance matrices. \emph{Journal of the American Statistical Association} 103, 340-349.
 
-Warton D.I. and Guttorp P. (in press April 2010) Compositional analysis of overdispersed 
-counts using generalized estimating equations. \emph{Environmental and Ecological Statistics} 
+Warton D.I. and Guttorp P. (in press April 2010) Compositional analysis of overdispersed counts using generalized estimating equations. \emph{Environmental and Ecological Statistics} 
+
+Warton D. I., Wright S., and Wang, Y. (2012). Distance-based multivariate analyses confound location and dispersion effects. \emph{Methods in Ecology and Evolution}, 3(1), 89-101.
+
 Davison, A. C. and Hinkley, D. V. (1997) \emph{Bootstrap Methods and their Application.} Cambridge University Press, Cambridge.
 
 Westfall, P. H. and Young, S. S. (1993) \emph{Resampling-based multiple 
@@ -126,11 +129,11 @@ anova(tasm.cop.nb)
 ## Checking model assumptions
 plot(tasm.cop.nb)
 
-
 ## Accounting for correlation between variables (with shrinkage):
 tasm.cop.nb2 <- manyglm(tasm.cop ~ block*treatment, family="negative.binomial", cor.type="shrink")
+
 ## Repeat ANOVA test with P-values adjusted for multiple testing, using parametric bootstrap and wald statistics:
-anova(tasm.cop.nb2, p.uni="adjusted", nBoot=500)
+anova(tasm.cop.nb2, p.uni="adjusted", nBoot=500, test="wald")
 
 }
 \keyword{models}

@@ -17,7 +17,9 @@ mvabund <- function(..., row.names = NULL, check.rows = FALSE,
     mvabund.obj <- data.frame(..., row.names=row.names, check.rows=check.rows,
       check.names=check.names)
 
-  mvabund.obj <- as.matrix(mvabund.obj)
+names <- dimnames(mvabund.obj)
+mvabund.obj <- as.matrix(mvabund.obj)
+dimnames(mvabund.obj) <- names
 
   N <- nrow(mvabund.obj)
 
@@ -26,8 +28,8 @@ mvabund <- function(..., row.names = NULL, check.rows = FALSE,
 	N <- nrow(mvabund.obj)
 	}
 	
-  if(any(mvabund.obj[!is.na(mvabund.obj)]<0) & !neg )
-    stop("Only positive values are accepted as abundance data.")
+if (any(mvabund.obj[!is.na(mvabund.obj)]<0) & !neg )
+     warning("There are some negative values in your abundance data, which is not expected if your data are counts - please check.")
 
  p <- dim(mvabund.obj)[2]
 
@@ -42,7 +44,7 @@ mvabund <- function(..., row.names = NULL, check.rows = FALSE,
 
 class(mvabund.obj) <- c("mvabund","matrix")
 if(!is.numeric(mvabund.obj))
-  warning("The object is not numeric. Further analysis will fail.")
+    warning("The object is not numeric. Further analysis will fail.")
 
 return(mvabund.obj)
 }

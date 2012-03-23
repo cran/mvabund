@@ -50,6 +50,9 @@
 /* ------------------------------ */
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_linalg.h>
+#include "R.h"
+
+#define printf Rprintf
 
 // MVN with positive-semi definite covariance matrix
 int semirmvnorm(const gsl_rng *rnd, const unsigned int n, const gsl_vector *mean, const gsl_matrix *var, gsl_vector *result);

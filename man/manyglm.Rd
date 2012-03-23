@@ -8,7 +8,7 @@
 manyglm(formula, family="negative.binomial", data=NULL, subset=NULL, 
     na.action=options("na.action"), phi.method = "ML", model = FALSE,
     x = TRUE, y = TRUE, qr = TRUE, cor.type= "I", shrink.param=NULL, 
-    tol=1.0e-8, show.coef=FALSE, show.fitted=FALSE, 
+    tol=1.0e-6, show.coef=FALSE, show.fitted=FALSE, 
     show.residuals=FALSE, \dots )
 }
 \arguments{
@@ -79,9 +79,9 @@ manyglm(formula, family="negative.binomial", data=NULL, subset=NULL,
 }
 \details{
 
-\code{manyglm} is used to calculate the parameter estimates of generalised linear models fitted to each of many variables simultaneously. Models for \code{manyglm} are specified symbolically. For details on this compare the details section of \code{\link{lm}} and \code{\link{formula}}. A formula has an implied intercept term.  To remove this use either \code{y ~ x - 1} or \code{y ~ 0 + x}.  See \code{\link{formula}} for more details of allowed formulae.
+\code{manyglm} is used to calculate the parameter estimates of generalised linear models fitted to each of many variables simultaneously as in Warton et. al. (2012) and Wang et.al.(2012). Models for \code{manyglm} are specified symbolically. For details on this compare the details section of \code{\link{lm}} and \code{\link{formula}}. A formula has an implied intercept term.  To remove this use either \code{y ~ x - 1} or \code{y ~ 0 + x}.  See \code{\link{formula}} for more details of allowed formulae.
 
-Generalised linear models are designed for non-normal data where a specific alternative distribution offers a reasonable model for data, as specified using the argument \code{family} (Warton (2011)). Count data can be analysed using \code{family="poisson"} if the data is not "overdispersed" (that is, if the variance is not larger than the mean), although for multivariate abundance data it has been shown that the negative binomial distribution (\code{family="negative.binomial"}) is a good choice of model for counts (Warton (2005)). Binary (presence/absence) data should use \code{family="binomial"}, which will be made available in the up coming version of mvabund.
+Generalised linear models are designed for non-normal data where a specific alternative distribution offers a reasonable model for data, as specified using the argument \code{family} (Warton (2011)). Count data can be analysed using \code{family="poisson"} if the data is not "overdispersed" (that is, if the variance is not larger than the mean), although for multivariate abundance data it has been shown that the negative binomial distribution (\code{family="negative.binomial"}) is a good choice of model for counts (Warton (2005)). For binary (presence/absence) data, \code{family="binomial"} should be used.
 
 The negative binomial function requires knowledge of the overdispersion
 parameter (\code{phi}) in order to fit a generalised linear model. However, it
@@ -204,6 +204,8 @@ If \code{cor.type=="shrink"}, a numerical value will be assigned to \code{shrink
 }
 
 \references{
+
+
 Lawless, J. F. (1987)
 \emph{Negative binomial and mixed Poisson regression},
 Canadian Journal of Statistics 15, 209-225.
@@ -223,7 +225,12 @@ Statistical Association} 103, 340-349.
 
 Warton D.I. (2011). Regularized sandwich estimators for analysis of high dimensional data using generalized estimating equations. \emph{Biometrics}, 67(1), 116-123.
 
+Warton D. I., Wright S., and Wang, Y. (2012). Distance-based multivariate analyses confound location and dispersion effects. \emph{Methods in Ecology and Evolution}, 3(1), 89-101.
+
+Wang Y., Neuman U., Wright S. and Warton D. I. (2012). mvabund: an R package for model-based analysis of multivariate abundance data. \emph{Methods in Ecology and Evolution}. online 21 Feb 2012.
+
 }
+
 \author{
 Yi Wang, Ulrike Naumann and David Warton <David.Warton@unsw.edu.au>.
 }

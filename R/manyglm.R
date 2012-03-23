@@ -3,7 +3,7 @@
 # the (default) methods coef, residuals, fitted values can be used             
 ###############################################################################
 
-manyglm <- function (formula, family="negative.binomial", data=NULL, subset=NULL, na.action=options("na.action"), phi.method = "ML", model = FALSE, x = TRUE, y = TRUE, qr = TRUE, cor.type= "I", shrink.param=NULL, tol=1.0e-8, show.coef=FALSE, show.fitted=FALSE, show.residuals=FALSE, ... ) {
+manyglm <- function (formula, family="negative.binomial", data=NULL, subset=NULL, na.action=options("na.action"), phi.method = "ML", model = FALSE, x = TRUE, y = TRUE, qr = TRUE, cor.type= "I", shrink.param=NULL, tol=1.0e-6, show.coef=FALSE, show.fitted=FALSE, show.residuals=FALSE, ... ) {
 
 # tasmX <- as.matrix(tasmX, "numeric")  
 
@@ -15,7 +15,7 @@ if ( is.character(family) ) {
        familynum <- 0 # gaussian
        familyname <- "gaussian"
     }   
-    if (substr(family,1,1) == "p") {
+    else if (substr(family,1,1) == "p") {
        familynum <- 1   #poisson
        familyname <- "poisson"
     }   
@@ -119,7 +119,6 @@ else {
     modelParam <- list(tol=tol, regression=familynum, estimation=methodnum, stablizer=FALSE)
     z <- .Call("RtoGlm", modelParam, Y, X, PACKAGE="mvabund")
 
-# new codes added here to deal with w 
 # New codes added for estimating ridge parameter 
     if (cor.type=="shrink") {      
         if (is.null(shrink.param)) {

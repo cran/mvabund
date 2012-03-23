@@ -7,7 +7,7 @@
 \description{
 This package provides tools for a model-based approach to the analysis of multivariate abundance data in ecology (Warton (2011)).
 
-This includes graphical methods for exploring the properties of data and the community-environment association, flexible regression methods for estimating and making robust inferences about the community-environment association, and diagnostic plots to check the appropriateness of a fitted model.
+This includes graphical methods for exploring the properties of data and the community-environment association, flexible regression methods for estimating and making robust inferences about the community-environment association, and diagnostic plots to check the appropriateness of a fitted model (Wang et. al (2012)).
 
 Future versions of this function will extend it to regression analysis using additive functions, and model-based cluster analysis.
 }
@@ -71,8 +71,12 @@ Warton D.I. & Hudson H.M. (2004). A MANOVA statistic is just as powerful as dist
 
 Warton, D. I. and Guttorp, P. (in press April 2010). Compositional analysis of overdispersed counts using generalized estimating equations. \emph{Environmental and Ecological Statistics}.
 
-Warton D.I. (2011). Regularized sandwich estimators for analysis of high dimensional data usi
-ng generalized estimating equations. \emph{Biometrics}, 67(1), 116-123.
+Warton D.I. (2011). Regularized sandwich estimators for analysis of high dimensional data using generalized estimating equations. \emph{Biometrics}, 67(1), 116-123.
+
+Warton D. I., Wright S., and Wang, Y. (2012). Distance-based multivariate analyses confound location and dispersion effects. \emph{Methods in Ecology and Evolution}, 3(1), 89-101.
+
+Wang Y., Neuman U., Wright S. and Warton D. I. (2012). mvabund: an R package
+for model-based analysis of multivariate abundance data. \emph{Methods in Ecology and Evolution}. online 21 Feb 2012. 
 
 }
 

@@ -23,18 +23,17 @@
 #include <gsl/gsl_sort_vector.h>
 #include <gsl/gsl_sort_double.h>
 #include <gsl/gsl_errno.h>
+#include "R.h"
 
 // rmv.h
 #include <gsl/gsl_eigen.h>
 #include <gsl/gsl_sf_gamma.h>
 
-#include "R.h"
-#define printf Rprintf
-
 // return status
 #define SUCCESS 0
 #define FAILED 1
 #define CannotOpenFile 2  
+
 // logic
 #define TRUE 1
 #define FALSE 0
@@ -81,7 +80,7 @@
 #define VECTOR 1
 // others
 #define TOL 1e-8
-#define MAXITER 999 
+#define MAXITER 499 
 #define LAMBDA 0.8  // no shrinkage 
 #define NaN -100000
 #define MAX_LINE_LENGTH 65536
@@ -95,7 +94,9 @@
 #define RHO 0.5
 #define ALFA 0.05
 #define MAXLINELEN 256
-//
+
+#define printf Rprintf
+
 typedef struct MethodStruc {
     // hypo test methods
     unsigned int nboot;
@@ -158,7 +159,7 @@ public: mv_Method *mmRef;
        virtual ~AnovaTest();
        int resampTest(void); 
        void releaseTest(void);
-       //void display(void);
+       // void display(void);
 
 private: mv_mat *Hats;
          gsl_permutation **sortid;
@@ -191,7 +192,7 @@ public: mv_Method *mmRef;
        virtual ~Summary();
        int resampTest(void); 
        void releaseSummary(void);
-       // void display(void);
+//       void display(void);
 
 private: mv_mat *Hats;
 	 gsl_permutation **sortid;
@@ -217,7 +218,7 @@ class glm
 	   virtual int regression(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)=0;
 	   virtual int EstIRLS(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, double *) = 0;
 	   int copyGlm(glm *src);
-          // void display(void); 	  
+//           void display(void); 	  
 
            // input arguments
            const reg_Method *mmRef;
@@ -226,7 +227,7 @@ class glm
 	   gsl_matrix *Oref;
 	   // return properties
 	   gsl_matrix *Beta;
-	   gsl_matrix *varBeta;
+           gsl_matrix *varBeta; // variance of Beta Hat
 	   gsl_matrix *Mu;
 	   gsl_matrix *Eta;
 	   gsl_matrix *Res;
@@ -349,10 +350,10 @@ class GlmTest
             void releaseTest(void);	
 
 	    int summary(void);
-	    // void displaySmry(void);
+//	    void displaySmry(void);
 
 	    int anova(gsl_matrix *);
-            // void displayAnova(void);
+//            void displayAnova(void);
             
     private:
 	    int getBootID(void);
@@ -367,7 +368,7 @@ class GlmTest
 
             int resampData(glm *, gsl_matrix *, GrpMat *, GrpMat *, unsigned int i ); // summary
 	    int resampNonCase(glm *, gsl_matrix *, unsigned int i);
-	    int resampAnovaCase(glm *, gsl_matrix *, gsl_matrix *, gsl_matrix *, unsigned int i);
+	    int resampAnovaCase(glm *, gsl_matrix *, gsl_matrix *, unsigned int i);
 	    int setMonteCarlo(glm *model, gsl_matrix *, gsl_matrix *);
 
             // intermediate data
@@ -386,7 +387,6 @@ class GlmTest
 	    //double *mr, *sr; // mean and variance of model residuals
 //	    gsl_vector *mr;
 
-	    GrpMat *GrpHii; // group Hii
 	    GrpMat *GrpXs;  // group X0
 	    GrpMat *GrpOs;  // group offset
 
@@ -397,8 +397,8 @@ int vector_filesize(FILE *f);
 void matrix_filesize(FILE *f, int * row, int * col);
 gsl_matrix * load_m(const char * file);
 gsl_vector * load_v(const char * file);
-//void displaymatrix(gsl_matrix * m, const char * name);
-//void displayvector(gsl_vector * v, const char * name);
+void displaymatrix(gsl_matrix * m, const char * name);
+void displayvector(gsl_vector * v, const char * name);
 
 // calctest.c - utility functions
 double calcDet(gsl_matrix *SS);

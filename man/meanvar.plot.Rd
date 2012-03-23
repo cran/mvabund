@@ -43,7 +43,7 @@ mvformula) to be used.}
 \item{\dots}{arguments to be passed to or from other methods.} 
 }
 \details{
-\code{meanvar.plot} calculates a mean-variance plot for a dataset with many variables.
+\code{meanvar.plot} calculates a mean-variance plot for a dataset with many variables (e.g., Warton D. I., Wright S., and Wang, Y. (2012)).
 
 The mean values and variances are calculated across all observations, unless a 
 formula is given as the first argument which specifies a factor as the dependent 
@@ -68,6 +68,10 @@ Otherwise, only the plot(s) is/are drawn.
 }
 
 \references{
+
+Warton D. I., Wright S., and Wang, Y. (2012). Distance-based multivariate analyses confound location and dispersion effects. \emph{Methods in Ecology and Evolution}, 3(1), 89-101.
+
+
 Warton D.I. (2008). Raw data graphing: an informative but under-utilized tool for the analysis of multivariate abundances. \emph{Austral Ecology} 33(3), 290-300.
 }
 

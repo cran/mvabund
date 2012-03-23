@@ -64,6 +64,7 @@ anova.manyglm <- function(object, ..., resamp="montecarlo", test="LR", p.uni="no
     if (substr(object$family,1,1) == "p") familynum <- 1 
     else if (substr(object$family,1,1) == "n") familynum <- 2
     else if (substr(object$family,1,1)=="b") familynum <- 3
+  
 
     if (object$phi.method == "ML") methodnum <- 0
     else if (object$phi.method == "Chi2") methodnum <- 1 
@@ -77,13 +78,28 @@ anova.manyglm <- function(object, ..., resamp="montecarlo", test="LR", p.uni="no
 #    else if (substr(resamp,1,1) =="f") resampnum <- 4 # free permuation
     else if (substr(resamp,1,1) ==  "m") resampnum <- 5 # montecarlo 
     else stop("'resamp' not defined. Choose one of 'case', 'resid', 'score', 'perm.resid', 'montecarlo'")    
-        
+
+
+    # allows case and parametric bootstrap only for binomial regression
+    if (familynum == 3 && resampnum != 5) {     
+       warning("'montecarlo' is used for binomial regression.")
+       resamp <- "montecarlo"
+       resampnum <- 5
+    }
+    
     if (substr(test,1,1) == "w") testnum <- 2 # wald
     else if (substr(test,1,1) == "s") testnum <- 3 #score
     else if (substr(test,1,1) == "L") testnum <- 4 #LR
     else stop("'test'not defined. Choose one of 'wald', 'score', 'LR' for an manyglm object.")  
 
-    if (cor.type == "R") corrnum <- 0
+    if (resampnum==0 && testnum!=2) # case resampling and score/LR test
+       warning("case resampling with score and LR tests is under development. try case resampling with wald test.")
+
+    if (cor.type == "R") {
+        corrnum <- 0
+        if ( nVars > nRows ) # p>N 
+           warning("number of variables is greater than number of parameters so R cannot be estimated reliably -- suggest using cor.type='shrink'.")
+    }        
     else if (cor.type == "I") corrnum <- 1
     else if (cor.type == "shrink") corrnum <- 2
     else stop("'cor.type' not defined. Choose one of 'I', 'R', 'shrink'")  

@@ -623,8 +623,9 @@ if (type=="bx")  {
 	 	col[factor.shift == lev ] <- colr[lev]
 	    col <-  rep(col, times = n.vars)
 	}
-	else
+	else {
 	   colr <- c("red", "darkgreen", "orange", "black", "darkred", "darkblue","purple","rosybrown", "plum", "green", "hotpink", "gold", "brown","lightblue","darkgrey")[col]
+        }
 		
 	########### factor plot #################
 	# Shift overlapping points.
@@ -645,7 +646,7 @@ if (type=="bx")  {
 		xlimi <- c(xlim[1], xlim[2] + (xlim[2]- xlim[1])*ncoll/6)
 	} 
 
-	plot(mvabund.object,y.axisi,ylab="",xlab="", main="", ylim=c(0,n.vars+0.5), pch=pch, type=type, xlim=xlimi, col=colr, cex=cex, lwd=lwd, axes=FALSE)
+	plot(mvabund.object,y.axisi,ylab="",xlab="", main="", ylim=c(0,n.vars+0.5), pch=pch, type=type, xlim=xlimi, col=col, cex=cex, lwd=lwd, axes=FALSE)
 
        # add title 	
        mtext(main, side=3, line=-1.2, cex=clab, font=2, adj=0.5)

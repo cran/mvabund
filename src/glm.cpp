@@ -1,6 +1,6 @@
 // GLM estimation 
 // Author: Yi Wang (yi dot wang at unsw dot edu dot au)
-// // 16-June-2011
+// 16-333-2011
 
 #include "resampTest.h"
 //#include "time.h"
@@ -135,12 +135,8 @@ void glm::initialGlm(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)
         dev[j] = 0;
         aic[j] = 0;
         iterconv[j] = 0;
-        for (i=0; i<nRows; i++) {
-//            eij = link(gsl_matrix_get(Mu, i, j));
-//            eij=(eij<-lTol)?-lTol:((eij>lTol)?lTol:eij);
+        for (i=0; i<nRows; i++) 
             gsl_matrix_set(Eta, i, j, link(gsl_matrix_get(Mu, i, j)));
-//            gsl_matrix_set(Mu, i, j, invLink(eij));
-        }
     }    
     rdf = nRows - nParams;
 }
@@ -180,13 +176,19 @@ int PoissonGlm::EstIRLS(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, double *a)
     initialGlm(Y, X, O);
 
     unsigned int i, j;   
-    double yij, mij, vij, wij, rij, tol;
+    double yij, mij, vij, wij, rij, tol, hii;
+    gsl_matrix *WX = gsl_matrix_alloc(nRows, nParams);   
+    gsl_matrix *TMP = gsl_matrix_alloc(nRows, nParams);   
+    gsl_matrix *XwX = gsl_matrix_alloc(nParams, nParams);   
+    gsl_vector *t = gsl_vector_alloc(nParams);
+    gsl_vector_view wj, vj, dj, hj;
 
     for (j=0; j<nVars; j++) {
        if ( a!=NULL ) phi[j]=a[j]; 
        // estimate mu and beta   
        iterconv[j] = betaEst(j, maxiter, &tol, phi[j]);        
        // other properties based on mu
+       wj = gsl_matrix_column (wHalf, j);
        for (i=0; i<nRows; i++) {
             mij = gsl_matrix_get(Mu, i, j);
             // get variance
@@ -194,25 +196,52 @@ int PoissonGlm::EstIRLS(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, double *a)
             gsl_matrix_set(Var, i, j, vij); 
             // get weight
             wij = weifunc(mij, phi[j]);           
-            gsl_matrix_set(wHalf, i, j, sqrt(wij)); 
+            gsl_vector_set(&wj.vector, i, sqrt(wij));             
             // get (Pearson) residuals
             yij = gsl_matrix_get(Y, i, j);
             rij = (yij-mij)/sqrt(vij);
             gsl_matrix_set(Res, i, j, rij);        
             // get elementry log-likelihood	   
             ll[j] = ll[j] + llfunc( yij, mij, phi[j] );
-            dev[j] = dev[j] + devfunc( yij, mij, phi[j] );
+            dev[j] = dev[j] + devfunc( yij, mij, phi[j] );            
        }      
        aic[j]=-ll[j]+2*(nParams);
+
+       // Get X * W^1/2
+       wj = gsl_matrix_column (wHalf, j);
+       for (i=0; i<nParams; i++) 
+           gsl_matrix_set_col (WX, i, &wj.vector);
+       gsl_matrix_mul_elements (WX, X);
+       // X^T * W * X
+       gsl_matrix_set_zero (XwX);
+       gsl_blas_dsyrk (CblasLower, CblasTrans, 1.0, WX, 0.0, XwX);
+       gsl_linalg_cholesky_decomp (XwX); // provided XwX is non-singular        
+       // Calc varBeta
+       gsl_linalg_cholesky_invert (XwX);
+       vj = gsl_matrix_column (varBeta, j);
+       dj = gsl_matrix_diagonal (XwX);
+       gsl_vector_memcpy (&vj.vector, &dj.vector);
+
+       // Calc sqrt(1-hii)
+       // hii is diagonal element of W^1/2*X*(X'WX)^-1*X^T*W^1/2
+       gsl_blas_dsymm (CblasRight, CblasLower, 1.0, XwX, WX, 0.0, TMP);
+       gsl_matrix_mul_elements (TMP, WX);
+       gsl_vector_set_all (t, 1.0);
+       hj = gsl_matrix_column (sqrt1_Hii, j);
+       gsl_blas_dgemv (CblasNoTrans, 1.0, TMP, t, 0.0, &hj.vector); 
+       for (i=0; i<nRows; i++) {
+           hii = gsl_vector_get(&hj.vector, i);
+           gsl_vector_set(&hj.vector, i, sqrt(1-MIN((1-mintol),hii))); 
+       }
    } 
-//   float time_diff = (float)(clock() - clk_start)/(float)(CLOCKS_PER_SEC);
-//   printf("\n [var%d] betaEst time: %.6f sec", j, time_diff);
    // standardize perason residuals by rp/sqrt(1-hii) 
-   // hii is diagonal element in Hat = X*(X'WX)^-1*X'W
-   getHat(Xref, wHalf, sqrt1_Hii);
    gsl_matrix_div_elements (Res, sqrt1_Hii);
    subtractMean(Res);  // have mean subtracted
-//   displaymatrix(Res, "Res");
+
+   gsl_matrix_free(XwX);
+   gsl_matrix_free(WX);
+   gsl_matrix_free(TMP);
+   gsl_vector_free(t);
 
    return SUCCESS;    
 }
@@ -221,31 +250,33 @@ int PoissonGlm::EstIRLS(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, double *a)
 int PoissonGlm::betaEst( unsigned int id, unsigned int iter, double *tol, double a )
 {
    unsigned int i, isConv=FALSE, step=0;
-   double eij, mij, yij, oij, wij, zij;
+   double oij, wij, zij;   
+   double eij, mij, yij;   
    double dev_old, diff;
    gsl_vector *z = gsl_vector_alloc(nRows);
-   gsl_matrix *wX = gsl_matrix_alloc(nRows, nParams);   
-   gsl_matrix *XwX = gsl_matrix_alloc(nParams, nParams);   
+   gsl_vector *y_m = gsl_vector_alloc(nRows);
+   gsl_matrix *WX = gsl_matrix_alloc(nRows, nParams); 
+   gsl_matrix *XwX = gsl_matrix_alloc(nParams, nParams);
    gsl_vector *Xwz = gsl_vector_alloc(nParams);
 
-   gsl_vector_view yj, mj, ej, bj, oj, Xwi, vj, dj;
+   gsl_vector_view yj, mj, ej, bj, oj, wj, Xwi;
    yj=gsl_matrix_column(Yref, id);
    mj=gsl_matrix_column(Mu, id);
    ej=gsl_matrix_column(Eta, id);
    bj=gsl_matrix_column (Beta, id);   
-   vj=gsl_matrix_column (varBeta, id);   
-   if ( Oref==NULL ) oij=0;
-   else  oj = gsl_matrix_column(Oref, id);
-
+   wj=gsl_matrix_column (wHalf, id);   
+   if ( Oref!=NULL ) oj = gsl_matrix_column(Oref, id);
    // IRLS
+//   unsigned int debug = FALSE;
+//   double det;
    while ( isConv != TRUE ) {
        step++;
        dev_old = dev[id];
-       gsl_matrix_memcpy( wX, Xref );
+       gsl_matrix_memcpy (WX, Xref);
        for (i=0; i<nRows; i++) {
            eij = gsl_vector_get(&ej.vector, i);
            mij = gsl_vector_get(&mj.vector, i);
-           yij = gsl_vector_get(&yj.vector, i);
+           yij = gsl_vector_get(&yj.vector, i);           
            if (Oref == NULL) oij = 0;
            else oij = gsl_vector_get(&oj.vector, i); 
            // update weight 
@@ -254,27 +285,39 @@ int PoissonGlm::betaEst( unsigned int id, unsigned int iter, double *tol, double
 	   zij = eij + (yij-mij)/rcpLinkDash(mij) - oij;
            gsl_vector_set( z, i, wij*zij ); // z = wHalf * z
            // get Xw
-	   Xwi = gsl_matrix_row (wX, i);
-           gsl_vector_scale (&Xwi.vector, wij); // Xw = WHalf * X
+	   Xwi = gsl_matrix_row (WX, i);
+           gsl_vector_scale (&Xwi.vector, wij); // Xw = WHalf * X 
+/*           if (wij < mintol) {
+              printf("wHalf(%d, %d) < mintol\n", i, id);
+              debug == TRUE;
+           }
+*/
         }
-        // X^T * W * X
-        gsl_blas_dsyrk (CblasLower, CblasTrans, 1.0, wX, 0.0, XwX);
-        // solve X^T * W * X * bj = X^T * W * z
-        gsl_linalg_cholesky_decomp (XwX); // provided XwX is non-singular 
-        // X^T * W * z = (Xw)^T * z
-        gsl_blas_dgemv (CblasTrans, 1.0, wX, z, 0.0, Xwz);
-        gsl_linalg_cholesky_solve (XwX, Xwz, &bj.vector);
-        //displaymatrix(XwX, "XwX");
         // XwX can be singular so use QR LSQ instead
-	//invLSQ(wX, z, &bj.vector);   
+//       invLSQ(WX, z, &bj.vector);   
 
-	// update eta = X*beta + offset
-        gsl_blas_dgemv (CblasNoTrans, 1.0, Xref, &bj.vector, 0.0, &ej.vector);
-	if (Oref!=NULL) gsl_vector_add (&ej.vector, &oj.vector);	   
+       gsl_matrix_set_zero (XwX);
+       gsl_blas_dsyrk (CblasLower, CblasTrans, 1.0, WX, 0.0, XwX);
 
-        // update mu and deviance
-        dev[id] = 0;
-        for (i=0; i<nRows; i++) {
+ /*      if (debug == TRUE) {
+          displaymatrix(WX, "WX");
+          printf("det(XwX) = %.8f\n", calcDet(XwX));
+       }
+ */        
+       // solve X^T * W * X * bj = X^T * W * z
+       gsl_linalg_cholesky_decomp (XwX); // provided XwX is non-singular
+       // X^T * W * z = (Xw)^T * z
+       gsl_blas_dgemv (CblasTrans, 1.0, WX, z, 0.0, Xwz);
+       gsl_linalg_cholesky_solve (XwX, Xwz, &bj.vector);
+ 
+       // update eta = X*beta + offset
+       gsl_blas_dgemv (CblasNoTrans, 1.0, Xref, &bj.vector, 0.0, &ej.vector);
+       if ( Oref!=NULL ) gsl_vector_add (&ej.vector, &oj.vector);	   
+
+
+       // update mu and deviance
+       dev[id] = 0;
+       for (i=0; i<nRows; i++) {
             eij=gsl_vector_get(&ej.vector, i);
             eij=(eij<-lTol)?-lTol:((eij>lTol)?lTol:eij);
             gsl_vector_set(&ej.vector, i, eij);
@@ -289,16 +332,11 @@ int PoissonGlm::betaEst( unsigned int id, unsigned int iter, double *tol, double
         if ( (*tol < mintol) | (step == iter )) break;
    } 
 
-   // Get variance for the jth column of beta hat
-//   gsl_linalg_cholesky_decomp (XwX); // provided XwX is non-singular 
-   gsl_linalg_cholesky_invert (XwX);
-   dj = gsl_matrix_diagonal (XwX); 
-   gsl_vector_memcpy (&vj.vector, &dj.vector);
-
    gsl_vector_free(z);
-   gsl_matrix_free(wX); 
+   gsl_vector_free(y_m);
+   gsl_matrix_free(WX); 
    gsl_matrix_free(XwX); 
-   gsl_vector_free(Xwz);
+   gsl_vector_free(Xwz); 
 
    return step;
 }
@@ -307,13 +345,17 @@ int PoissonGlm::betaEst( unsigned int id, unsigned int iter, double *tol, double
 int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)
 {   
     initialGlm(Y, X, O);
-//    displaymatrix(Eta, "Eta0");
 
     unsigned int i, j, isConv;
-    double yij, mij, vij;
+    double yij, mij, vij, hii;
     double a, tol, fA, fAdash;
     double initphi=1e-4;
     gsl_vector_view b0j, m0j, e0j, v0j;
+    gsl_matrix *WX = gsl_matrix_alloc(nRows, nParams);   
+    gsl_matrix *TMP = gsl_matrix_alloc(nRows, nParams);   
+    gsl_matrix *XwX = gsl_matrix_alloc(nParams, nParams);   
+    gsl_vector *t = gsl_vector_alloc(nParams);
+    gsl_vector_view wj, vj, dj, hj;
 
     // Get initial estimates from Poisson    
     PoissonGlm fit0( mmRef );
@@ -322,7 +364,6 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)
     for (j=0; j<nVars; j++) {  
         // Get initial beta estimates from Poisson
         fit0.betaEst(j, maxiter, &tol, 0);
-// printf("done\n");
 	b0j = gsl_matrix_column(fit0.Beta, j);
 	gsl_matrix_set_col(Beta, j, &b0j.vector);
         m0j = gsl_matrix_column(fit0.Mu, j);
@@ -336,7 +377,6 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)
         // Get initial phi estimates 
         if (mmRef->estiMethod==CHI2) {
             a = fit0.getDisper(j); 
-//            printf("a=%.2f\n", a);
             phi[j] = (a<1)? 0:1/a;
 	    isConv = (a<1)? TRUE:FALSE;
 	    while (isConv != TRUE) {
@@ -361,10 +401,11 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)
                 getfAfAdash(phi[j], j, &fA, &fAdash);
                 phi[j] = phi[j]-fA/fAdash;
                 // check convergence
-	        if ((tol<mintol) | (iterconv[j]==maxiter) | (phi[j] < 0)) 
-                   break;
+	        if ((tol<mintol*10) | (iterconv[j]==maxiter) | (phi[j] < 0) | (phi[j]!=phi[j])) break;
        }   }
-       if ( phi[j] < 0) { // restore poisson
+       // restore poisson if phi[j]<0 or nan
+       if ( (phi[j] < 0) | (phi[j]!=phi[j]) ) { 
+//            printf("%.2f, fA=%.2f, fAdash=%.2f\n", phi[j], fA, fAdash);
             phi[j]=0;
             gsl_matrix_set_col (Beta, j, &b0j.vector);
             gsl_matrix_set_col (Mu, j, &m0j.vector);
@@ -387,16 +428,43 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)
            ll[j] = ll[j] + llfunc( yij, mij, phi[j] );
        }
        aic[j]=-ll[j]+2*(nParams+1);
-   } // end nVar for j loop
 
-   // standardize pearson residual rp = rp/sqrt(1-hii)
-   // hii is diagonal element in Hat = X*(X'WX)^-1*X'W
-   getHat(Xref, wHalf, sqrt1_Hii);
+       // Get X * W^1/2
+       wj = gsl_matrix_column (wHalf, j);
+       for (i=0; i<nParams; i++) 
+           gsl_matrix_set_col (WX, i, &wj.vector);
+       gsl_matrix_mul_elements (WX, X);
+       // X^T * W * X
+       gsl_matrix_set_zero (XwX);
+       gsl_blas_dsyrk (CblasLower, CblasTrans, 1.0, WX, 0.0, XwX);
+       gsl_linalg_cholesky_decomp (XwX); // provided XwX is non-singular        
+       // Calc varBeta
+       gsl_linalg_cholesky_invert (XwX);
+       vj = gsl_matrix_column (varBeta, j);
+       dj = gsl_matrix_diagonal (XwX);
+       gsl_vector_memcpy (&vj.vector, &dj.vector);
+//       displayvector(&vj.vector, "vj");
+
+       // Calc sqrt(1-hii)
+       // hii is diagonal element of W^1/2*X*(X'WX)^-1*X^T*W^1/2
+       gsl_blas_dsymm (CblasRight, CblasLower, 1.0, XwX, WX, 0.0, TMP);
+       gsl_matrix_mul_elements (TMP, WX);
+       gsl_vector_set_all (t, 1.0);
+       hj = gsl_matrix_column (sqrt1_Hii, j);
+       gsl_blas_dgemv (CblasNoTrans, 1.0, TMP, t, 0.0, &hj.vector); 
+       for (i=0; i<nRows; i++) {
+           hii = gsl_vector_get(&hj.vector, i);
+           gsl_vector_set(&hj.vector, i, sqrt(1-MIN((1-mintol),hii))); 
+       }    
+   } // end nVar for j loop
    gsl_matrix_div_elements (Res, sqrt1_Hii);
    subtractMean(Res);
-//   displaymatrix(Res, "standardized Pearson resdiduals");
 
    fit0.releaseGlm();  
+   gsl_matrix_free(XwX);
+   gsl_matrix_free(WX);
+   gsl_matrix_free(TMP);
+   gsl_vector_free(t);
 
    return SUCCESS;    
 }
@@ -428,20 +496,28 @@ double PoissonGlm::getDisper( unsigned int id ) const
 
 double NBinGlm::llfunc ( double yi, double mui, double a  ) const
 {
-    double l=0, k=1/a, p;
-    if ((a==0) & (yi==0)) l = -mui;
-    else if ((a==0) & (yi>0))  l = (yi*log(mui)-mui-gsl_sf_lngamma(yi+1));  
-    else if ((a>0) & (yi==0))  l = k*(log(k)-log(mui+k));    
-    else if ((a>0) & (yi>0)) {
-       p = 1/(1+GSL_MAX(mui, 0)*a);
-//       double pComp = ((1-p)<mintol) ? 1:(1-p);
-       l = gsl_sf_lngamma(yi+k)-gsl_sf_lngamma(k)-gsl_sf_lngamma(yi+1);
-       l = l + log(p)*k + yi*log( ((1-p)==0) ? 1:(1-p) );  
+    double l=0, k=0, p=0;
+
+    if (a < 0 ) 
+       GSL_ERROR("Error in llfunc, phi should be non-negative", GSL_ERANGE); 
+    else if (a<mintol) { // equivalent to Poisson log likelihood
+       if (yi < 0)
+          GSL_ERROR("Error in llfunc, y should be non-negative", GSL_ERANGE);
+       else if (yi<mintol) l = -mui;
+       else l = (yi*log(mui)-mui-gsl_sf_lngamma(yi+1));
     }
     else {
-//       printf("yi=%.2f, mui=%.2f, phi=%.4f\n", yi, mui, a);
-       GSL_ERROR("Error in llfunc, y or phi should be non-negative", GSL_ERANGE); 
-    }   
+       if (yi < 0)
+          GSL_ERROR("Error in llfunc, y should be non-negative", GSL_ERANGE);
+       else if (yi<mintol)  l = -(log(1+mui*a))/a;    
+       else {
+          k = 1/a;
+          l = gsl_sf_lngamma(yi+k)-gsl_sf_lngamma(k)-gsl_sf_lngamma(yi+1);
+          p = 1/(1+GSL_MAX(mui, mintol)*a);
+          l = l + log(p)*k + yi*log( ((1-p)<mintol) ? 1:(1-p) );  
+       }
+    }
+
     return 2*l;
 }
 
@@ -493,28 +569,30 @@ void glm::display(void)
 	      break;
           default: 
               printf("no such method available.\n");
+              exit(1);
        }
     }   
     else {
         printf("regression not available.\n");
+	exit(1);
     }
 
-    printf("Two-log-like=\n " );
-    for ( j=0; j<nVars; j++ ) printf("%.3f ", ll[j]);	
-    printf("\n");
-    printf("AIC=\n " );
-    for ( j=0; j<nVars; j++ ) printf("%.3f ", aic[j]);	
-    printf("\n");
-    printf("# of convergence\n");    
-    for ( j=0; j<nVars; j++ )
-        printf("%d ", iterconv[j]); 
-    printf("\n");	       
-    printf("Residual deviance=\n " );
-    for ( j=0; j<nVars; j++ ) printf("%.2f ", dev[j]);
-    printf("\n");	       
+//    printf("Two-log-like=\n " );
+//    for ( j=0; j<nVars; j++ ) printf("%.2f ", ll[j]);	
+//    printf("\n");
+//    printf("AIC=\n " );
+//    for ( j=0; j<nVars; j++ ) printf("%.2f ", aic[j]);	
+//    printf("\n");
+//    printf("# of convergence\n");    
+//    for ( j=0; j<nVars; j++ )
+//        printf("%d ", iterconv[j]); 
+//    printf("\n");	       
+//    printf("Residual deviance=\n " );
+//    for ( j=0; j<nVars; j++ ) printf("%.2f ", dev[j]);
+//    printf("\n");	       
     if ( mmRef->model == NB ) {
         printf("\nphi=\n ");
-        for (j=0; j<nVars; j++ ) printf("%.4f ", phi[j]);
+        for (j=0; j<nVars; j++ ) printf("%.2f ", phi[j]);
     }
     printf("\n");	       
 //    if (Oref != NULL)
@@ -522,12 +600,12 @@ void glm::display(void)
 //    displaymatrix(Xref, "X");
 //    displaymatrix(Eta, "Eta");
 //    displaymatrix(Beta, "Beta");
-    displaymatrix(varBeta, "varBeta");
+//    displaymatrix(varBeta, "varBeta");
 //    displaymatrix(Mu, "Mu");
 //    displaymatrix(Var, "Var");    
 //    displaymatrix(Res, "Res");    
-    displaymatrix(wHalf, "wHalf");
+//    displaymatrix(sqrt1_Hii, "sqrt1_Hii");    
+//    displaymatrix(wHalf, "wHalf");
     
 }
-
 */

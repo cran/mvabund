@@ -30,12 +30,14 @@ ret.x <- x
 ret.y <- y
 ret.qr <- qr
 cl <- match.call()
-mf <- match.call(expand.dots = FALSE)
-m  <- match(c("formula", "data", "subset", "weights", "na.action", "offset"), names(mf), 0)
-mf <- mf[c(1, m)]
-mf$drop.unused.levels <- TRUE
-mf[[1]] <- as.name("model.frame")
-mf <- eval(mf, parent.frame())    # Obtain the model.frame.
+#mf <- match.call(expand.dots = FALSE)
+#m  <- match(c("formula", "data", "subset", "weights", "na.action", "offset"), names(mf), 0)
+#mf <- mf[c(1, m)]
+#mf$drop.unused.levels <- TRUE
+#mf[[1]] <- as.name("model.frame")
+#mf <- eval(mf, parent.frame())    # Obtain the model.frame.
+mf <- model.frame(formula)
+
 if (method == "model.frame") { 
     return(mf)
 } else if (method != "qr") 
