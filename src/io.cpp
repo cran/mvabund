@@ -33,8 +33,6 @@ void matrix_filesize(FILE *f, unsigned int * row, unsigned int * col)
 
 	while (NULL != fgets(line, MAX_LINE_LENGTH-1, f)) (*row)++;
       
-//        printf("col=%d, row=%d\n", *(col), *(row));	
-
 	rewind(f);
 
 }
@@ -47,8 +45,6 @@ gsl_matrix * load_m(const char * file)
 	gsl_matrix * out;
 
 	matrix_filesize(f, &row, &col);
-
-//        printf("matrix file load size: %d rows, %d cols\n", row, col);
 
 	out = gsl_matrix_alloc(row, col);
 
@@ -65,13 +61,22 @@ gsl_vector * load_v(const char * file)
 	unsigned int size = vector_filesize(f);
 	gsl_vector * out;
 
-//        printf("size=%d.\n", size);
 	out = gsl_vector_alloc(size);
 
 	gsl_vector_fscanf(f, out);
 	fclose(f);
 
 	return out;
+}
+
+int getBootID (mv_Method *tm, char *fname, gsl_matrix *bootID)
+{
+    if (tm->reprand == TRUE ) {
+       bootID = load_m(fname);
+       if ((tm->resamp!=SCOREZ) & (tm->resamp!=SCOREBOOT))
+          gsl_matrix_add_constant(bootID, -1.0); // Matlab id ->C id 
+    }
+    return 0;
 }
 
 void displaymatrix(gsl_matrix * m, const char * name)
@@ -95,15 +100,5 @@ void displayvector(gsl_vector * v, const char * name)
 	    printf("%.2f ", gsl_vector_get(v, i));
 	printf("\n");
 
-}
-
-int getBootID (mv_Method *tm, char *fname, gsl_matrix *bootID)
-{
-    if (tm->reprand == TRUE ) {
-       bootID = load_m(fname);
-       if ((tm->resamp!=SCOREZ) & (tm->resamp!=SCOREBOOT))
-          gsl_matrix_add_constant(bootID, -1.0); // Matlab id ->C id 
-    }
-    return 0;
 }
 

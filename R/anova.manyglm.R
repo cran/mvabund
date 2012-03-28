@@ -31,7 +31,7 @@ anova.manyglm <- function(object, ..., resamp="montecarlo", test="LR", p.uni="no
        for (i in 1:ndots) {
            if (!any(class(dots[[i]])=="manyglm")){
               objectname <- names(dots[i])
-              warning(paste(objectname, "is not a manyglm object nor a valid argument- removed from input"))
+              warning(paste(objectname, "is not a manyglm object nor a valid argument- removed from input, default value is used instead."))
               which[i+1] <- FALSE
            }
        }
@@ -138,14 +138,25 @@ anova.manyglm <- function(object, ..., resamp="montecarlo", test="LR", p.uni="no
        # test the significance of each model terms
        X <- object$x
        varseq <- object$assign
-       nterms <- max(0, varseq)+1
        resdev <- resdf <- NULL
+       tl <- attr(object$terms, "term.labels")
+       # if intercept is included
+       if (attr(object$terms,"intercept")==0) {
+          minterm = 1
+          nterms = max(1, varseq)
+       }
+       else {
+          minterm = 0
+          nterms <- max(0, varseq)+1
+          tl <- c("(Intercept)", tl)
+       }
        XvarIn <- matrix(ncol=nParam, nrow=nterms, 1)
-       for ( i in 0L:(nterms-2)) { # exclude object itself
-           XvarIn[nterms-i, varseq>i] <- 0 # in reversed order
-           ncoef <- nParam-length(varseq[varseq>i])
+       for ( i in 0:(nterms-2)) { # exclude object itself
+           XvarIn[nterms-i, varseq>i+minterm] <- 0 # in reversed order
+           ncoef <- nParam-length(varseq[varseq>i+minterm])
            resdf <- c(resdf, nRows-ncoef)
        }
+
        resdf <- c(resdf, object$df.residual)
 #browser()       
        # get the shrinkage estimates
@@ -158,7 +169,7 @@ anova.manyglm <- function(object, ..., resamp="montecarlo", test="LR", p.uni="no
               shrink.param[1] <- ridgeParamEst(dat=object$residuals, X=tX, 
 	                     only.ridge=TRUE)$ridgeParam
           for ( i in 0:(nterms-2)){ # exclude object itself
-              fit <- .Call("RtoGlm", modelParam, Y, X[,varseq<=i,drop=FALSE], 
+              fit <- .Call("RtoGlm", modelParam, Y, X[,varseq<=i+minterm,drop=FALSE], 
 	              PACKAGE="mvabund")
               shrink.param[nterms-i] <- ridgeParamEst(dat=fit$residuals, 
                       X=tX, only.ridge=TRUE)$ridgeParam # in reversed order
@@ -168,11 +179,8 @@ anova.manyglm <- function(object, ..., resamp="montecarlo", test="LR", p.uni="no
        else if (corrnum == 1) shrink.param <- c(rep(0, nterms))
 #       resdev <- c(resdev, object$deviance) 
        nModels <- nterms
-
        ord <- (nterms-1):1
        topnote <- paste("Model:", deparse(object$call))
-       tl <- attr(object$terms, "term.labels")
-       tl <- c("(Intercept)", tl)
     }   
     else {
         targs <- match.call(call = sys.call(which = 1), expand.dots = FALSE)

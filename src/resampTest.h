@@ -218,7 +218,7 @@ class glm
 	   virtual int regression(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)=0;
 	   virtual int EstIRLS(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, double *) = 0;
 	   int copyGlm(glm *src);
-//           void display(void); 	  
+   //        void display(void); 	  
 
            // input arguments
            const reg_Method *mmRef;
@@ -368,7 +368,8 @@ class GlmTest
 
             int resampData(glm *, gsl_matrix *, GrpMat *, GrpMat *, unsigned int i ); // summary
 	    int resampNonCase(glm *, gsl_matrix *, unsigned int i);
-	    int resampAnovaCase(glm *, gsl_matrix *, gsl_matrix *, unsigned int i);
+//	    int resampAnovaCase(glm *, gsl_matrix *, gsl_matrix *, gsl_matrix *, gsl_matrix *, gsl_matrix *, unsigned int i);
+	    int resampAnovaCase(glm *, gsl_matrix *, gsl_matrix *, gsl_matrix *, unsigned int i);
 	    int setMonteCarlo(glm *model, gsl_matrix *, gsl_matrix *);
 
             // intermediate data

@@ -1,10 +1,10 @@
-ba344e2e953de77207d61b45cb536899 *DESCRIPTION
+8089d874c9ccfe29513ac6340305064c *DESCRIPTION
 ecc3ad3e1b695044d2a6d107b4ccb92e *NAMESPACE
 cfd0b4c9d0c82a6840b3776b75cd4ff1 *R/AllClass.R
 ac4de34bb6d601a3a125c3017c7c79c9 *R/RcppVersion.R
 965daf540ddf679f812f57e80bf637a4 *R/RidgeParamEst.R
 edd4725455e10c954ac35c5910e74847 *R/absspp.R
-b766910cb9c4fca96279b3efe3f6ceb1 *R/anova.manyglm.R
+6eb3c483d70fc6678818c8a3dd180b72 *R/anova.manyglm.R
 4bfd48bcec3e69dba3bd90a70a12e353 *R/anova.manylm.R
 21f7cc3a6f5705b797bd5ce09a1d2319 *R/as.data.frame.mvabund.R
 0bef2525e807ea57e1e0e08be1ff2f49 *R/as.matrix.mvabund.R
@@ -74,7 +74,7 @@ ba0a6d89d9bbae5b83bb3f3f3a70b591 *R/rbind.mvabund.R
 7f1ec460c67812540c3f7435956f397b *R/rstandard.manylm.R
 9dad787d9fc38cec8e7bfd8a817d0c24 *R/rstudent.manylm.R
 38ba2aae8076e34039c850b9b956e630 *R/shiftpoints.R
-87cd1895c3fdfc06b5282c7891dcbbc3 *R/summary.manyglm.R
+897243d51be03f5bbb67ff75cf3cef20 *R/summary.manyglm.R
 5c12753af9754e8ca71c4e1ec3f32563 *R/summary.manylm.R
 ea1285a48a67063fbcf41feaaef087c7 *R/transAxis.SW.R
 e2086ebc6613e0aeb185d39b03458f3a *R/unabund.R
@@ -127,10 +127,10 @@ b1ca6a74528441aae5d11297af3df544 *src/RtoGlmSmry.cpp
 baa16a75b9db327ac5bfc32452019aa1 *src/RtoSmryCpp.cpp
 d8d59c5bdcac3c490e392c7f94f91e57 *src/anova.cpp
 498808f0869fb62a238a4dd83c85d791 *src/calctest.cpp
-770a937b26417bf25feb6e57efe4746e *src/glm.cpp
-36dbe7b765523d666ba2661cc8b4af75 *src/glmtest.cpp
-25ef96150cadfb35047875f00bb3181f *src/io.cpp
-1f6c73e005d003c34fc80fa9b0979ab3 *src/resampTest.h
+071b1885cdb94498173969ae0f577157 *src/glm.cpp
+f8a697b096c99227291e2f1d2a86e50f *src/glmtest.cpp
+bcdf91e10a7b5164432c2cebd47899f8 *src/io.cpp
+4a282ca90b36f7d55e9586b36beb272e *src/resampTest.h
 b61e7b73bd004ec128efa09ed163602c *src/rmv.h
 f745a79864cb2f149bf1b27aa349bf6c *src/rnd.cpp
 31fdebe8b8b670d8bf906f64bb4286e0 *src/simutility.cpp

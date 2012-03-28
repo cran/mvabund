@@ -57,12 +57,11 @@ summary.manyglm <- function(object, resamp="montecarlo", test="LR", p.uni="none"
     else stop("'method' not defined. Choose one of 'ML', 'Chi2' for an manyglm object") 
 
     if (substr(resamp,1,1)=="r") resampnum <- 1  # residual
-#   else if (substr(resamp,1,1)=="c") resampnum <- 0  #case
+    else if (substr(resamp,1,1)=="c") resampnum <- 0  #case
     else if (substr(resamp,1,1)=="s") resampnum <- 2  # score
     else if (substr(resamp,1,1) =="p") resampnum <- 3 # permuation
-#    else if (substr(resamp,1,1) =="p") resampnum <- 4 # free permuation
     else if (substr(resamp,1,1) =="m") resampnum <- 5 # montecarlo
-    else stop("'resample' not defined. Choose one of 'residual', 'score', 'perm.resid'", "montecarlo")   
+    else stop("'resample' not defined. Choose one of 'case', 'residual', 'score', 'perm.resid'", "montecarlo")   
 
     # allows case and parametric bootstrap only for binomial regression
     if (familynum == 3 && resampnum !=5 ) {

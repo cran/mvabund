@@ -20,38 +20,28 @@ glm::glm(const reg_Method *mm)
      mintol = mmRef->tol;
      lTol=-log(mintol);
      maxiter = 50;
-//     printf("mintol=%.5f, lTol=%.3f\n", mintol, lTol);
-     //    printf("glm constructor called.\n"); 
 }
 
-PoissonGlm::PoissonGlm(const reg_Method *mm):glm(mm)
-{
-//    printf("Poisson constructor called.\n");
+PoissonGlm::PoissonGlm(const reg_Method *mm):glm(mm){
 }
 
 LogiGlm::LogiGlm(const reg_Method *mm):PoissonGlm(mm) {
-//    printf("Logi constructor called.\n");
 }
 
 NBinGlm::NBinGlm(const reg_Method *mm):PoissonGlm(mm){ 
-//   printf("NB constructor called.\n");
 }
 
 glm::~glm() {
-//   printf("glm destructor called.\n");
 }
 
 
 PoissonGlm::~PoissonGlm() {
-//   printf("Poisson destructor called.\n");
 }
 
 LogiGlm::~LogiGlm() {
-//   printf("Logi destructor called.\n");
 }
 
 NBinGlm::~NBinGlm() {
-//   printf("NB destructor called.\n");
 }
 
 void glm::releaseGlm(void)
@@ -82,7 +72,6 @@ void glm::releaseGlm(void)
         delete[] iterconv;
     if (aic!=NULL)	
         delete[] aic;
-//    printf("glm object released.\n");
 }
 
 void glm::initialGlm(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O) 
@@ -279,42 +268,22 @@ int PoissonGlm::betaEst( unsigned int id, unsigned int iter, double *tol, double
            yij = gsl_vector_get(&yj.vector, i);           
            if (Oref == NULL) oij = 0;
            else oij = gsl_vector_get(&oj.vector, i); 
-           // update weight 
-	   wij = sqrt(weifunc(mij, a));
-	   // update z
-	   zij = eij + (yij-mij)/rcpLinkDash(mij) - oij;
+	   wij = sqrt(weifunc(mij, a)); // update weight
+	   zij = eij + (yij-mij)/rcpLinkDash(mij) - oij; // update z
            gsl_vector_set( z, i, wij*zij ); // z = wHalf * z
-           // get Xw
 	   Xwi = gsl_matrix_row (WX, i);
            gsl_vector_scale (&Xwi.vector, wij); // Xw = WHalf * X 
-/*           if (wij < mintol) {
-              printf("wHalf(%d, %d) < mintol\n", i, id);
-              debug == TRUE;
-           }
-*/
-        }
-        // XwX can be singular so use QR LSQ instead
-//       invLSQ(WX, z, &bj.vector);   
-
+       }
        gsl_matrix_set_zero (XwX);
        gsl_blas_dsyrk (CblasLower, CblasTrans, 1.0, WX, 0.0, XwX);
-
- /*      if (debug == TRUE) {
-          displaymatrix(WX, "WX");
-          printf("det(XwX) = %.8f\n", calcDet(XwX));
-       }
- */        
        // solve X^T * W * X * bj = X^T * W * z
-       gsl_linalg_cholesky_decomp (XwX); // provided XwX is non-singular
+       gsl_linalg_cholesky_decomp (XwX); 
        // X^T * W * z = (Xw)^T * z
        gsl_blas_dgemv (CblasTrans, 1.0, WX, z, 0.0, Xwz);
        gsl_linalg_cholesky_solve (XwX, Xwz, &bj.vector);
- 
        // update eta = X*beta + offset
        gsl_blas_dgemv (CblasNoTrans, 1.0, Xref, &bj.vector, 0.0, &ej.vector);
        if ( Oref!=NULL ) gsl_vector_add (&ej.vector, &oj.vector);	   
-
-
        // update mu and deviance
        dev[id] = 0;
        for (i=0; i<nRows; i++) {
@@ -326,12 +295,10 @@ int PoissonGlm::betaEst( unsigned int id, unsigned int iter, double *tol, double
             dev[id] = dev[id] + devfunc(yij, mij, a);
         }        
 	// Test convergence as the glm function in R
-        // *tol = ABS(dev[id]-dev_old)/(ABS(dev[id])+0.1); 
         diff = dev[id]-dev_old;        
         *tol = GSL_MAX(diff, -diff)/(GSL_MAX(dev[id], -dev[id])+0.1);
         if ( (*tol < mintol) | (step == iter )) break;
    } 
-
    gsl_vector_free(z);
    gsl_vector_free(y_m);
    gsl_matrix_free(WX); 
@@ -381,12 +348,9 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)
 	    isConv = (a<1)? TRUE:FALSE;
 	    while (isConv != TRUE) {
                 iterconv[j]++;
-                // 1-step update beta
-	        betaEst(j, 1, &tol, phi[j]); 
-                // 1-step update phi
-		phi[j] = phi[j]*getDisper(j);
-	        if ((tol<mintol) | (iterconv[j]==maxiter) | (phi[j]<0)) 
-	           break;
+	        betaEst(j, 1, &tol, phi[j]);  // 1-step beta
+		phi[j] = phi[j]*getDisper(j); // 1-step phi
+	        if ((tol<mintol) | (iterconv[j]==maxiter) | (phi[j]<0) | (phi[j]!=phi[j])) break;
         }   }
         else if (mmRef->estiMethod==NEWTON) {
             getfAfAdash(initphi, j, &fA, &fAdash);
@@ -395,17 +359,13 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)
 	    isConv = (fA>0)? FALSE:TRUE;
 	    while ( isConv != TRUE ) {
                 iterconv[j]++;	    
-                // 1-step update beta
-	        betaEst(j, 1, &tol, phi[j]);
-                // 1-step update phi
-                getfAfAdash(phi[j], j, &fA, &fAdash);
+	        betaEst(j, 1, &tol, phi[j]); // 1-step beta
+                getfAfAdash(phi[j], j, &fA, &fAdash); // 1-step phi
                 phi[j] = phi[j]-fA/fAdash;
-                // check convergence
-	        if ((tol<mintol*10) | (iterconv[j]==maxiter) | (phi[j] < 0) | (phi[j]!=phi[j])) break;
+	        if ((tol<mintol) | (iterconv[j]==maxiter) | (phi[j]<0) | (phi[j]!=phi[j])) break;
        }   }
        // restore poisson if phi[j]<0 or nan
        if ( (phi[j] < 0) | (phi[j]!=phi[j]) ) { 
-//            printf("%.2f, fA=%.2f, fAdash=%.2f\n", phi[j], fA, fAdash);
             phi[j]=0;
             gsl_matrix_set_col (Beta, j, &b0j.vector);
             gsl_matrix_set_col (Mu, j, &m0j.vector);
@@ -417,14 +377,10 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)
        for (i=0; i<nRows; i++) {
            yij = gsl_matrix_get(Y, i, j);
            mij = gsl_matrix_get(Mu, i, j);
-           // get variance
            vij = varfunc( mij, phi[j] );
            gsl_matrix_set(Var, i, j, vij); 
-           // get weight
            gsl_matrix_set(wHalf, i, j, sqrt(weifunc(mij, phi[j]))); 
-           // get (Pearson) residuals
            gsl_matrix_set(Res, i, j, (yij-mij)/sqrt(vij));        
-           // get elementry log-likelihood
            ll[j] = ll[j] + llfunc( yij, mij, phi[j] );
        }
        aic[j]=-ll[j]+2*(nParams+1);
@@ -437,13 +393,12 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)
        // X^T * W * X
        gsl_matrix_set_zero (XwX);
        gsl_blas_dsyrk (CblasLower, CblasTrans, 1.0, WX, 0.0, XwX);
-       gsl_linalg_cholesky_decomp (XwX); // provided XwX is non-singular        
+       gsl_linalg_cholesky_decomp (XwX); 
        // Calc varBeta
        gsl_linalg_cholesky_invert (XwX);
        vj = gsl_matrix_column (varBeta, j);
        dj = gsl_matrix_diagonal (XwX);
        gsl_vector_memcpy (&vj.vector, &dj.vector);
-//       displayvector(&vj.vector, "vj");
 
        // Calc sqrt(1-hii)
        // hii is diagonal element of W^1/2*X*(X'WX)^-1*X^T*W^1/2
@@ -483,7 +438,6 @@ double PoissonGlm::getDisper( unsigned int id ) const
 	ss2 = (yij-mij)*(yij-mij); // ss = (y-mu)^2
 	if ( mij < mintol ) mij = 1;
 	else  nNonZero++;	   
-//	printf("ss2=%.2f, var=%.2f ", ss2, varfunc(mij, phi[id]));
         chi2 = chi2 + ss2/varfunc(mij, phi[id]); // dist dependant
     }
     if (nNonZero > nParams) 
@@ -531,7 +485,6 @@ int NBinGlm::getfAfAdash(double a, unsigned int id, double *fAPtr, double *fAdas
     for ( i=0; i<nRows; i++ ) {
         yij = gsl_matrix_get(Yref, i, id);
 	mij = gsl_matrix_get(Mu, i, id);
-//	printf("%.1f ", mij);
         dl=gsl_sf_psi(yij+k)-gsl_sf_psi(k)-log(mij+k)+log(k)-(yij-mij)/(mij+k); // dl/da
 	*fAPtr = *fAPtr + dl;  // sum
 	ddl=gsl_sf_psi_1(yij+k)-gsl_sf_psi_1(k)+a*mij/(mij+k)+(yij-mij)/(mij+k)/(mij+k); // dl^2/d^2a
@@ -568,18 +521,16 @@ void glm::display(void)
               printf("(Fisher Scoring):\n");
 	      break;
           default: 
-              printf("no such method available.\n");
-              exit(1);
+              printf("phi estimation method not available");
        }
     }   
-    else {
-        printf("regression not available.\n");
-	exit(1);
+    else { 
+        printf("GLM regression method not available");
     }
 
-//    printf("Two-log-like=\n " );
-//    for ( j=0; j<nVars; j++ ) printf("%.2f ", ll[j]);	
-//    printf("\n");
+    printf("Two-log-like=\n " );
+    for ( j=0; j<nVars; j++ ) printf("%.2f ", ll[j]);	
+    printf("\n");
 //    printf("AIC=\n " );
 //    for ( j=0; j<nVars; j++ ) printf("%.2f ", aic[j]);	
 //    printf("\n");
