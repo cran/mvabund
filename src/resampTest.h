@@ -5,7 +5,12 @@
 #ifndef _RESAMPTEST_H
 #define _RESAMPTEST_H
 
-// original resampTest.h
+//#define MATHLIB_STANDALONE 
+//#include "/usr/local/R/2.13/lib64/R/include/Rmath.h"
+#include "Rmath.h"
+#include "R.h"
+
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,11 +24,12 @@
 #include <gsl/gsl_statistics_double.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
+#include <gsl/gsl_cdf.h>
 #include <gsl/gsl_permutation.h>
 #include <gsl/gsl_sort_vector.h>
 #include <gsl/gsl_sort_double.h>
 #include <gsl/gsl_errno.h>
-#include "R.h"
+//#include <R_ext/Rdynload.h>
 
 // rmv.h
 #include <gsl/gsl_eigen.h>
@@ -33,7 +39,6 @@
 #define SUCCESS 0
 #define FAILED 1
 #define CannotOpenFile 2  
-
 // logic
 #define TRUE 1
 #define FALSE 0
@@ -41,7 +46,7 @@
 #define LM 0
 #define POISSON 1
 #define NB 2
-#define LOGIT 3
+#define BIN 3
 // shrinkage
 #define NOSHRINK 0
 #define IDENTITY 1
@@ -68,6 +73,7 @@
 #define MONTECARLO 5
 #define RESIZ 6 
 #define SCOREZ 7
+#define PITSBOOT 8
 // p-value adjustment
 #define NONE 0
 #define UNADJUST 1
@@ -79,23 +85,22 @@
 #define HOOPER 0
 #define VECTOR 1
 // others
-#define TOL 1e-8
-#define MAXITER 499 
+#define printf Rprintf
+#define TOL 1e-6
+#define MAXITER 999 
 #define LAMBDA 0.8  // no shrinkage 
 #define NaN -100000
 #define MAX_LINE_LENGTH 65536
 #define WRAP 4
 #define MIN(a, b) ((a)<(b)?(a):(b))
 #define MAX(a, b) ((a)>(b)?(a):(b))
-#define ABS(a) MAX(a, -a)  
+#define ABS(a) GSL_MAX(a, -a)  
 //simulations
-#define NSIMU 1000
+#define NSIMU 500 
 #define NQ 6
 #define RHO 0.5
 #define ALFA 0.05
 #define MAXLINELEN 256
-
-#define printf Rprintf
 
 typedef struct MethodStruc {
     // hypo test methods
@@ -107,6 +112,11 @@ typedef struct MethodStruc {
     unsigned int student;
     unsigned int punit;
     unsigned int rsquare;
+    unsigned int nRows;
+    unsigned int nVars;
+    unsigned int nParam;
+    unsigned int showtime;
+
     // numeric
     double shrink_param;
     gsl_vector *smry_lambda;
@@ -136,6 +146,7 @@ typedef struct RegressionMethod{
     unsigned int varStab;
     unsigned int estiMethod;
     double tol;
+    unsigned int n; // used in binomial regression
 } reg_Method;
 
 // ManyLM related
@@ -159,7 +170,7 @@ public: mv_Method *mmRef;
        virtual ~AnovaTest();
        int resampTest(void); 
        void releaseTest(void);
-       // void display(void);
+       void display(void);
 
 private: mv_mat *Hats;
          gsl_permutation **sortid;
@@ -192,7 +203,7 @@ public: mv_Method *mmRef;
        virtual ~Summary();
        int resampTest(void); 
        void releaseSummary(void);
-//       void display(void);
+       void display(void);
 
 private: mv_mat *Hats;
 	 gsl_permutation **sortid;
@@ -213,12 +224,12 @@ class glm
    public:
            glm(const reg_Method *mm);
 	   virtual ~glm();	   
-	   void initialGlm(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O);
+	   void initialGlm(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B);
 	   void releaseGlm(void);
-	   virtual int regression(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)=0;
-	   virtual int EstIRLS(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, double *) = 0;
+	   virtual int regression(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B)=0;
+	   virtual int EstIRLS(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B, double *a)=0;
 	   int copyGlm(glm *src);
-   //        void display(void); 	  
+           void display(void); 	  
 
            // input arguments
            const reg_Method *mmRef;
@@ -234,14 +245,16 @@ class glm
 	   gsl_matrix *Var;
 	   gsl_matrix *wHalf;
 	   gsl_matrix *sqrt1_Hii;
+           gsl_matrix *PitRes;
 
+           unsigned int n; // used in binomial and logistic regression
            unsigned int rdf;
 	   double *phi, *ll, *dev, *aic;
 	   unsigned int *iterconv;  
            unsigned int maxiter;
-	   double mintol, lTol;
+	   double eps, maxtol;
            unsigned int nRows, nVars, nParams;
-   private: 
+//   private: 
   	   // abstract 	
 	   virtual double link(double) const=0;	   
 	   virtual double invLink(double) const=0;	   
@@ -250,6 +263,10 @@ class glm
 	   virtual double varfunc(double, double) const=0;	   
 	   virtual double llfunc(double, double, double) const=0;	   
 	   virtual double devfunc(double, double, double) const=0;	   
+	   virtual double pdf(double, double, double) const=0;	   
+	   virtual double cdf(double, double, double) const=0;	   
+	   virtual unsigned int cdfinv(double, double, double) const=0;	   
+           virtual unsigned int genRandist(double, double) const=0;
 };
 
 // poisson regression
@@ -258,13 +275,16 @@ class PoissonGlm : public glm
     public: // public functions
            PoissonGlm(const reg_Method *);
 	   virtual ~PoissonGlm();
-	   virtual int regression(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O) 
-	        { return EstIRLS ( Y, X, O, NULL); }
-	   int EstIRLS( gsl_matrix *, gsl_matrix *, gsl_matrix *, double * );
+	   virtual int regression(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B) 
+	        { return EstIRLS ( Y, X, O, B, NULL); }
+	   int EstIRLS( gsl_matrix *, gsl_matrix *, gsl_matrix *, gsl_matrix *, double * );
 	   int betaEst( unsigned int id, unsigned int iter, double *tol, double a );
 	   double getDisper( unsigned int id ) const;
+           int update(gsl_vector *bj, unsigned int id);
+           int predict(gsl_vector_view bj, gsl_vector *coef_old, unsigned int id, double a);
 
-    private: 
+
+//    private: 
            // Log-link and property functions
            double link(double mui) const 
                 { return log(mui); } 
@@ -278,57 +298,91 @@ class PoissonGlm : public glm
 	        { return mui; }
 	   double llfunc(double yi, double mui, double a) const
 	        { if (yi==0) return 2*(-mui); else
-		  return 2*(yi*log(mui) - mui - gsl_sf_lngamma(yi+1)); }
+		  return 2*(yi*log(mui) - mui - gsl_sf_lngamma(yi+1) ); }
 	   double devfunc(double yi, double mui, double a) const
-	        { return 2*(yi*log(GSL_MAX(yi, mintol)/mui)-yi+mui); }
+	        { return 2*(yi*log(GSL_MAX(yi, eps)/mui)-yi+mui); }
+	   double pdf(double yi, double mui, double a) const
+                { return Rf_dpois(yi, mui, FALSE); }
+	   double cdf(double yi, double mui, double a) const
+                { return Rf_ppois(yi, mui, TRUE, FALSE); }
+           unsigned int cdfinv(double u, double mui, double a) const
+                { return (unsigned int)Rf_qpois(u, mui, TRUE, FALSE); }
+           unsigned int genRandist(double mui, double a) const
+                { return Rf_rpois(mui); }
+
 };
 
-// logistic regression 
-class LogiGlm : public PoissonGlm
+
+// Binomial regression yi ~ BIN(n, pi), mui=n*pi
+class BinGlm : public PoissonGlm
 {
     public: // public functions
-           LogiGlm(const reg_Method *);
-	   virtual ~LogiGlm();
+           BinGlm(const reg_Method *);
+           virtual ~BinGlm();
+//    private: // logit link and property functions          
+           double link(double mui) const // pi=mui/n
+               { return log(mui/(n-mui)); }
+           double invLink(double ei) const
+                { return n*exp(ei)/(1+exp(ei)); }
+           double rcpLinkDash(double mui) const
+                { return (mui/n)*(1-mui/n); }
+           double weifunc(double mui, double a) const
+                { return rcpLinkDash(mui)/n; }
+           double varfunc(double mui, double a) const
+                { return mui*(1-mui/n); } // n*pi*(1-pi)
+           double llfunc(double yi, double mui, double a) const
+                { return 2*((yi>0)?yi*log(mui/n):0+(yi<n)?(n-yi)*log(1-mui/n):0+(n>1)?(gsl_sf_lngamma(n+1)-gsl_sf_lngamma(yi+1)-gsl_sf_lngamma(n-yi+1)):0); }
+           double devfunc(double yi, double mui, double a) const
+                { return 2*((yi>0)?(yi*log(yi/mui)):0+(yi<n)?((n-yi)*log((n-yi)/(n-mui))):0);}
+	   double pdf(double yi, double mui, double a) const
+//	        { if (n==1) return (yi<1)?(1-mui):mui;
+                { return Rf_dbinom(yi, n, mui/n, FALSE); }
+           double cdf(double yi, double mui, double a) const
+//                { if (n==1) return (yi<1)?(1-mui):1;
+                { return Rf_pbinom(yi, n, mui/n, TRUE, FALSE); }
+           unsigned int cdfinv(double ui, double mui, double a) const
+//                { if (n==1) return (ui<1)?0:1;
+                { return (unsigned int)Rf_qbinom(ui, n, mui/n, TRUE, FALSE); }
+           unsigned int genRandist(double mui, double a) const
+                { return (unsigned int)Rf_rbinom(n, mui/n); }
 
-    private: // logit link and property functions 
-           double link(double mui) const
-	       { return log(mui/(1-mui)); }
-           double invLink(double etai) const 
-	        { return exp(etai)/(1+exp(etai)); }
-	   double rcpLinkDash(double mui) const
-                { return mui*(1-mui); }
-	   double weifunc(double mui, double a) const
-	        { return mui*(1-mui); }
-	   double varfunc(double mui, double a) const
-	        { return mui*(1-mui); }
-	   double llfunc(double yi, double mui, double a) const
-//	   { return 2*((yi==0)?0:yi*log(mui) + (yi==1)?0:(1-yi)*log(1-mui)); }
-	        { return 2*(yi*log(mui) + (1-yi)*log(1-mui)); }
-	   double devfunc(double yi, double mui, double a) const
-//     { return 2*((yi<=mintol)?(-log(1-MAX(mui, 1e-5))):(-log(MIN(mui, 1-1e-5)))); }
-           { return 2*(yi*log((yi==0)?1:yi)+(1-yi)*log((yi==1)?1:(1-yi)))-llfunc(yi,mui,a);  }
 };
 
 // negative binomial regression
-class NBinGlm : public PoissonGlm
+class NBinGlm : public PoissonGlm // Y~NB(n, p)
 {
     public:
            NBinGlm(const reg_Method *mm);
 	   virtual ~NBinGlm();
-	   virtual int regression(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O)
-	      { return nbinfit ( Y, X, O); }
-	   int nbinfit(gsl_matrix *, gsl_matrix *, gsl_matrix *);
-    private:
+	   virtual int regression(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B)
+	      { return nbinfit ( Y, X, O, B); }
+	   int nbinfit(gsl_matrix *, gsl_matrix *, gsl_matrix *, gsl_matrix *);
+//    private:
 	   double weifunc(double mui, double a) const
 	        { return (mui/(1+a*mui)); }
 	   double varfunc(double mui, double a) const
 	        { return (mui*(1+a*mui)); }
 	   double llfunc(double yi, double mui, double a) const;
 	   double devfunc(double yi, double mui, double a) const
-                { return 2*((yi==0)?0:yi*log(yi/mui)-(yi+1/GSL_MAX(a,mintol))*log((1+yi*a)/(1+mui*a))); }
+                { return 2*((yi==0)?0:yi*log(yi/mui)-(yi+1/GSL_MAX(a,eps))*log((1+yi*a)/(1+mui*a))); }
+           // mu=y*p(y), y=k, r=1/phi, p=1-(1+phi*mu)^-1 (the wiki definition)
+           // mu=y*p(y), y=k, n=1/phi, p=(1+phi*mu)^-1 (the GSL definition)
+	   double pdf(double yi, double mui, double a) const
+                { if (a==0) return Rf_dpois(yi, mui, FALSE);
+                  else return Rf_dnbinom(yi, 1/a, 1/(1+a*mui), FALSE); }
+	   double cdf(double yi, double mui, double a) const
+                { if (a==0) return Rf_ppois(yi, mui, TRUE, FALSE);
+                  else return Rf_pnbinom(yi, 1/a, 1/(1+a*mui), TRUE, FALSE); }
+           unsigned int cdfinv(double ui, double mui, double a) const
+                { if (a==0) return Rf_qpois(ui, mui, TRUE, FALSE);
+                  else return (unsigned int)Rf_qnbinom(ui, 1/a, 1/(1+a*mui), TRUE, FALSE); }
+           unsigned int genRandist(double mui, double a) const
+                { if (a==0) return Rf_rpois(mui);
+                  else return Rf_rnbinom(1/a, 1/(1+a*mui)); }
 
 	   int getfAfAdash (double a, unsigned int id, double *fA, double *fAdash);
 };
+
 
 // base test class
 class GlmTest
@@ -345,53 +399,48 @@ class GlmTest
             unsigned int *dfDiff;
 
             // methods
-            GlmTest(const mv_Method *tm, glm *fit);
+            GlmTest(const mv_Method *tm);
             virtual ~GlmTest(void);
             void releaseTest(void);	
 
-	    int summary(void);
-//	    void displaySmry(void);
+	    int summary(glm *);
+	    void displaySmry(glm *);
 
-	    int anova(gsl_matrix *);
-//            void displayAnova(void);
+	    int anova(glm *, gsl_matrix *);
+            void displayAnova(void);
             
     private:
 	    int getBootID(void);
 
-	    int geeCalc(glm *PtrAlt, glm *PtrNull, gsl_matrix *, gsl_matrix *);
-	    int geeWald(glm *PtrAlt, gsl_matrix *, gsl_matrix *);
-	    int geeScore(glm *PtrAlt, glm *PtrNULL, gsl_matrix *, gsl_matrix *);
-	    int geeLR(glm *PtrAlt, glm *PtrNULL, gsl_matrix *);
-	    int subGeeWald(glm *, gsl_matrix *, gsl_vector *, gsl_matrix *);
-	    int subGeeScore(glm *, glm *, gsl_vector *, gsl_matrix *);
-	    int subGeeLR(glm *PtrAlt, glm *PtrNull, gsl_vector *teststat);
+//	    int geeCalc(glm *PtrAlt, glm *PtrNull, gsl_matrix *);
+	    int GeeWald(glm *, gsl_matrix *, gsl_vector *, double lambda);
+	    int GeeScore(gsl_matrix *, glm *, gsl_vector *, double lambda);
+	    int GeeLR(glm *PtrAlt, glm *PtrNull, gsl_vector *teststat);
 
-            int resampData(glm *, gsl_matrix *, GrpMat *, GrpMat *, unsigned int i ); // summary
-	    int resampNonCase(glm *, gsl_matrix *, unsigned int i);
-//	    int resampAnovaCase(glm *, gsl_matrix *, gsl_matrix *, gsl_matrix *, gsl_matrix *, gsl_matrix *, unsigned int i);
+//            int resampSmryCase(glm *, gsl_matrix *, GrpMat *, GrpMat *, unsigned int i ); // summary
+            int resampSmryCase(glm *, gsl_matrix *, GrpMat *, gsl_matrix *, unsigned int i ); // summary
 	    int resampAnovaCase(glm *, gsl_matrix *, gsl_matrix *, gsl_matrix *, unsigned int i);
+	    int resampNonCase(glm *, gsl_matrix *, unsigned int i);
 	    int setMonteCarlo(glm *model, gsl_matrix *, gsl_matrix *);
 
-            // intermediate data
-	    unsigned int nRows, nVars, nParam, nModels;
-
 	    // the following used in resampling
+	    unsigned int nModels;
             gsl_rng *rnd;
             unsigned int *permid;   // only useful in permutation test
-            double lambda;    // intermediate shrinkage parameter
+            double lambda, eps;    // intermediate shrinkage parameter
                 
             // the following are used in geeCalc
 	    gsl_matrix *L;  // only useful in Wald test
-	    gsl_matrix *Rlambda, *bRlambda; 
+	    gsl_matrix *Rlambda; 
 	    gsl_matrix *Wj;
 	    gsl_matrix *XBeta, *Sigma; // used in monte carlo simulation
 	    //double *mr, *sr; // mean and variance of model residuals
 //	    gsl_vector *mr;
 
 	    GrpMat *GrpXs;  // group X0
-	    GrpMat *GrpOs;  // group offset
 
 };
+
 
 // io.cpp - input/output functions
 int vector_filesize(FILE *f);
@@ -409,8 +458,9 @@ int subX1(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi);
 int subX2(gsl_matrix *X, unsigned int id, gsl_matrix *Xi);
 int subXrow(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi);
 int subXrow2(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi);
+int addXrow2(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi);
 int subXrow1(gsl_matrix *X, gsl_vector *ref0, gsl_vector *ref1, gsl_matrix *Xi);
-int GetR(gsl_matrix *Res, unsigned int corr, gsl_vector *glmshrink, unsigned int k, gsl_matrix *R); 
+int GetR(gsl_matrix *Res, unsigned int corr, double lambda, gsl_matrix *R); 
 int subtractMean(gsl_matrix *dat);
 // calctest.c - manylm related functions
 int testStatCalc(mv_mat *H0, mv_mat *H1, mv_Method *mmRef, const unsigned int ifcalcH1det, double *stat, gsl_vector *statj);

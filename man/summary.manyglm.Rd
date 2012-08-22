@@ -4,7 +4,7 @@
 \title{Summarizing Multivariate Generalized Linear Model Fits for Abundance Data}
 \description{\code{summary} method for class "manyglm". }
 \usage{
-\method{summary}{manyglm}(object, resamp="montecarlo", test="LR", p.uni="none", nBoot=1000, cor.type=object$cor.type, show.cor = FALSE, show.est=FALSE, show.residuals=FALSE, symbolic.cor = FALSE, \dots)
+\method{summary}{manyglm}(object, resamp="pit.trap", test="wald", p.uni="none", nBoot=1000, cor.type=object$cor.type, show.cor = FALSE, show.est=FALSE, show.residuals=FALSE, symbolic.cor = FALSE, show.time=FALSE,\dots)
 \method{print}{summary.manyglm}(x, \dots)
 }
 \arguments{
@@ -27,6 +27,7 @@ step-down resampling procedure.
 \item{symbolic.cor}{logical. If \code{TRUE}, the correlation is printed in a
 symbolic form (see \code{\link{symnum}} ) rather than in numerical format.
 }
+\item{show.time}{logical. Whether to display timing information for the resampling procedure.}
 \item{\dots}{for \code{summary.manyglm} method, these are additional arguments including: \cr
 \code{ld.perm} - logical. Whether to load bootstrap id's from an external file. Default is \code{FALSE}, which will generate bootstrap id's on the fly.\cr
 \code{filename} - if \code{ld.perm} is \code{TRUE}, this specifies the file path to the stored bootstrap id's. Default is \code{NULL}.\cr

@@ -390,9 +390,9 @@ default.plot.manylm  <- function(x,
             	if(studentized) {
 		     ylab23 <- "Standardized residuals"
                      if(any(na.action.type == "exclude"))
-                        hii <- manylm.influence(x, do.coef = FALSE)$hat[-na.action]
+                        hii <- diag(x$hat.X[-na.action])
                      else
-                        hii <- manylm.influence(x, do.coef = FALSE)$hat	 
+                        hii <- diag(x$hat.X)
                      stud  <- (1- hii)^(-(1/2))
                      rs <- (diag(stud) %*% r.w)/s  
                 } else {

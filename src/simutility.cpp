@@ -243,63 +243,32 @@ int GetPdstbtion(double *p, unsigned int nVars, unsigned int *isH0var, unsigned 
 // ----------------------------------------------------- //
 //  Select test variables according to variances under H0 //
 // ----------------------------------------------------- //
-/* 
-int GetH0var(gsl_matrix *Mu0, gsl_matrix *Mu1, gsl_matrix *Sigma, gsl_vector *var, unsigned int AR1MAT, char *fname_isH0var)
+int GetH0var(gsl_matrix *Sigma, unsigned int *isH0var)
 {
-    unsigned int nVars = Mu0->size2;
     unsigned int j, h0id, h1id; 
-    unsigned int Half=(unsigned int)floor(nVars/2);
-    unsigned int *srtid = (unsigned int *)malloc(nVars*sizeof(unsigned int));
-    unsigned int *shuffled = (unsigned int *)malloc(nVars*sizeof(unsigned int));
-    unsigned int *isH0var = (unsigned int *)malloc(nVars*sizeof(unsigned int));
+    unsigned int nVars = Sigma->size1;
+    size_t *srtid = (size_t *)malloc(nVars*sizeof(size_t));
 
-    if (AR1MAT<3) { //0 1 2
-//       GetCov (Mu0, logY, AR1MAT, Sigma);
-//       displaymatrix(Sigma, "Sigma");
-       // indices of largest variances in descending order
-       gsl_vector_view sig=gsl_matrix_diagonal (Sigma);
-       gsl_sort_vector_largest_index (srtid, nVars, &sig.vector);
-       // shuffle srtid: 123456 => 135246
-       for (j=0; j<nVars; j+=2) {
-           shuffled[j/2] = srtid[j];
-	   shuffled[j/2+Half]  = srtid[j+1];
-    }  }    
-    else { //equal variances
-       for (j=0; j<nVars; j++) shuffled[j]=nVars-1-j;
-    }   
-    for (j=0; j<nVars; j++) {
-        if ( j< NQ ) {
-           h0id = shuffled[j];
-           isH0var[h0id]=TRUE;
-        }
-	else {
-	   h1id = shuffled[j];
-	   isH0var[h1id]=FALSE;
-	}
-        // printf("%d ", shuffled[j]);	
-    }
-   // printf("\nisH0var=[ ");
-    FILE *f_isH0var=fopen(fname_isH0var, "w");
-    for (j=0; j<nVars; j++){
-       fprintf (f_isH0var, "%d ", (unsigned int)isH0var[j]);
-   //    printf("%d ", isH0var[j]);
-       
-       gsl_vector_view m0j=gsl_matrix_column(Mu0, j);
-       if ( isH0var[j] == FALSE ) { // H1 variable
-          gsl_vector_view mj=gsl_matrix_column(Mu1, j);
-          gsl_vector_memcpy (&m0j.vector, &mj.vector);
-       }
-       gsl_vector_add_constant (&m0j.vector, 0.5*gsl_vector_get(var, j));			  
-    }  
-    fprintf(f_isH0var, "\n");
-    rewind (f_isH0var);
-    fclose(f_isH0var);
-    //printf("]\n");	
+    // Sort variances in descending order
+    gsl_vector_view sig=gsl_matrix_diagonal (Sigma);
+    gsl_sort_vector_largest_index (srtid, nVars, &sig.vector);
 
+    for (j=0; j<nVars; j+=2) {
+        h0id = srtid[j];
+        isH0var[h0id] = TRUE;
+        h1id = srtid[j+1];
+        isH0var[h1id] = FALSE;
+    }      
+/*   
+    for (j=0; j<nVars/2; j++){
+        h0id = srtid[j];
+        isH0var[h0id] = TRUE;
+    }     
+    for (j=nVars/2; j<nVars; j++){
+        h1id = srtid[j];
+        isH0var[h1id] = FALSE;
+    }     
+*/
     free(srtid);
-    free(shuffled);
-    free(isH0var);
-
     return 0;
 }
-*/

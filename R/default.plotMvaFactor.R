@@ -28,7 +28,8 @@ default.plotMvaFactor <- function(	x,
 				ask, 
 				legend = TRUE, 
 				legend.horiz=FALSE,
-  				legend.title, ... ) {
+  				legend.title, 
+                                xaxis.labels, ... ) {
 
 
 dev <- dev.list()
@@ -97,7 +98,7 @@ if (length(dots)>0) {
     else lwd  <- 2 
 
     if ("cex.axis" %in% names(dots)) caxis <- dots$cex.axis
-    else caxis <- 1.2
+    else caxis <- 1.5
 
     if ("legend.text" %in% names(dots)) leg <- dots$legend.text
     else leg <- NULL 
@@ -614,7 +615,7 @@ if (type=="bx")  {
 		for(lev in 1:nlevelsi) pch[factor.shift == lev] <- pchr[lev]
 		pch <-  rep(pch, times = n.vars)
 	    } else pch = 1	
-        }        
+        } 
 	if (miss.col) {
 	    if (nlevelsi<= 9) colr <- c(1:9)[1:nlevelsi]
 	    else colr <- rainbow(nlevelsi)
@@ -623,9 +624,6 @@ if (type=="bx")  {
 	 	col[factor.shift == lev ] <- colr[lev]
 	    col <-  rep(col, times = n.vars)
 	}
-	else {
-	   colr <- c("red", "darkgreen", "orange", "black", "darkred", "darkblue","purple","rosybrown", "plum", "green", "hotpink", "gold", "brown","lightblue","darkgrey")[col]
-        }
 		
 	########### factor plot #################
 	# Shift overlapping points.
@@ -653,14 +651,18 @@ if (type=="bx")  {
 #       mtext("(b)", side = 3, cex = 1.8, at=-1.8, line=-1.2)
 
 	# Specify some axis details.
-	if (scale.lab=="s" ) {
+	if (scale.lab=="s" ){
 	    if (minmva==0)  posx=-0.05 
             else  posx=0
 	} else {
-            seque<-c(minmva ,axTicks(1), mx)
-	    sequenc<-c("",as.character(axTicks(1)),"")
 	    posx=minmva
 	}
+
+#        seque<-c(minmva ,axTicks(1), mx)       
+        seque <- axTicks(1)
+        if (missing(xaxis.labels)) 
+            sequenc<-as.character(axTicks(1))        
+        else sequenc <- xaxis.labels
 
 	posy <- 0.5
         # 'at' is turned around to adjust for that the yaxis data is starting
@@ -690,7 +692,7 @@ if (type=="bx")  {
 #	   }
 	   par(xpd=NA)
 	   legpch <- unique(pch)
-           legcol <- unique(colr)	   
+           legcol <- unique(col)	   
            legend("bottomright", inset=c(.15,0.08), legend=leg, horiz=legend.horiz,col=legcol, cex=0.9*cex, ncol=ncoll, pch=legpch, bg=0, lwd=lwd, lty=rep(0,length(leg)), x.intersp=0.01)
 	}
     } # for(iexpl in 1:pExpl) 

@@ -3,7 +3,7 @@
 # the (default) methods coef, residuals, fitted values can be used             
 ###############################################################################
 
-manyglm <- function (formula, family="negative.binomial", data=NULL, subset=NULL, na.action=options("na.action"), phi.method = "ML", model = FALSE, x = TRUE, y = TRUE, qr = TRUE, cor.type= "I", shrink.param=NULL, tol=1.0e-6, show.coef=FALSE, show.fitted=FALSE, show.residuals=FALSE, ... ) {
+manyglm <- function (formula, family="negative.binomial", K=1, data=NULL, subset=NULL, na.action=options("na.action"), phi.method = "ML", model = FALSE, x = TRUE, y = TRUE, qr = TRUE, cor.type= "I", shrink.param=NULL, tol=1.0e-6, show.coef=FALSE, show.fitted=FALSE, show.residuals=FALSE, ... ) {
 
 # tasmX <- as.matrix(tasmX, "numeric")  
 
@@ -116,14 +116,14 @@ else {
     else stop("Check the param estimation method name.")  
 
     ######### call Glm Fit Rcpp #########
-    modelParam <- list(tol=tol, regression=familynum, estimation=methodnum, stablizer=FALSE)
+    modelParam <- list(tol=tol, regression=familynum, estimation=methodnum, stablizer=FALSE, n=K)
     z <- .Call("RtoGlm", modelParam, Y, X, PACKAGE="mvabund")
 
 # New codes added for estimating ridge parameter 
     if (cor.type=="shrink") {      
         if (is.null(shrink.param)) {
 	    tX <- matrix(1, NROW(X), 1)
-            shrink.param <- ridgeParamEst(dat=z$residuals, X=tX, only.ridge=TRUE, tol=tol)$ridgeParameter
+            shrink.param <- ridgeParamEst(dat=z$Pearson.residuals, X=tX, only.ridge=TRUE, tol=tol)$ridgeParameter
 	}    
         # to simplify later computation
         if(shrink.param == 0) cor.type <- "I"
@@ -145,7 +145,8 @@ else {
     dimnames(z$coefficients) <- list(colnames(X), labAbund)
     dimnames(z$var.coefficients) <- list(colnames(X), labAbund)
     dimnames(z$linear.predictor) <- list(labObs, labAbund)    
-    dimnames(z$residuals) <- list(labObs, labAbund)
+    dimnames(z$Pearson.residuals) <- list(labObs, labAbund)
+    dimnames(z$PIT.residuals) <- list(labObs, labAbund)
     dimnames(z$sqrt.1_Hii) <- list(labObs, labAbund)
     dimnames(z$var.estimator) <- list(labObs, labAbund)
     dimnames(z$sqrt.weight) <- list(labObs, labAbund)
@@ -161,6 +162,7 @@ else {
     z$prior.weight <- NULL
     z$AICsum <- sum(z$aic)
     z$family    <- familyname
+    z$K         <- K
     z$phi.method<- phi.method
     z$cor.type  <- cor.type
     z$shrink.param  <- shrink.param

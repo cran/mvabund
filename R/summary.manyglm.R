@@ -4,7 +4,7 @@
 # 05-Jan-2010
 ###############################################################################
 
-summary.manyglm <- function(object, resamp="montecarlo", test="LR", p.uni="none", nBoot=1000, cor.type=object$cor.type, show.cor = FALSE, show.est=FALSE, show.residuals=FALSE, symbolic.cor = FALSE, ... ) 
+summary.manyglm <- function(object, resamp="pit.trap", test="wald", p.uni="none", nBoot=1000, cor.type=object$cor.type, show.cor = FALSE, show.est=FALSE, show.residuals=FALSE, symbolic.cor = FALSE, show.time=FALSE, ... ) 
 {
     tol = object$tol
     allargs <- match.call(expand.dots = FALSE)
@@ -13,6 +13,9 @@ summary.manyglm <- function(object, resamp="montecarlo", test="LR", p.uni="none"
     else ld.perm <- FALSE
     if ("filename" %in% names(dots)) filename <- dots$filename
     else filename <- NULL
+
+    if (show.time==FALSE) st=0
+    else st=1
 
     if (cor.type!="I" & test=="LR") {
        warning("The likelihood ratio test can only be used if correlation matrix of the abundances is is assumed to be the Identity matrix. The Wald Test will be used.")
@@ -55,19 +58,22 @@ summary.manyglm <- function(object, resamp="montecarlo", test="LR", p.uni="none"
     if (object$phi.method == "ML") methodnum <- 0
     else if (object$phi.method == "Chi2") methodnum <- 1 
     else stop("'method' not defined. Choose one of 'ML', 'Chi2' for an manyglm object") 
-
-    if (substr(resamp,1,1)=="r") resampnum <- 1  # residual
-    else if (substr(resamp,1,1)=="c") resampnum <- 0  #case
-    else if (substr(resamp,1,1)=="s") resampnum <- 2  # score
-    else if (substr(resamp,1,1) =="p") resampnum <- 3 # permuation
-    else if (substr(resamp,1,1) =="m") resampnum <- 5 # montecarlo
-    else stop("'resample' not defined. Choose one of 'case', 'residual', 'score', 'perm.resid'", "montecarlo")   
+    if (substr(resamp,1,1)=="c") resampnum <- 0  #case
+    # To exclude case resampling
+    #if (resamp=="case") stop("Sorry, case resampling is not yet available.")
+    else if (substr(resamp,1,4)=="resi") resampnum <- 1  # residual
+    else if (resamp=="score") resampnum <- 2  # score
+    else if (substr(resamp,1,4) =="perm") resampnum <- 3 # permuation
+#    else if (substr(resamp,1,1) =="f") resampnum <- 4 # free permuation
+    else if (substr(resamp,1,4) ==  "mont") resampnum <- 5 # montecarlo 
+    else if (substr(resamp,1,3) ==  "pit") resampnum <- 8 # PIT residual bootstrap 
+    else stop("'resamp' not defined. Choose one of 'case', 'resid', 'score', 'perm.resid', 'montecarlo', 'pit.trap'")
 
     # allows case and parametric bootstrap only for binomial regression
-    if (familynum == 3 && resampnum !=5 ) {
-       warning("'montecarlo' is used for binomial regression.")
-       resamp <- "montecarlo"
-       resampnum <- 5
+    if (familynum == 3 && ( (resampnum !=5) && (resampnum!=8) ) ) {
+       warning("'montecarlo' or 'pit.trap' should be used for binomial regression. Resampling option is changed to 'pit.trap'.")
+       resamp <- "pit.trap"
+       resampnum <- 8 
     }
   
     if (substr(test,1,1) == "w") testnum <- 2 # wald
@@ -122,9 +128,9 @@ summary.manyglm <- function(object, resamp="montecarlo", test="LR", p.uni="none"
     else if (corrnum == 0) shrink.param <- c(rep(1,nParam+2))
     else if (corrnum == 1) shrink.param <- c(rep(0,nParam+2))
     
-    modelParam <- list(tol=tol, regression=familynum, estimation=methodnum, stablizer=0)
+    modelParam <- list(tol=tol, regression=familynum, estimation=methodnum, stablizer=0, n=object$K)
     # note that nboot excludes the original dataset
-    testParams <- list(tol=tol, nboot=nBoot-1, cor_type=corrnum, test_type=testnum, resamp=resampnum, reprand=rep, punit=pu)
+    testParams <- list(tol=tol, nboot=nBoot-1, cor_type=corrnum, test_type=testnum, resamp=resampnum, reprand=rep, punit=pu, showtime=st)
 
     ######## Call Summary Rcpp #########
     val <- .Call("RtoGlmSmry", modelParam, testParams, Y, X, bootID, shrink.param, PACKAGE="mvabund")
@@ -134,7 +140,7 @@ summary.manyglm <- function(object, resamp="montecarlo", test="LR", p.uni="none"
     rankX <- object$rank
 
     # residual statistics  (from the previous R codes)
-    r <- as.matrix(object$residuals)
+    r <- as.matrix(object$Pearson.residuals)
     rss <- t(r)%*% r
     rdf <- nRows - rankX   # residual rdf
     resvar <- rss/rdf 
@@ -229,7 +235,7 @@ summary.manyglm <- function(object, resamp="montecarlo", test="LR", p.uni="none"
     smry$aliased <- c(is.na(object$coefficients)[,1])
 
     # residual stats
-    smry$residuals <- object$residuals 
+    smry$Pearson.residuals <- object$Pearson.residuals 
     smry$df <- c(rankX, rdf, NCOL(Qr$qr))
     smry$genVar <- genVar 
     smry$est <- est     # coefficient estimates, i.e. Beta

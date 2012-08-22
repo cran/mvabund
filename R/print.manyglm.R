@@ -30,9 +30,13 @@ print.manyglm <- function( x, digits = max(3, getOption("digits") - 3), dig.tst=
         cat("Fitted Values\n")
         print.default(format(round(x$fitted.values, digits=dig.tst), digits = digits), print.gap = 2, quote = FALSE)
   }
-  if (x$show.residuals==TRUE) {
+  if (x$show.residuals=="pearson") {
         cat("Standardized Pearson Residuals\n")
-        print.default(format(round(x$residuals, digits=dig.tst), digits = digits), print.gap = 2, quote = FALSE)
+        print.default(format(round(x$Pearson.residuals, digits=dig.tst), digits = digits), print.gap = 2, quote = FALSE)
+  }
+  else if (x$show.residuals=="PIT") {
+        cat("Uniform PIT Residuals\n")
+        print.default(format(round(x$PIT.residuals, digits=dig.tst), digits = digits), print.gap = 2, quote = FALSE)
   }
 
   if (x$family=="quasipoisson" | x$family=="negative.binomial"){

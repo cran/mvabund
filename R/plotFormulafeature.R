@@ -65,8 +65,7 @@ if ("border" %in% names(dots)) {
 	
 pch <- dots$pch
 
-m$ylab <-  m$xlab <- m$... <- m$ask <- m$las <- m$yaxis.ticks <- m$yaxis.labs <- m$xaxis.ticks <- m$xaxis.labs <- 
-m$fg <- m$cex.xaxis <- m$cex.yaxis  <- m$axes <- m$main <- m$overall.main <- m$xvar.subset <-m$all.labels <- NULL
+m$ylab <-  m$xlab <- m$... <- m$ask <- m$las <- m$yaxis.ticks <- m$yaxis.labs <- m$xaxis.ticks <- m$xaxis.labs <- m$fg <- m$cex.xaxis <- m$cex.yaxis  <- m$axes <- m$main <- m$overall.main <- m$xvar.subset <-m$all.labels <- NULL
 
 subset.expr <- m$subset
 
@@ -210,10 +209,8 @@ cat("plot 2\n")
 				}
 			}
 
-			if (j/pw == floor(j/pw )) {  
-				mtext(overall.main, outer = TRUE, cex = par("cex.main"), col=colmains)
-			}
 		}
+        	mtext(overall.main, outer = TRUE, cex = par("cex.main"), col=colmains, line=1)
 
 	} else {
 		if (type=="bx") {

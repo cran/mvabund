@@ -4,12 +4,15 @@
 # 11-Nov-2011
 ###############################################################################
 
-anova.manyglm <- function(object, ..., resamp="montecarlo", test="LR", p.uni="none", nBoot=1000, cor.type=object$cor.type, ld.perm=FALSE, filename=NULL ) 
+anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none", nBoot=1000, cor.type=object$cor.type, show.time=FALSE, ld.perm=FALSE, filename=NULL ) 
 {
     if (cor.type!="I" & test=="LR") {
         warning("The likelihood ratio test can only be used if correlation matrix of the abundances is is assumed to be the Identity matrix. The Wald Test will be used.")
         test <- "wald"
     }
+   
+    if (show.time==TRUE) st=1
+    else st=0
 
     if (any(class(object) == "manylm")) {
         if ( test == "LR" ) 
@@ -50,7 +53,7 @@ anova.manyglm <- function(object, ..., resamp="montecarlo", test="LR", p.uni="no
     if (is.null(Y)) {
     #      mu.eta <- object$family$mu.eta
         eta <- object$linear.predictor
-        Y <- object$fitted.values + object$residuals * log(eta)	     
+        Y <- object$fitted.values + object$Pearson.residuals * log(eta)	     
      }
 
     w <- object$weights
@@ -72,19 +75,19 @@ anova.manyglm <- function(object, ..., resamp="montecarlo", test="LR", p.uni="no
     if (substr(resamp,1,1)=="c") resampnum <- 0  #case
     # To exclude case resampling
     #if (resamp=="case") stop("Sorry, case resampling is not yet available.")
-    else if (substr(resamp,1,1)=="r") resampnum <- 1  # residual
-    else if (substr(resamp,1,1)=="s") resampnum <- 2  # score
-    else if (substr(resamp,1,1) =="p") resampnum <- 3 # permuation
+    else if (substr(resamp,1,4)=="resi") resampnum <- 1  # residual
+    else if (resamp=="score") resampnum <- 2  # score
+    else if (substr(resamp,1,4) =="perm") resampnum <- 3 # permuation
 #    else if (substr(resamp,1,1) =="f") resampnum <- 4 # free permuation
-    else if (substr(resamp,1,1) ==  "m") resampnum <- 5 # montecarlo 
-    else stop("'resamp' not defined. Choose one of 'case', 'resid', 'score', 'perm.resid', 'montecarlo'")    
-
+    else if (substr(resamp,1,4) ==  "mont") resampnum <- 5 # montecarlo 
+    else if (substr(resamp,1,3) ==  "pit") resampnum <- 8 # PIT residual bootstrap 
+    else stop("'resamp' not defined. Choose one of 'case', 'resid', 'score', 'perm.resid', 'montecarlo', 'pit.trap'")    
 
     # allows case and parametric bootstrap only for binomial regression
-    if (familynum == 3 && resampnum != 5) {     
-       warning("'montecarlo' is used for binomial regression.")
+    if ( (familynum==3)&&(resampnum!=5)&&(resampnum!=8) ) {     
+       warning("'montecarlo' or 'pit.trap' should be used for binomial regression. Setting option to 'pit.trap'.")
        resamp <- "montecarlo"
-       resampnum <- 5
+       resampnum <- 5       
     }
     
     if (substr(test,1,1) == "w") testnum <- 2 # wald
@@ -128,10 +131,10 @@ anova.manyglm <- function(object, ..., resamp="montecarlo", test="LR", p.uni="no
 
     # construct for param list     
     modelParam <- list(tol=tol, regression=familynum, 
-                       estimation=methodnum, stablizer=0)
+                       estimation=methodnum, stablizer=0, n=object$K)
     # note that nboot excludes the original data set
     testParams <- list(tol=tol, nboot=nBoot-1, cor_type=corrnum, 
-              test_type=testnum, resamp=resampnum, reprand=rep, punit=pu)
+              test_type=testnum, resamp=resampnum, reprand=rep, punit=pu, showtime=st)
 
     # ANOVA
     if (nModels==1) {
@@ -162,18 +165,26 @@ anova.manyglm <- function(object, ..., resamp="montecarlo", test="LR", p.uni="no
        # get the shrinkage estimates
        tX <- matrix(1, nrow=nRows, ncol=1)
        if (corrnum==2 | resampnum==5){ # shrinkage or montecarlo bootstrap
-          shrink.param <- c(rep(NA, nterms))
-          if (object$cor.type == "shrink") 
-       	      shrink.param[1] <- object$shrink.param	 
-	  else    
-              shrink.param[1] <- ridgeParamEst(dat=object$residuals, X=tX, 
-	                     only.ridge=TRUE)$ridgeParam
-          for ( i in 0:(nterms-2)){ # exclude object itself
-              fit <- .Call("RtoGlm", modelParam, Y, X[,varseq<=i+minterm,drop=FALSE], 
-	              PACKAGE="mvabund")
-              shrink.param[nterms-i] <- ridgeParamEst(dat=fit$residuals, 
-                      X=tX, only.ridge=TRUE)$ridgeParam # in reversed order
-           }
+#          shrink.param <- c(rep(NA, nterms))
+          # use a single shrinkage parameter for all models
+          if (object$cor.type == "shrink") {
+#       	      shrink.param[1] <- object$shrink.param
+       	      shrink.param <- rep(object$shrink.param,nterms)
+          }
+	  else  {
+#              shrink.param[1] <- ridgeParamEst(dat=object$Pearson.residuals, X=tX, 
+#	                     only.ridge=TRUE)$ridgeParam      
+  
+              lambda <- ridgeParamEst(dat=object$Pearson.residuals, X=tX, 
+	                     only.ridge=TRUE)$ridgeParam          
+              shrink.param <- rep(lambda, nterms)
+          }
+#          for ( i in 0:(nterms-2)){ # exclude object itself
+#              fit <- .Call("RtoGlm", modelParam, Y, X[,varseq<=i+minterm,drop=FALSE], 
+#	              PACKAGE="mvabund")
+#              shrink.param[nterms-i] <- ridgeParamEst(dat=fit$Pearson.residuals, 
+#                      X=tX, only.ridge=TRUE)$ridgeParam # in reversed order
+#           }
        }   
        else if (corrnum == 0) shrink.param <- c(rep(1, nterms))
        else if (corrnum == 1) shrink.param <- c(rep(0, nterms))
@@ -204,7 +215,7 @@ anova.manyglm <- function(object, ..., resamp="montecarlo", test="LR", p.uni="no
 	    for ( i in 1:nModels ) {
 	        if (objects[[i]]$cor.type == "shrink") 
                     shrink.param[i] <- objects[[i]]$shrink.param
-	        else shrink.param[i] <- ridgeParamEst(dat=objects[[i]]$residuals, X=tX, only.ridge=TRUE)$ridgeParam 
+	        else shrink.param[i] <- ridgeParamEst(dat=objects[[i]]$Pearson.residuals, X=tX, only.ridge=TRUE)$ridgeParam 
 	    }
 	}
         else if (corrnum == 0) shrink.param <- c(rep(1,nModels))
@@ -245,8 +256,9 @@ anova.manyglm <- function(object, ..., resamp="montecarlo", test="LR", p.uni="no
         topnote <- paste(modelnamelist, ": ", Xnames, sep = "", collapse = "\n")
         tl <- modelnamelist	
         ord <- (nModels-1):1
-     }
-#browser()
+    }
+
+# browser()
     ######## call resampTest Rcpp #########
     val <- .Call("RtoGlmAnova", modelParam, testParams, Y, X, 
                  XvarIn, bootID, shrink.param, PACKAGE="mvabund")

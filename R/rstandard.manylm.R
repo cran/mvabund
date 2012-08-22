@@ -4,17 +4,16 @@
 #####################################################################################
 
 
-rstandard.manylm <- 
-function (model, infl = manylm.influence(model, do.coef = FALSE), 
-    sd = sqrt(deviance(model)/df.residual(model)), ...) {
+rstandard.manylm <- function(model, 
+                    sd = sqrt(deviance(model)/df.residual(model)), ...) {
 
-    wt.res 	<- infl$wt.res
+    wt.res <- as.matrix(weighted.residuals(model))		    
+    hat <- as.vector(diag(model$hat.X))
     n 	<- NROW(wt.res)
-    n.vars 	<- NCOL(wt.res)
+    n.vars <- NCOL(wt.res)
     sD 	<- matrix(rep(sd, each=n), nrow=n, ncol=n.vars)
-    hat	<- matrix(rep(infl$hat,times=n.vars), nrow=n, ncol=n.vars)
-    res 	<- wt.res /(sD * sqrt(1 - hat))
+    hatX <- matrix(rep(hat,times=n.vars), nrow=n, ncol=n.vars)
+    res <- wt.res /(sD * sqrt(1 - hatX))
     res[is.infinite(res)] <- NaN
     res
-
 }

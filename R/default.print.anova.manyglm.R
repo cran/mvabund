@@ -24,14 +24,10 @@ default.print.anova.manyglm <- function( x, digits = max(getOption("digits") - 3
     if(anova$resamp == "perm.resid")
        anova$resamp <- "residual permutation (without replacement)"
 
-    if (anova$cor.type=="R")  corname <- "unconstrained correlation"
-    else if (anova$cor.type=="I")  corname <- "response assumed to be uncorrelated"
+    if (anova$cor.type=="R")  corname <- "unconstrained correlation response"
+    else if (anova$cor.type=="I")  corname <- "uncorrelated response (for faster computation)"
     else if (anova$cor.type=="shrink") 
-        corname <- paste("correlation matrix of model", modelnames[nModels:2], "is shrunk by parameter", round(anova$shrink.param[1:nModels-1], digits = dig.tst))	  
-    else if (anova$cor.type=="blockdiag")
-      corname <- paste("blockdiagonal correlation matrix with", anova$shrink.param, "variables in each block")
-    else if (anova$cor.type=="augvar")
-      corname <- paste("correlation matrix augmented with parameter", round(anova$shrink.param, digits = dig.tst))
+        corname <- "correlated response via ridge regularization"	  
     else corname <- ""
 
     ############## Anova Table for the simultaneous tests x ####################
@@ -63,19 +59,12 @@ default.print.anova.manyglm <- function( x, digits = max(getOption("digits") - 3
     
     if(!is.null(test) & substr(anova$resamp,1,1)!="n"){
        if(substr(anova$p.uni,1,1)=="n") {
-            if(inherits(anova, "anova.manyglm") )
-                cat("Arguments: with", n.bootsdone, "resampling iterations using",       anova$resamp, "resampling,", anova$teststat, "and",corname, "\n")
-            else
-                cat("Arguments: with", n.bootsdone, "resampling iterations using",        anova$resamp, "resampling and",corname, "\n") 
-
-#            if(anova$resamp=="case" & sum(anova$n.iter.sing)>0) {
-#                cat("\nNumber of iterations with adjusted tests (including skipped tests)      because of singularities in X due to the case resampling\n")
-#                print.default(anova$n.iter.sing, quote = FALSE, right = TRUE, na.print = "", ...)
+              cat("Arguments:\n", "Test statistics calculated assuming", corname, 
+              "\n P-value calculated using", n.bootsdone, "resampling iterations via",       anova$resamp, "resampling (to account for correlation in testing).\n")
                 if(sum(anova$nBoot - anova$n.bootsdone)>1){
                     cat("\nNumber of iterations with skipped test statistic as the respective variable/variable-group to test became linear dependent during the case resampling step\n")
                     print.default(anova$nBoot - anova$n.bootsdone - 1, quote = FALSE, right = TRUE, na.print = "", ...) 
 		}
-#            }
         }
     }
   ########### END Anova Table for the simultaneous tests #################
@@ -135,14 +124,8 @@ default.print.anova.manyglm <- function( x, digits = max(getOption("digits") - 3
               na.print = "", ...)
 
         if( substr(anova$resamp,1,1)!="n"){
-           if(inherits(anova, "anova.manyglm") )
-              cat("\nArguments: with", n.bootsdone, "resampling iterations using",              anova$resamp, "resampling,", anova$teststat, "and",corname, "\n")
-           else 
-              cat("\nArguments: with", n.bootsdone, "resampling iterations using", anova$resamp, "resampling and",corname, "\n")
-#           if(anova$resamp=="case" & sum(anova$n.iter.sing)>0) {
-#              cat("\nNumber of iterations with adjusted tests (including skipped tests)              because of singularities in X due to the case resampling\n")
-#              print.default(anova$n.iter.sing, quote = FALSE, right = TRUE, na.print = "", ...)
-#            }
+              cat("Arguments:\n", "Test statistics calculated assuming", corname, 
+              "\nP-value calculated using", n.bootsdone, "resampling iterations via",       anova$resamp, "resampling (to account for correlation in testing.\n")
            if(sum(anova$nBoot - anova$n.bootsdone)>1){
               cat("\nNumber of iterations with skipped test statistic as the respective              variable/variable-group to test became linear dependent during the case resampling step\n")
               print.default(anova$nBoot - anova$n.bootsdone - 1, quote = FALSE, right = TRUE, na.print = "", ...)

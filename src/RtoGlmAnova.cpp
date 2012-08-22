@@ -21,6 +21,7 @@ RcppExport SEXP RtoGlmAnova(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
     mm.model = as<unsigned int>(sparam["regression"]);
     mm.estiMethod = as<unsigned int>(sparam["estimation"]);
     mm.varStab = as<unsigned int>(sparam["stablizer"]);   
+    mm.n = as<unsigned int>(sparam["n"]);   
 
     List rparam(tpar);
     // pass parameters
@@ -31,9 +32,10 @@ RcppExport SEXP RtoGlmAnova(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
     tm.resamp = as<unsigned int>(rparam["resamp"]);
     tm.reprand = as<unsigned int>(rparam["reprand"]);
     tm.punit = as<unsigned int>(rparam["punit"]);
+    tm.showtime = as<unsigned int>(rparam["showtime"]);
 
-// for debug
-//  Rprintf("Input param arguments:\n tol=%g, nboot=%d, cor_type=%d, shrink_param=%g, test_type=%d, resamp=%d, reprand=%d\n", tm.tol, tm.nboot, tm.corr, tm.shrink_param, tm.test, tm.resamp, tm.reprand);
+//  for debug
+//    Rprintf("Input param arguments:\n tol=%g, mm.model=%d, nboot=%d, cor_type=%d, shrink_param=%g, test_type=%d, resamp=%d, n=%d, showtime=%d\n", mm.tol, mm.model, tm.nboot, tm.corr, tm.shrink_param, tm.test, tm.resamp, mm.n, tm.showtime);
 
     NumericMatrix Yr(Ysexp);
     NumericMatrix Xr(Xsexp);
@@ -45,8 +47,11 @@ RcppExport SEXP RtoGlmAnova(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
     unsigned int nParam = Xr.ncol();
     unsigned int nModels = INr.nrow();
     unsigned int nLambda = lambda.size();
+    tm.nRows = nRows;
+    tm.nVars = nVars;
+    tm.nParam = nParam;
 // for debug
-//  Rprintf("nRows=%d, nVars=%d, nParam=%d\n", nRows, nVars, nParam);
+//    Rprintf("nRows=%d, nVars=%d, nParam=%d\n", nRows, nVars, nParam);
 
     // Rcpp -> gsl
     unsigned int i, j, k;
@@ -69,23 +74,24 @@ RcppExport SEXP RtoGlmAnova(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
     for (i=0; i<nRows; i++) {
         for (j=0; j<nVars; j++) {
             gsl_matrix_set(Y, i, j, Yr(i, j));
-    //      Rprintf("%d ", (int)gsl_matrix_get(Y, i, j));
+//            Rprintf("%d ", (int)gsl_matrix_get(Y, i, j));
         }
-    //  Rprintf("\t");
+//        Rprintf("\t");
         
         for (k=0; k<nParam; k++){
             gsl_matrix_set(X, i, k, Xr(i, k));
-    //      Rprintf("%.2f ", gsl_matrix_get(X, i, k));
+//            Rprintf("%.2f ", gsl_matrix_get(X, i, k));
         }
-    //  Rprintf("\n");    
+//        Rprintf("\n");    
     }
 
-    for (i=0; i<nModels; i++)
-    for (j=0; j<nParam; j++){
-        gsl_matrix_set(isXvarIn, i, j, INr(i, j));
-//      Rprintf("%d ", (int)gsl_matrix_get(isXvarIn, i, j));
+    for (i=0; i<nModels; i++) {
+        for (j=0; j<nParam; j++){
+            gsl_matrix_set(isXvarIn, i, j, INr(i, j));
+//            Rprintf("%d ", (int)gsl_matrix_get(isXvarIn, i, j));
+        }
+//        Rprintf("\n");
     }
-//  Rprintf("\n");
 
     // do stuff	
   clock_t clk_start, clk_end;
@@ -93,14 +99,14 @@ RcppExport SEXP RtoGlmAnova(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
 
     // glmfit
     PoissonGlm pfit(&mm);
-    LogiGlm lfit(&mm);
     NBinGlm nbfit(&mm);
-    glm *glmPtr[3] = { &pfit, &nbfit, &lfit };
+    BinGlm binfit(&mm);
+    glm *glmPtr[3] = { &pfit, &nbfit, &binfit };
     unsigned int mtype = mm.model-1;
-    glmPtr[mtype]->regression(Y, X, NULL);
+    glmPtr[mtype]->regression(Y, X, NULL, NULL);
 //    glmPtr[mtype]->display();
 
-    GlmTest myTest(&tm, glmPtr[mtype]);
+    GlmTest myTest(&tm);
     // Resampling indices
     if ( !Rf_isNumeric(bIDsexp) || !Rf_isMatrix(bIDsexp) ) {
 //       Rprintf("Calc bootID on the fly.\n");
@@ -126,11 +132,11 @@ RcppExport SEXP RtoGlmAnova(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
     }  } 
 
     // resampling test
-    myTest.anova(isXvarIn);
+    myTest.anova(glmPtr[mtype],isXvarIn);
 //    myTest.displayAnova();
 
     clk_end = clock();
-    long int dif = floor((double)(clk_end - clk_start)/(double)(CLOCKS_PER_SEC));  
+    unsigned long int dif = floor((double)(clk_end - clk_start)/(double)(CLOCKS_PER_SEC));  
     unsigned int hours = floor((double)(dif/(double)3600));
     unsigned int min = floor((double)(dif%3600)/(double)60);
     unsigned int sec = dif%60;   

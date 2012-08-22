@@ -3,11 +3,10 @@
 # h_ii*r_i^2/(1-hii)^2 divided by k*s^2     	
 ############################################################################
 
-cooks.distance.manylm <-
-    function (model, infl = manylm.influence(model, do.coef = FALSE),
+cooks.distance.manylm <- function (model, 
     res = as.matrix(residuals(model)),
     sd = sqrt(deviance(model)/df.residual(model)), 
-    hat = infl$hat, ...) 
+    hat = diag(model$hat.X), ...) 
 {
         if (!is.null(model$weighted.residuals))
             res <- as.matrix(model$weighted.residuals)

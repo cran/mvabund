@@ -142,7 +142,7 @@ double dmvnorm(const unsigned int n, const gsl_vector *x, const gsl_vector *mean
    gsl_blas_ddot( xm, ym, &ay);
    gsl_vector_free(xm);
    gsl_vector_free(ym);
-   ay = exp(-0.5*ay)/sqrt( (double) pow((double)(2*M_PI),(double)n)*ax );
+   ay = exp(-0.5*ay)/sqrt( pow((2*M_PI),n)*ax );
 
    return ay;
 }
@@ -215,7 +215,7 @@ double dmvt(const unsigned int n, const gsl_vector *x, const gsl_vector *locatio
     gsl_vector_free(xm);
     gsl_vector_free(ym);
 
-    ay = pow((double)(1+ay/dof),-az)*gsl_sf_gamma(az)/(gsl_sf_gamma(0.5*dof)*sqrt( (double) pow((double)(dof*M_PI),(double)n)*ax ));
+    ay = pow((1+ay/dof),-az)*gsl_sf_gamma(az)/(gsl_sf_gamma(0.5*dof)*sqrt( pow((dof*M_PI),n)*ax ));
 
     return ay;
 }

@@ -197,20 +197,21 @@ double calcDet(gsl_matrix *SS)
      // SS is a nVars x nVars real symmetric matric
      unsigned int nVars = SS->size1;
      double result;
-/*     // det(A) = prod(eig(A))
+/*
+     // det(A) = prod(eig(A))
      gsl_eigen_symm_workspace *ws = gsl_eigen_symm_alloc(nVars);
      gsl_vector *eval=gsl_vector_alloc(nVars);    
      unsigned int j;
      double logDetSS=0.0;
      gsl_eigen_symm(SS, eval, ws);
-//     displayvector(eval, "SS eigen values");
+     displayvector(eval, "SS eigen values");
      for ( j=0; j<nVars; j++ )
          logDetSS += log(gsl_vector_get(eval, j));
 
      gsl_eigen_symm_free(ws);
      gsl_vector_free(eval);
      return logDetSS;
-  */
+*/  
 
    // OR: det(A) = diag(LU)
      // fill SS
@@ -323,6 +324,24 @@ int subXrow2(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi)
         }
      }
      return 0;
+}     
+
+
+int addXrow2(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi)
+{   
+    unsigned int j, k=0;
+    unsigned int n=Xi->size1;
+
+    gsl_matrix_set_zero(Xi);
+
+    for (j=0; j<n; j++) {       
+        if ( (unsigned int)gsl_vector_get(ref, j)>0 ){
+           gsl_vector_view row = gsl_matrix_row (X, k);
+           gsl_matrix_set_row(Xi, j, &row.vector);
+           k++;
+        }
+     }
+     return SUCCESS;
 }     
 
 int subXrow1(gsl_matrix *X, gsl_vector *ref0, gsl_vector *ref1, gsl_matrix *Xi)
@@ -519,7 +538,7 @@ int invLSQ(gsl_matrix *A, gsl_vector *b, gsl_vector *x)
 }
 
 // the manyglm version of rcalc
-int GetR(gsl_matrix *Res, unsigned int corr, gsl_vector *glmshrink, unsigned int k, gsl_matrix *R)
+int GetR(gsl_matrix *Res, unsigned int corr, double lambda, gsl_matrix *R)
 {
     if (corr == IDENTITY) {
        gsl_matrix_set_identity (R);
@@ -528,7 +547,7 @@ int GetR(gsl_matrix *Res, unsigned int corr, gsl_vector *glmshrink, unsigned int
        unsigned int j;
        unsigned int nRows = Res->size1;
        unsigned int nVars = Res->size2;
-       double std, lambda;
+       double std;
        gsl_matrix *Sd =gsl_matrix_alloc(nVars, nVars);
        gsl_vector *s = gsl_vector_alloc(nVars);
 
@@ -555,7 +574,6 @@ int GetR(gsl_matrix *Res, unsigned int corr, gsl_vector *glmshrink, unsigned int
        //  displaymatrix(R, "corr-coefficents");
                                                         
        if ( corr == SHRINK ) { 
-          lambda = gsl_vector_get(glmshrink, k);
           gsl_matrix_scale (R, lambda);
           gsl_vector_add_constant(&d.vector,(double)(1.0-lambda));          
        }

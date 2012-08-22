@@ -24,12 +24,12 @@ void matrix_filesize(FILE *f, unsigned int * row, unsigned int * col)
 	fgets(line, MAX_LINE_LENGTH-1, f);
 	*row = 1;
 	strtok(line, " \t");
-	*col = 0;
+	*col = 1;
 
         // Note that here is a potential bug:
 	// The line must end with an empty space, otherwise 
 	// the last number will not be counted in
-	while (NULL != strtok(NULL, " \t")) (*col)++;             
+	while (NULL != strtok(NULL, " \t")) (*col)++;   
 
 	while (NULL != fgets(line, MAX_LINE_LENGTH-1, f)) (*row)++;
       
@@ -87,7 +87,7 @@ void displaymatrix(gsl_matrix * m, const char * name)
 	for (i = 0; i < m->size1; i++)
 	{
 	    for (j = 0; j < m->size2; j++)
-		printf("%.2f\t", gsl_matrix_get(m, i, j));
+		printf("%.4f\t", gsl_matrix_get(m, i, j));
 	    printf("\n");
 	}
 

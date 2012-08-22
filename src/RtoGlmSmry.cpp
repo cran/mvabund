@@ -21,19 +21,21 @@ RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
     mm.model = as<unsigned int>(sparam["regression"]);
     mm.estiMethod = as<unsigned int>(sparam["estimation"]);
     mm.varStab = as<unsigned int>(sparam["stablizer"]);
+    mm.n = as<unsigned int>(sparam["n"]);
 
     List rparam(tpar);
     // pass parameters
-    mv_Method tm;	
+    mv_Method tm;
     tm.corr = as<unsigned int>(rparam["cor_type"]);
     tm.test = as<unsigned int>(rparam["test_type"]);
     tm.resamp = as<unsigned int>(rparam["resamp"]);
     tm.reprand = as<unsigned int>(rparam["reprand"]);
     tm.punit = as<unsigned int>(rparam["punit"]);
     tm.nboot = as<unsigned int>(rparam["nboot"]);
+    tm.showtime = as<unsigned int>(rparam["showtime"]);
 
 //    // for debug
-//    Rprintf("Input param arguments:\n tol=%.4f, nboot=%d, cor_type=%d, test_type=%d, resamp=%d, reprand=%d\n",tm.tol, tm.nboot, tm.corr, tm.test, tm.resamp, tm.reprand);
+//    Rprintf("Input param arguments:\n tol=%.4f, nboot=%d, cor_type=%d, test_type=%d, resamp=%d, showtime=%d\n",mm.tol, tm.nboot, tm.corr, tm.test, tm.resamp, tm.showtime);
 
     NumericMatrix Yr(Ysexp);
     NumericMatrix Xr(Xsexp);
@@ -42,6 +44,9 @@ RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
     unsigned int nVars = Yr.ncol();
     unsigned int nParam = Xr.ncol();
     unsigned int nLambda = lambda.size();
+    tm.nRows = nRows;
+    tm.nVars = nVars;
+    tm.nParam = nParam;
 
     // Rcpp -> gsl
     unsigned int i, j, k;
@@ -70,14 +75,14 @@ RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
 
     // Glm fit
     PoissonGlm pfit(&mm);
-    LogiGlm lfit(&mm);
+    BinGlm lfit(&mm);
     NBinGlm nbfit(&mm);
     glm *glmPtr[3] = { &pfit, &nbfit, &lfit };
     unsigned int mtype = mm.model-1;
-    glmPtr[mtype]->regression(Y, X, NULL);
+    glmPtr[mtype]->regression(Y, X, NULL, NULL);
 //    glmPtr[mtype]->display();
 
-    GlmTest myTest(&tm, glmPtr[mtype]);    
+    GlmTest myTest(&tm);    
     // Resampling indices
     if ( !Rf_isNumeric(bIDsexp) || !Rf_isMatrix(bIDsexp) ) {
 //      Rprintf("Calc bootID on the fly.\n");
@@ -103,11 +108,11 @@ RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
     }   } 
 
     // resampling test
-    myTest.summary();
+    myTest.summary(glmPtr[mtype]);
 //    myTest.displaySmry();
 
     clk_end = clock();
-    long int dif = floor((double)(clk_end - clk_start)/(double)(CLOCKS_PER_SEC));
+    unsigned long int dif = floor((double)(clk_end - clk_start)/(double)(CLOCKS_PER_SEC));
     unsigned int hours = floor((double)dif/(double)3600);
     unsigned int min = floor((double)(dif-hours*3600)/(double)60);
     unsigned int sec = dif - hours*3600 - min*60;

@@ -20,6 +20,7 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
     mm.model = as<unsigned int>(rparam["regression"]);
     mm.estiMethod = as<unsigned int>(rparam["estimation"]);
     mm.varStab = as<unsigned int>(rparam["stablizer"]);
+    mm.n = as<unsigned int>(rparam["n"]);
 // for debug
 //    Rprintf("tol=%g, model=%d, estiMethod=%d, varStab=%d\n", mm.tol, mm.model, mm.estiMethod, mm.varStab);
 
@@ -59,22 +60,22 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
     }
        
     // do stuff	
-    clock_t clk_start, clk_end;
-    clk_start = clock();
+//    clock_t clk_start, clk_end;
+//    clk_start = clock();
 
     PoissonGlm pfit(&mm);
-    LogiGlm lfit(&mm);
+    BinGlm lfit(&mm);
     NBinGlm nbfit(&mm);
     glm *glmPtr[3] = { &pfit, &nbfit, &lfit };
     unsigned int mtype = mm.model-1;
-    glmPtr[mtype]->regression(Y, X, NULL);
+    glmPtr[mtype]->regression(Y, X, NULL, NULL);
 //    glmPtr[mtype]->display();
 	
-    clk_end = clock();
-    long int dif = floor((double)(clk_end - clk_start)/(double)(CLOCKS_PER_SEC));
-    unsigned int hours = floor((double)(dif/(double)3600));
-    unsigned int min = floor((double)(dif%3600)/(double)60);
-    unsigned int sec = dif%60;
+//    clk_end = clock();
+//    unsigned long int dif = floor((double)(clk_end - clk_start)/(double)(CLOCKS_PER_SEC));
+//    unsigned int hours = floor((double)(dif/(double)3600));
+//    unsigned int min = floor((double)(dif%3600)/(double)60);
+//    unsigned int sec = dif%60;
 //    Rprintf("Time elapsed: %d hr %d min %d sec (%d seconds)\n", hours, min, sec, dif);
 
     // Wrap the glm object with Rcpp 
@@ -91,6 +92,7 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
     NumericMatrix Vars(nRows, nVars);
     NumericMatrix wHalf(nRows, nVars);
     NumericMatrix Res(nRows, nVars);
+    NumericMatrix PitRes(nRows, nVars);
     NumericMatrix sqrt1_Hii(nRows, nVars);
 
     for (i=0; i<nParam; i++)
@@ -106,6 +108,7 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
 	Vars(i, j) = gsl_matrix_get(glmPtr[mtype]->Var, i, j);        
 	wHalf(i, j) = gsl_matrix_get(glmPtr[mtype]->wHalf, i, j);        
 	Res(i, j) = gsl_matrix_get(glmPtr[mtype]->Res, i, j);        
+	PitRes(i, j) = gsl_matrix_get(glmPtr[mtype]->PitRes, i, j);        
 	sqrt1_Hii(i, j) = gsl_matrix_get(glmPtr[mtype]->sqrt1_Hii, i, j);        
 //        Rprintf("%d ", (int)gsl_matrix_get(Y, i, j));
     }
@@ -123,7 +126,8 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
          _["var.coefficients"] = varBeta,
          _["fitted.values"] = Mu,
          _["linear.predictor"] = Eta,
-	 _["residuals"] = Res,
+	 _["Pearson.residuals"] = Res,
+	 _["PIT.residuals"] = PitRes,
 	 _["sqrt.1_Hii"] = sqrt1_Hii,
          _["var.estimator"] = Vars,
 	 _["sqrt.weight"] = wHalf,

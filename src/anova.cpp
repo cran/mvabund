@@ -163,11 +163,7 @@ int AnovaTest::resampTest(void)
     bY = gsl_matrix_alloc(nRows, nVars);
     bX = gsl_matrix_alloc(nRows, nParam);
 
-    gsl_rng *rnd;
-    const gsl_rng_type *T; 
-    gsl_rng_env_setup();
-    T=gsl_rng_default;
-    rnd=gsl_rng_alloc(T);
+    gsl_rng *rnd=gsl_rng_alloc(gsl_rng_mt19937);
 
     // initialize permid
     unsigned int *permid=NULL;

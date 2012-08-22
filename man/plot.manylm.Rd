@@ -13,12 +13,12 @@
 }
 \usage{
 \method{plot}{manylm}(
-  x, which=1:4, caption=c("Residuals vs Fitted", "Normal Q-Q", 
+  x, res.type="pearson", which=1:4, caption=c("Residuals vs Fitted", "Normal Q-Q", 
   "Scale-Location", "Cook's distance"), overlay=TRUE, 
   n.vars=12, var.subset=NULL, sub.caption=NULL, studentized= TRUE, ...)
 
 \method{plot}{manyglm}(
-  x, which=1, caption=c("Residuals vs Fitted", "Normal Q-Q", 
+  x, res.type="pearson", which=1, caption=c("Residuals vs Fitted", "Normal Q-Q", 
   "Scale-Location", "Cook's distance"), overlay=TRUE, 
   n.vars=12, var.subset=NULL, sub.caption=NULL, ...)
 
@@ -26,6 +26,7 @@
 \arguments{
  \item{x}{ \code{manylm} object or \code{manyglm} object, typically the 
   result of a call to \code{\link{manylm}} or \code{manyglm}.}
+ \item{res.type}{type of residuals to plot. By default, plot the Pearson residuals. It is recommended to use \code{res.type="pit"} to use Probability Integral Residuals for presence-absence data or discrete data with a small number of integer values. }
   \item{which}{if a subset of the plots is required, specify a subset of
     the numbers \code{1:4}.}
   \item{caption}{captions to appear above the plots}

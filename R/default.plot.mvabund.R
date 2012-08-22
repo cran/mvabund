@@ -110,7 +110,7 @@ if (missing(x)) { stop("The mvabund object 'x' is missing.") }
         if (any(!fac)) warning("Only the factor variables ", paste((1:ncol(expl.data))[fac], collapse =", "), " of x will be plotted.")
         if(shift) message("Overlapping points were shifted along the y-axis to make them visible.")
         cat("\n PIPING TO 1st MVFACTOR \n")
-        do.call("plotMvaFactor", c(list(x=x, y=expl.data), allargs, dots))
+        do.call("default.plotMvaFactor", c(list(x=x, y=expl.data), allargs, dots))
         return(invisible())
     }
     else if(is.mvabund(y) & is.factor(x)) {
@@ -124,14 +124,14 @@ if (missing(x)) { stop("The mvabund object 'x' is missing.") }
         if(any(!fac)) warning("Only the factor variables ", paste((1:ncol(expl.data))[fac], collapse =", "), " of x will be plotted.")
         if(shift) message("Overlapping points were shifted along the y-axis to make them visible.")
         cat("\n PIPING TO 2nd MVFACTOR \n")
-        do.call("plotMvaFactor", c(list(x=y, y=expl.data), allargs, dots))
+        do.call("default.plotMvaFactor", c(list(x=y, y=expl.data), allargs, dots))
         return(invisible())
      }
      else if (!is.mvabund(x) & !is.data.frame(y)){ 
         foo <- eval(targs$x)
         if( inherits(foo, "formula")) {
             cat("\n PIPING TO 1st MVFORMULA \n")	
-            do.call("plot.mvformula", foo, allargs, dots)
+            do.call("default.plot.mvformula", foo, allargs, dots)
             return(invisible())
         }  
         else {
@@ -158,7 +158,7 @@ if (missing(x)) { stop("The mvabund object 'x' is missing.") }
             allargs$n.vars <- min(NCOL(y), 12)
              
             cat("\n PIPING TO 2nd MVFORMULA \n")            	
-	    do.call("plot.mvformula", c(list(x=formula.mva), allargs, dots))
+	    do.call("default.plot.mvformula", c(list(x=formula.mva), allargs, dots))
             return(invisible())
         }
     } 
@@ -191,7 +191,7 @@ if (missing(x)) { stop("The mvabund object 'x' is missing.") }
 
             allargs$n.vars <- min(n.vars, NCOL(x))
             cat("\n PIPING TO 3rd MVFORMULA \n")
-       	    do.call( "plot.mvformula", quote=FALSE, c(list(x=formula.mva),allargs,dots))
+       	    do.call( "default.plot.mvformula", quote=FALSE, c(list(x=formula.mva),allargs,dots))
             return(invisible())
     	} # if (class(foo)==formula)
     } #  (!is.mvabund(y) & !is.data.frame(x))

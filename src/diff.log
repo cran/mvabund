@@ -1,0 +1,96 @@
+235,236c235,238
+<             uij = wei*cdf(yij, mij, phi[j]);
+<             if (yij>0) uij=uij+(1-wei)*cdf((yij-1),mij,phi[j]);
+---
+>             if (yij==0) uij = wei*cdf(yij, mij, phi[j]);
+>             else uij = wei*cdf(yij,mij,phi[j])+(1-wei)*cdf((yij-1),mij,phi[j]);
+> //            if (uij==0 | uij==1)
+> //               printf("wei=%.1f, cdf(%d)=%.1f ", wei, yij, cdf(yij, mij, phi[j]));
+309c311
+<    while ( step<iter ) {
+---
+>    while ( *tol>eps ) {
+387c389
+<        while (((dev[id]>10)|(dev_grad>-0.25))&(step>0)){
+---
+>        while (((dev[id]>10)|(dev_grad>-0.25))&(step>1)){
+393,394c395,398
+<             *tol=ABS(dev_grad);
+<             if (*tol<eps) break;
+---
+>             *(tol)=ABS(dev_grad);
+>             if (*tol<eps) {
+>                break; 
+>             }
+397c401
+<                printf("\t Internal loop reached max iter, d_dev=%.4f\n", dev_grad);
+---
+>                printf("\t Internal loop I reached maximum iter %d: gradient=%.4f\n", step1, dev_grad);
+402,403d405
+<        gsl_vector_free(z);
+<        gsl_matrix_free(WX); 
+406,407d407
+<        step++;
+<        if (*tol<eps) break;
+408a409,413
+>        gsl_vector_free(z);
+>        gsl_matrix_free(WX); 
+>       
+>        step++;
+>        if (step==iter) break;
+507,508c512,514
+<     double a, phi_old, fA, fAdash, tol;
+< //    double tol_grad, tol_old;
+---
+>     double a, phi_old, fA, fAdash;
+>     double initphi=eps, tol=1.0;
+>     double tol_grad, tol_old;
+552c558
+<             getfAfAdash(eps, j, &fA, &fAdash);
+---
+>             getfAfAdash(initphi, j, &fA, &fAdash);
+558a565
+>                 tol_old = tol;
+559a567,576
+>                 tol_grad = tol - tol_old; // ensure decreasing tol
+>                 if ( (iterconv[j]>10)&((tol_grad>0)|(ABS(tol_grad)<mmRef->tol))){ 
+>                    // restore previous estimate
+>                    phi[j]=phi_old;
+>                    betaEst(j, 1, &tol, phi[j]);
+> //                   printf("tol_grad=%.6f, restore previous estimates\n", tol_grad);
+> //                   exit(-1);
+>                    break;
+>                 }
+> 
+561c578
+<                 if ( (ABS(fAdash)<eps)|(ABS(fA/fAdash)>0.5) ) 
+---
+>                 if ( (ABS(fAdash)<eps)|(ABS(fA/fAdash)>0.5) ) {
+562a580,581
+> //                   printf("fA/fAdash=%.4f , ABS(.)=%.4f\n", (fA/fAdash), ABS(fA/fAdash));
+>                 }
+570c589,590
+< //                   printf("NBinFit(ML) reached %d, phi[j]=%.4f, fA=%.4f, (.)=%.4f, tol=%.6f, tol_old=%.6f, tol_grad=%.6f\n", iterconv[j], phi[j], fA, (fA/fAdash), tol, tol_old, tol_grad); 
+---
+> //                  printf("NBinFit(ML) reached %d, phi[j]=%.4f, fA=%.4f, (.)=%.4f, tol=%.6f, tol_old=%.6f, tol_grad=%.6f\n", iterconv[j], phi[j], fA, (fA/fAdash), tol, tol_old, tol_grad); 
+> //                  exit(-1);
+598,599c618,625
+<            uij = wei*cdf(yij, mij, phi[j]);
+<            if (yij>0) uij=uij+(1-wei)*cdf((yij-1),mij,phi[j]);           
+---
+>            if ( phi[j]==0 ) { // Poisson
+>               if (yij==0) uij=wei*gsl_cdf_poisson_P(yij, mij);
+>               else uij=wei*gsl_cdf_poisson_P(yij,mij)+(1-wei)*gsl_cdf_poisson_P((yij-1),mij);
+>            }
+>            else { // Negative binomial
+>               if (yij==0) uij = wei*cdf(yij, mij, phi[j]);
+>               else uij = wei*cdf(yij,mij,phi[j])+(1-wei)*cdf((yij-1),mij,phi[j]);
+>            }
+610,611c636,637
+<        if (calcDet(XwX)<eps) { //XwX + eps*I
+<           dj=gsl_matrix_diagonal(XwX);
+---
+>        if (calcDet(XwX)<eps) {
+>           gsl_vector_view dj=gsl_matrix_diagonal(XwX);
+617a644
+> //          exit(-1);

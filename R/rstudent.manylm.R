@@ -3,11 +3,9 @@
 # however standardization is NOT done multivariate, but univariate fashion 		#
 #####################################################################################
 
-rstudent.manylm <- 
-function (model, infl = manylm.influence(model, do.coef = FALSE), 
-    res = infl$wt.res, ...) {
+rstudent.manylm <- function(model, ...) {
 
-    res <- res/(infl$sigma * sqrt(1 - infl$hat))
-    res[is.infinite(res)] <- NaN
-    res
+    warning("Not implemented for manylm objects. Return rstandard(model) instead. \n")
+    rstandard.manylm(mode)
+
 }

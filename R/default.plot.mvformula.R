@@ -42,8 +42,7 @@ dev <- dev.list()
 dev.name <- getOption("device")
 
 if(is.null(dev.name))
-	stop("Make sure that the 'device' option has a valid value, e.g. 'options(device = 'windows')'.
-		Allowed values here are 'windows', 'win.graph', 'x11', 'X11'.")
+	stop("Make sure that the 'device' option has a valid value, e.g. 'options(device = 'windows')'. Allowed values here are 'windows', 'win.graph', 'x11', 'X11'.")
 
 # if(!(any(dev.name == c("windows", "win.graph", "x11", "X11")) ) )
 #   stop("Make sure that the 'device' option has a valid value, e.g. 'options(device = 'windows')'.
@@ -469,11 +468,12 @@ if(write.plot=="show" & is.null(dev)) {
 
 if (all(par("mar")== c(5.1, 4.1, 4.1, 2.1)) & (rows*columns>1) )  {
 	if (overall.main=="") side3 <- 1.7 else side3 <- 1
-	par(mar=c(3,4,side3,1)+0.1)
+#	par(mar=c(3,4,side3,1)+0.1)
+	par(mar=c(1,1,side3,1)+0.1)
 }
 
 #Set outer margin of the image (in text lines)
-par(oma=c(1,1,4,1))
+par(oma=c(1,1,2,1))
 
 
 ######### BEGIN plot #########
@@ -580,6 +580,12 @@ if(any(scale.lab == "ss")){
 	mxAll <- sapply( 1:n.vars, function(yi)	max(mvabund.object.1[,yi],na.rm=TRUE))
 	wh.max <- which( abs( mxAll - max(mxAll, na.rm=TRUE)) < 1e-06  )[1]
 
+	mnAll <- sapply( 1:n.vars, function(yi)min(mvabund.object.1[,yi],na.rm=TRUE))
+	wh.min <- which( abs( mnAll - min(mnAll, na.rm=TRUE)) < 1e-06  )[1]
+
+        ylimleft <- mnAll[wh.min]-mnAll[wh.min]/10
+        ylimright <- mxAll[wh.max]+mxAll[wh.max]/10
+
 	if(is.null(yaxvalues[[wh.max]])) {
 		if(write.plot=="show" & is.null(dev)) {
 			do.call(dev.name, args=list(height=height,width=width))
@@ -587,16 +593,15 @@ if(any(scale.lab == "ss")){
 			do.call(dev.name, args=list())
 		}	
 	
-		# dev.set(which = dev.curr)
+#		dev.set(which = dev.cur())
 cat("\n \tPIPING TO 1st PLOT FORMULA FEATURE \n")
-		do.call( "plotFormulafeature", c(list(mvabund.formula[[wh.max]],
-				data=data, axes=axes, type=type[1],
-					ylim=c(0,mxAll[wh.max]+mxAll[wh.max]/10), xvar.subset=1,
-						ask=FALSE), dots ))
+#		do.call( "plotFormulafeature", c(list(mvabund.formula[[wh.max]],data=data, axes=axes, type=type[1],ylim=c(0,mxAll[wh.max]+mxAll[wh.max]/10), xvar.subset=1,ask=FALSE), dots ))
+		do.call( "plotFormulafeature", c(list(mvabund.formula[[wh.max]],data=data, axes=axes, type=type[1],ylim=c(ylimleft,ylimright), xvar.subset=1), dots ))
+		mtext(overall.main, outer = TRUE, cex = 0.9*par("cex.main"), col=par("col.main"), line = 1) 
 
 		yaxTic <- axTicks(2)
 		yaxLab <- as.character(yaxTic)
-		dev.off()
+#		dev.off()
 
 	} else {
 		yaxTic <- yaxvalues[[wh.max]]
@@ -671,10 +676,12 @@ for (yi in 1:winylevel) {
 			}
 
 			if(any(scale.lab == "ss")) {
-				ylimVal <- c(0,mxAll[wh.max]+mxAll[wh.max]/10)
+		#		ylimVal <- c(0,mxAll[wh.max]+mxAll[wh.max]/10)
+				ylimVal <- c(min.y, max.y)
 			} else {
-				mx <- max(mvabund.object.1[,yj],na.rm=TRUE)	
-				ylimVal <- c(0,mx+mx/10)
+                #		mx <- max(mvabund.object.1[,yj],na.rm=TRUE)	
+	        #		ylimVal <- c(0,mx+mx/10)
+                                ylimVal <- c(min.y, max.y)
 			}
 
 cat("\n \tPIPING TO 2nd PLOT FORMULA FEATURE \n")

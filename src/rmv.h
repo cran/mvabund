@@ -50,22 +50,19 @@
 /* ------------------------------ */
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_linalg.h>
-#include "R.h"
-
-#define printf Rprintf
 
 // MVN with positive-semi definite covariance matrix
-int semirmvnorm(const gsl_rng *rnd, const unsigned int n, const gsl_vector *mean, const gsl_matrix *var, gsl_vector *result);
+int semirmvnorm(const gsl_rng *rnd, const int n, const gsl_vector *mean, const gsl_matrix *var, gsl_vector *result);
 
 //multivariate normal distribution random number generator
-int rmvnorm(const gsl_rng *r, const unsigned int n, const gsl_vector *mean, const gsl_matrix *var, gsl_vector *result);
+int rmvnorm(const gsl_rng *r, const int n, const gsl_vector *mean, const gsl_matrix *var, gsl_vector *result);
 // multivariate normal density function
-double dmvnorm(const unsigned int n, const gsl_vector *x, const gsl_vector *mean, const gsl_matrix *var);
+double dmvnorm(const int n, const gsl_vector *x, const gsl_vector *mean, const gsl_matrix *var);
 // multivariate Student t distribution random number generator 
-int rmvt(const gsl_rng *r, const unsigned int n, const gsl_vector *location, const gsl_matrix *scale, const unsigned int dof, gsl_vector *result);
+int rmvt(const gsl_rng *r, const int n, const gsl_vector *location, const gsl_matrix *scale, const int dof, gsl_vector *result);
 // multivariate Student t density function
-double dmvt(const unsigned int n, const gsl_vector *x, const gsl_vector *locationn, const gsl_matrix *scale, const unsigned int dof);
+double dmvt(const int n, const gsl_vector *x, const gsl_vector *locationn, const gsl_matrix *scale, const int dof);
 // Wishart distribution random number generator 
-int rwishart(const gsl_rng *r, const unsigned int n, const unsigned int dof, const gsl_matrix *scale, gsl_matrix *result);
+int rwishart(const gsl_rng *r, const int n, const int dof, const gsl_matrix *scale, gsl_matrix *result);
 
 #endif

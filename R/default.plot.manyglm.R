@@ -3,7 +3,7 @@
 # Plot for evaluation of goodness of fit for lm.mvabund objects                #
 ################################################################################
 
-default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted","Normal Q-Q", "Scale-Location", "Cook's distance"), overlay=TRUE, n.vars=12, var.subset=NULL, panel = if (add.smooth) panel.smooth else points, sub.caption = NULL, main = "", ask, ..., col=palette(rainbow(n.vars+1))[2:(n.vars+1)], id.n = if (overlay) 0 else 3, labels.id=rownames(x$residuals), cex.id = 0.75, qqline = TRUE, add.smooth = if(!is.null(getOption("add.smooth"))){ getOption("add.smooth") } else TRUE, label.pos = c(4, 2), cex.caption=1.5, asp = 1, legend.pos= if(length(col)==1) "none" else "nextplot",	mfrow= if(overlay) {length(which)+(legend.pos=="nextplot")} else if(write.plot=="show") c(min(n.vars,3),length(which)) else length(which), mfcol=NULL, write.plot="show", filename="plot.mvabund", keep.window= if(is.null(c(mfrow,mfcol))) TRUE else FALSE, legend=FALSE) 
+default.plot.manyglm  <- function(x, which = 1, res.type="pearson", caption = c("Residuals vs Fitted","Normal Q-Q", "Scale-Location", "Cook's distance"), overlay=TRUE, n.vars=12, var.subset=NULL, panel = if (add.smooth) panel.smooth else points, sub.caption = NULL, main = "", ask, ..., col=palette(rainbow(n.vars+1))[2:(n.vars+1)], id.n = if (overlay) 0 else 3, labels.id=rownames(x$Pearson.residuals), cex.id = 0.75, qqline = TRUE, add.smooth = if(!is.null(getOption("add.smooth"))){ getOption("add.smooth") } else TRUE, label.pos = c(4, 2), cex.caption=1.5, asp = 1, legend.pos= if(length(col)==1) "none" else "nextplot",	mfrow= if(overlay) {length(which)+(legend.pos=="nextplot")} else if(write.plot=="show") c(min(n.vars,3),length(which)) else length(which), mfcol=NULL, write.plot="show", filename="plot.mvabund", keep.window= if(is.null(c(mfrow,mfcol))) TRUE else FALSE, legend=FALSE) 
 {        
     allargs <- match.call(expand.dots = FALSE)
     dots <- allargs$...
@@ -32,10 +32,8 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
 	   bmp(paste(filename,".bmp", sep=""))
         else if (write.plot=="png" )
 	   png(paste(filename,".png", sep=""))
-	 
     	on.exit( dev.off() )
    }
-
    na.action <- x$na.action
    na.action.type  <- attr(na.action, "class")
    if(!is.null(na.action))  message("Due to NA values the case(s) ", na.action, " were discarded.")
@@ -75,7 +73,11 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
 	}
     }
 
-    r <- as.matrix(x$residuals) # residuals(x)
+    if (substr(res.type,1,3)=="pit") {
+        r <- as.matrix(x$PIT.residuals) 
+        if (res.type=="pit.norm") r <- qnorm(r) 
+    }
+    else r <- as.matrix(x$Pearson.residuals) # residuals(x)
     yh <- as.matrix(x$linear.predictor)
 
 #    yh <- as.matrix(x$fitted.values)
@@ -314,7 +316,11 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
 
          rs <- if (is.null(w)) { r } # weighed residuals
 	       else sqrt(w) * r   
-         ylab23 <- " Pearson residuals."
+         if (substr(res.type,1,3)=="pit") {
+             if (res.type=="pit.norm") ylab23<-"Random Quantile Residuals"
+             else ylab23 <- "PIT Residuals."
+         }
+         else ylab23 <- "Standard Pearson residuals."
          rs[is.infinite(rs)] <- NaN
       }
    }   
@@ -390,18 +396,18 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
       if (length(which)==1) {
 #          dev.off()
 	  if (legend == TRUE) {
-             dev.new(height=6, width=8) # added for smaller window size    
+#             dev.new(height=6, width=8) # added for smaller window size    
              par(mfrow = c(1,1), oma=c(.5,.5,.5,4.5), mar=c(6, 4.5, 2, 5))
 	     legend.pos="right"
 	  }   
 	  else { 
-             dev.new(height=6, width=6) # added for smaller window size    
+#             dev.new(height=6, width=6) # added for smaller window size    
              par(mfrow = c(1,1), oma=c(.5,.5,.5,.5), mar=c(6,4.5,2,.5))
 	  }   
       }	  
       else if (length(which)==2) {
  #         dev.off()
-	  dev.new(height=6, width=12)
+#	  dev.new(height=6, width=12)
           par(mfrow=c(1,2),oma=c(0.5,0.5,1,10), mar=c(4, 4.5, 2, 2))
       }	  
       else if (length(which)==3) {
@@ -412,7 +418,7 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
       # The residual vs. fitted value plot	
       yhtmp <- c(yh)
 #      yh.is.zero <- yhtmp < (-8)
-      yh.is.zero <- yhtmp < (-max(yhtmp))
+      yh.is.zero <- yhtmp < max(-6,(-max(yhtmp)))
       yh0 <- yhtmp[!yh.is.zero]
       xlim <- range(yh0)
 
@@ -435,8 +441,13 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
 
           colortmp <- rep(color, each=n)
           color0 <- colortmp[!yh.is.zero]
-
-	  plot(yh0, r0, xlab = l.fit, ylab = "Pearson residuals", main=main, ylim=ylim, xlim=xlim, font.main=2, asp=asp, col=color0, cex.lab=clab, cex.axis=caxis, cex=cex, lwd=lwd)
+            
+          if (substr(res.type,1,3)=="pit") {
+              if (res.type=="pit.norm") ylab="Random Quantile Residuals"
+              else ylab="PIT Residuals"
+          }
+          else ylab="Pearson residuals"
+	  plot(yh0, r0, xlab = l.fit, ylab = ylab, main=main, ylim=ylim, xlim=xlim, font.main=2, col=color0, cex.lab=clab, cex.axis=caxis, cex=cex, lwd=lwd)
 
           # Add sub.caption, e.g, manyglm(tasm.cop ~ treatment)
           if (one.fig) 
@@ -450,7 +461,8 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
              text.id( (c(yh))[show.r], y.id, (rep(labels.id, times=n.vars))[show.r], col=rep(col, each=id.n))
           }
 
-          abline(h = 0, lty = 2, col = "black", lwd=2)            	
+          if (res.type=="pit.uniform") hmark=0.5 else hmark=0
+          abline(h = hmark, lty = 2, col = "black", lwd=2)            	
           if(legend==TRUE & substr(legend.pos, 1,1)[1]!="n"){    
 	    # add a legend
 	      legend(legend.pos, legend=leg, col=color, pch=1, ncol=ncoll, cex=cexl-0.1,inset=-0.35,xpd=NA, lwd=2, lty=0, x.intersp=0.5)
@@ -594,7 +606,9 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
 	     # for compatibility with R 2.2.1
 	         ylim <- ylim + c(-0.08, 0.08) * diff(ylim)
                 
-	    do.call( "plot", c(list(yhi, ri, xlab = l.fit, ylab = "Pearson residuals", main = main, ylim = ylim, type = "n", asp=asp), dots))
+            if (res.type=="pit") ylab="Random Quantile Residuals"
+            else ylab="Pearson residuals"
+	    do.call( "plot", c(list(yhi, ri, xlab = l.fit, ylab=ylab, main = main, ylim = ylim, type = "n", asp=asp), dots))
             
 	    do.call( "panel", c(list(yhi, ri, col=color[i]), dots))
             
@@ -614,7 +628,7 @@ default.plot.manyglm  <- function(x, which = 1, caption = c("Residuals vs Fitted
 		text.id(yhi[show.r[,i]], y.id, labels.id[show.r[,i]])
 	    }
         
-	    abline(h = 0, lty = 3, col = "grey")
+#	    abline(h = 0, lty = 3, col = "grey")
 	    scapt <- scaption(scapt)
 	 }
         		

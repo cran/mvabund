@@ -41,8 +41,11 @@ A list containing the elements
 \item{x}{a factor with the levels \code{control}, \code{high}, \code{low}}
 }
 }
-\source{...}
-% \references{}
+%\source{}
+\references{
+Gee J. M., Warwick R. M., Schaanning M., Berge J. A. and Ambrose W. G. Jr (1985) Effects of organic enrichment on meiofaunal abundance and community structure in sublittoral soft sediments. \emph{Journal of Experimental Marine Biology and Ecology}. 91(3), 247-262.
+
+}
 \details{The abundance of each species was measured as the count 
 of the number of organisms in the sample.}
 % \seealso{}

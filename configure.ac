@@ -1,6 +1,7 @@
 
 AC_INIT([mvabund], 1.0-1)
 
+
 AC_CHECK_LIB(gsl, gsl_matrix_set,
              [LIBS="${LIBS} -lgsl -lgslcblas"], 
              [AC_MSG_ERROR([Cannot find Gnu Scientific Library.])],
