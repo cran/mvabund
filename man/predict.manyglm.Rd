@@ -8,7 +8,7 @@ predictions from a fitted manyglm object.
 \usage{
 % predict.manyglm
 \method{predict}{manyglm}(object, newdata = NULL, type = c("link", "response",
-    "terms"), se.fit = FALSE, dispersion = object$phi, terms = NULL,
+    "terms"), se.fit = FALSE, dispersion = object$theta, terms = NULL,
     na.action = na.pass, \dots)
 }
 \arguments{

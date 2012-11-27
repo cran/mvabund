@@ -40,11 +40,9 @@ print.manyglm <- function( x, digits = max(3, getOption("digits") - 3), dig.tst=
   }
 
   if (x$family=="quasipoisson" | x$family=="negative.binomial"){
-      p <- length(x$phi)
-      cat("\nNuisance Parameter(s) phi estimated by the", x$phi.method, "method.\n")
-#          if(x$one.phi){  cat("\nNuisance Parameter(s) phi:", format(x$phi[1], digits = digits), "\n")
-#   } else {
-      print.default(format(round(x$phi,digits=dig.tst)),print.gap=2,quote=FALSE)
+      p <- length(x$theta)
+      cat("\nNuisance Parameter(s) theta estimated by the", x$theta.method, "method.\n")
+      print.default(format(round(x$theta,digits=dig.tst)),print.gap=2,quote=FALSE)
   }		
 
   cat("\nDegrees of Freedom:", NROW(x$y)-1, "Total (i.e. Null);", x$df.residual, "Residual\n")

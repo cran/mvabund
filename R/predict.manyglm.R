@@ -1,7 +1,7 @@
 
 predict.manyglm <- 
 function (object, newdata = NULL, type = c("link", "response", 
-    "terms"), se.fit = FALSE, dispersion = object$phi, terms = NULL, 
+    "terms"), se.fit = FALSE, dispersion = object$theta, terms = NULL, 
     na.action = na.pass, ...) {
     
     ny      <- NCOL(object$fitted.values)

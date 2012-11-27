@@ -6,9 +6,9 @@
 }
 \usage{
 manyglm(formula, family="negative.binomial", K=1, data=NULL, subset=NULL, 
-    na.action=options("na.action"), phi.method = "ML", model = FALSE,
+    na.action=options("na.action"), theta.method = "ML", model = FALSE,
     x = TRUE, y = TRUE, qr = TRUE, cor.type= "I", shrink.param=NULL, 
-    tol=1.0e-6, show.coef=FALSE, show.fitted=FALSE, 
+    tol=sqrt(.Machine$double.eps), maxiter=25, show.coef=FALSE, show.fitted=FALSE, 
     show.residuals=FALSE, \dots )
 }
 \arguments{
@@ -37,8 +37,8 @@ manyglm(formula, family="negative.binomial", K=1, data=NULL, subset=NULL,
     \code{\link{na.fail}} if that is unset.  The \sQuote{factory-fresh}
     default is \code{\link{na.omit}}.  Another possible value is
     \code{NULL}, no action.  Value \code{\link{na.exclude}} can be useful.}
-  \item{phi.method}{the method used for the estimation of the overdisperson 
-  parameter phi, such that the mean-variance relationship is V=m+phi*m^2 for 
+  \item{theta.method}{the method used for the estimation of the overdisperson 
+  parameter theta, such that the mean-variance relationship is V=m+m^2/theta for 
   the negative binomial family. Here offers two options \cr
   "ML" = Maximum likelihood estimation (default), as in Lawless(1987), \cr
   "Chi2" = Moment estimation using chi-square dampening on the log scale, as
@@ -75,6 +75,7 @@ manyglm(formula, family="negative.binomial", K=1, data=NULL, subset=NULL,
   used in subsequent functions for inference.
   }
   \item{tol}{the tolerance used in estimations.}
+  \item{maxiter}{maximum allowed iterations in the weighted least square estimation of beta. The default value is 25.}
   \item{show.coef, show.fitted, show.residuals}{logical. Whether to show model coefficients, fitted values, or standardized pearson residuals.}
   \item{\dots}{further arguments passed to or from other methods.}
 }
@@ -85,12 +86,11 @@ manyglm(formula, family="negative.binomial", K=1, data=NULL, subset=NULL,
 Generalised linear models are designed for non-normal data where a specific alternative distribution offers a reasonable model for data, as specified using the argument \code{family} (Warton (2011)). Count data can be analysed using \code{family="poisson"} if the data is not "overdispersed" (that is, if the variance is not larger than the mean), although for multivariate abundance data it has been shown that the negative binomial distribution (\code{family="negative.binomial"}) is a good choice of model for counts (Warton (2005)). For binary (presence/absence) data, \code{family="binomial"} should be used.
 
 The negative binomial function requires knowledge of the overdispersion
-parameter (\code{phi}) in order to fit a generalised linear model. However, it
-is usual not to have knowledge of the value of \code{phi}. So we estimate 
+parameter (\code{theta}) in order to fit a generalised linear model. However, it
+is usual not to have knowledge of the value of \code{theta}. So we estimate 
 %so if it is not specified it will be estimated from the data. The default estimates 
-a separate \code{phi} for each variable from the data.
-%although a single  \code{phi} can be estimated for all variables using \code{one.phi=TRUE}. If data appear to follow a consistent quadratic mean-variance relationship, \code{one.phi=TRUE} is expected to be much more efficient. In either case, 
-The method of estimating \code{phi} is controlled by \code{phi.method} for negative binomial distributions. 
+a separate \code{theta} for each variable from the data.
+The method of estimating \code{theta} is controlled by \code{theta.method} for negative binomial distributions. 
 
 \code{family} not only chooses the type of distribution to fit to data,
 but also controls the link function - the function of the mean that is fitted
@@ -159,7 +159,7 @@ If \code{cor.type=="shrink"}, a numerical value will be assigned to \code{shrink
   \item{sqrt.1_Hii}{the matrix of scale terms used to standardize the Pearson reidusals.}
   \item{variance.estimator}{the variance estimator for the corresponding family function.}
   \item{sqrt.weight}{the matrix of square root of \emph{working} weights,  estimated for the corresponding family function.}
-  \item{phi}{the estimated nuisance parameters accounting for overdispersion}
+  \item{theta}{the estimated nuisance parameters accounting for overdispersion}
   \item{two.loglike}{two times the log likelihood.}
   \item{deviance}{up to a constant, minus twice the maximized log-likelihood.  Where sensible, the constant is chosen so that a saturated model has deviance zero.}
   \item{aic}{Akaike's \emph{An Information Criterion}, minus twice the
@@ -169,7 +169,7 @@ If \code{cor.type=="shrink"}, a numerical value will be assigned to \code{shrink
   \item{tol}{the tolerance used in estimations.}
 
   \item{family}{the \code{\link{family}} argument supplied.}
-  \item{phi.method}{the \code{phi.method} argument supplied.}
+  \item{theta.method}{the \code{theta.method} argument supplied.}
   \item{cor.type}{the \code{cor.type} argument supplied.}
   \item{shrink.param}{the shrink parameter to be used in subsequent inference.}
   \item{call}{the matched call.}

@@ -10,7 +10,7 @@ multivariate abundance data in ecology.
 
 \usage{
 \method{anova}{manylm}(
-  object, \dots, resamp="perm.resid", test="F", p.uni="none", nBoot=1000, cor.type=object$cor.type, shrink.param=object$shrink.param, studentize=TRUE, calc.rss = FALSE, tol=1.0e-10, ld.perm=FALSE, filename=NULL )
+  object, \dots, resamp="perm.resid", test="F", p.uni="none", nBoot=1000, cor.type=object$cor.type, shrink.param=object$shrink.param, studentize=TRUE, calc.rss = FALSE, tol=1.0e-10, rep.seed=FALSE, bootID=NULL )
 \method{print}{anova.manylm}(
     x, digits = max(getOption("digits") - 3, 3),
     signif.stars = getOption("show.signif.stars"),
@@ -40,9 +40,8 @@ for each response variable. \cr
 \item{studentize}{logical. Whether studentized residuals should be used to simulate the data in the resampling steps. This option is not used in case resampling.}
 \item{calc.rss}{logical. Whether the Residual Sum of Squares should be calculated.}
 \item{tol}{the sensitivity in calculations near 0.}
-\item{ld.perm}{logical. Whether to load bootstrap id's from an external file. Default is \code{FALSE}, which will generate bootstrap id's on the fly.}
-\item{filename}{if \code{ld.perm} is \code{TRUE}, this specifies the file path to the stored bootstrap id's. Default is \code{NULL}.}
-
+\item{rep.seed}{logical. Whether to fix random seed in resampling data. Useful for simulation or diagnostic purposes.}
+\item{bootID}{an integer matrix where each row specifies bootstrap id's in each resampling run. When \code{bootID} is supplied, \code{nBoot} is set to the number of rows in \code{bootID}. Default is \code{NULL}.}
 \item{x}{an object of class \code{"anova.manylm"}, usually, a result of a call to \code{anova.manylm}.}
 \item{digits}{the number of significant digits to use when printing.}
 \item{signif.stars}{logical. If \code{TRUE}, \sQuote{significance stars} are

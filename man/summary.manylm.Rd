@@ -58,8 +58,10 @@ returned and printed.}
 \item{signif.stars}{logical. If \code{TRUE}, \sQuote{significance stars} are printed for each coefficient.}
 \item{dig.tst}{the number of digits to round the estimates of the model parameters.}
 \item{eps.Pvalue}{a numerical tolerance for the formatting of p values.}
-\item{\dots}{further arguments passed to or from other methods.}
-
+\item{\dots}{for \code{summary.manyglm} method, these are additional arguments including: \cr
+\code{rep.seed} - logical. Whether to fix random seed in resampling data. Useful for simulation or diagnostic purposes.\cr
+\code{bootID} - this matrix should be integer numbers where each row specifies bootstrap id's in each resampling run. When \code{bootID} is supplied, \code{nBoot} is set to the number of rows in \code{bootID}. Default is \code{NULL}.\cr
+for \code{print.summary.manyglm} method, these are optional further arguments passed to or from other methods. See \code{\link{print.summary.glm}} for more details.}
 }
 
 \details{ 

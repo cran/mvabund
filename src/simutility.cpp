@@ -272,3 +272,113 @@ int GetH0var(gsl_matrix *Sigma, unsigned int *isH0var)
     free(srtid);
     return 0;
 }
+
+int setMonteCarlo(glm *model, gsl_matrix *XBeta, gsl_matrix *Sigma)
+{
+   unsigned int j;
+   unsigned int mtype=model->mmRef->model;
+   double k, vij, sd, scale;
+ 
+   gsl_matrix_memcpy (XBeta, model->Eta);
+   if (mtype == POISSON) {
+       gsl_matrix_set_identity (Sigma);
+       // Assuming no random effects, i.e. e*=0
+   }
+   else if (mtype == BIN) {
+       if (model->n==1) {
+       // Adjusting all betas and assuming var=1 
+       // logit(M) = X * sqrt(1+0.346 var) beta = 1.1601 Eta 
+       // See MATH5885 LDA lecture notes W9-11, Section 6.6.1
+          sd = 1;
+          k = 16*sqrt(3)/15/M_PI;
+          scale = sqrt(1 + gsl_pow_2(k)*gsl_pow_2(sd));
+          gsl_matrix_scale (XBeta, scale);
+       }
+   }
+   else if (model->mmRef->model == NB) {
+       // Adjusting the intercept to account for random effects
+       //  i.e., M = X * beta - 0.5 * var 
+       // var = log(1+phi)    
+       gsl_matrix *Sd = gsl_matrix_alloc (model->nVars, model->nVars);
+       gsl_vector  *s = gsl_vector_alloc (model->nVars);
+       gsl_vector_view mj, d;
+
+       for ( j=0; j<model->nVars; j++) {
+           mj=gsl_matrix_column (XBeta, j);
+           // adjust E(mj) = X*beta for the random effects
+           vij = log(1+model->theta[j])-log(model->theta[j]);
+           gsl_vector_add_constant(&mj.vector, -0.5*vij);
+           gsl_vector_set(s, j, sqrt(vij));
+       }
+       gsl_matrix_set_zero (Sd);
+       gsl_blas_dger (1.0, s, s, Sd);
+
+       // if phi=0, then vij=0, i.e., no random effects (independence)
+       // So it has zero impact / correlation on other variables 
+       d = gsl_matrix_diagonal(Sd);
+       for (j=0; j<model->nVars; j++) 
+           if (model->theta[j]>100) gsl_vector_set(&d.vector, j, 1.0);
+
+       // Sigma = diag(var)*R*diag(var)
+       gsl_matrix_mul_elements(Sigma, Sd);
+       // displaymatrix(Sigma, "log-normal Sigma");
+
+       // free memory
+       gsl_matrix_free(Sd);
+       gsl_vector_free(s);
+   }
+   else 
+       GSL_ERROR("The model type is not supported", GSL_ERANGE);
+
+   return SUCCESS;
+}
+
+int McSample(glm *model, gsl_rng *rnd, gsl_matrix *XBeta, gsl_matrix *Sigma, gsl_matrix *bY) 
+{
+   unsigned int j, k;
+   unsigned int nRows=XBeta->size1;
+   unsigned int nVars=Sigma->size1;
+   gsl_vector_view yj;
+   double eij, mij, yij;
+
+   if (model->mmRef->model == NB){  // Poisson log-normal
+      for (j=0; j<nRows; j++) {
+          yj = gsl_matrix_row(bY, j);
+          semirmvnorm(rnd, nVars, Sigma, &yj.vector); // random effect
+          for (k=0; k<nVars; k++) {
+              eij=gsl_matrix_get (XBeta, j, k);
+              // m_j = X_j * Beta_j + random_effect
+              if ( model->theta[k]>100 ) { // add random effect
+                 eij = eij + gsl_vector_get(&yj.vector, k);
+              }
+              // Sample from Poisson-Log-Normal dist
+              yij = Rf_rpois(exp(eij));
+              gsl_matrix_set(bY, j, k, yij);
+          }
+       }
+   }
+   else if (model->mmRef->model==BIN) {
+       for (j=0; j<nRows; j++) {
+            yj = gsl_matrix_row(bY, j);
+            semirmvnorm(rnd, nVars, Sigma, &yj.vector); // random effect
+            for (k=0; k<nVars; k++) {
+                eij = gsl_matrix_get (XBeta, j, k); // logit(m)
+                eij = eij + gsl_vector_get(&yj.vector, k);
+                mij = model->invLink(eij);
+                yij = model->genRandist(mij, model->theta[k]);
+                gsl_matrix_set(bY, j, k, yij);
+            }
+       }
+   }
+   else {
+       // Method 1 use R random gen func directly, no random effects
+       for (j=0; j<nRows; j++)
+       for (k=0; k<nVars; k++) {
+            mij = gsl_matrix_get(model->Mu, j, k);
+            yij = model->genRandist(mij, model->theta[k]);
+            gsl_matrix_set(bY, j, k, yij);
+       }
+   }
+
+   return SUCCESS;
+}

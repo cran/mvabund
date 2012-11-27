@@ -1,0 +1,23 @@
+citHeader("To cite package 'mvabund' in publications use:")
+     
+vers <- paste("R package version", meta$Version)
+     
+citEntry(entry="article",
+         title = "mvabund: an R package for model-based analysis of multivariate abundance data",
+         author = personList(as.person("Yi Wang"),
+                             as.person("Ulrike Naumann"),
+                             as.person("Stephen Wright"),
+                             as.person("David I. Warton")
+			     ),
+         year = {"2012"},
+         journal = {"Methods in Ecology & Evolution"},
+         volumne = {"3"},
+         issue = {"3"}, 
+         pages = {"471-474"},
+         note = vers,
+     
+         textVersion =
+         paste("Yi Wang, Ulrike Naumann, Stephen Wright and David I. Warton (2012). ",
+	      "mvabund: an R package for model-based analysis of multivariate data. ",
+	      "Methods in Ecology & Evolution, 3, 471-474,",
+               vers, ".", sep=""))

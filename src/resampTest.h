@@ -5,10 +5,27 @@
 #ifndef _RESAMPTEST_H
 #define _RESAMPTEST_H
 
-//#define MATHLIB_STANDALONE 
-//#include "/usr/local/R/2.13/lib64/R/include/Rmath.h"
 #include "Rmath.h"
 #include "R.h"
+#define printf Rprintf
+/*
+#define MATHLIB_STANDALONE 
+#include "/usr/local/R/2.13/lib64/R/include/Rmath.h"
+#define Rf_runif runif
+#define Rf_rnorm rnorm
+#define Rf_dpois dpois
+#define Rf_ppois ppois
+#define Rf_qpois qpois
+#define Rf_rpois rpois
+#define Rf_dbinom dbinom
+#define Rf_pbinom pbinom
+#define Rf_qbinom qbinom 
+#define Rf_rbinom rbinom 
+#define Rf_dnbinom dnbinom
+#define Rf_pnbinom pnbinom
+#define Rf_qnbinom qnbinom
+#define Rf_rnbinom rnbinom
+*/
 
 #include <time.h>
 #include <stdio.h>
@@ -16,9 +33,9 @@
 #include <string.h>
 #include <math.h>
 #include <sys/time.h>
-#include <gsl/gsl_math.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_vector.h>
+#include <gsl/gsl_math.h>
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_linalg.h> 
 #include <gsl/gsl_statistics_double.h>
@@ -85,7 +102,6 @@
 #define HOOPER 0
 #define VECTOR 1
 // others
-#define printf Rprintf
 #define TOL 1e-6
 #define MAXITER 999 
 #define LAMBDA 0.8  // no shrinkage 
@@ -146,6 +162,7 @@ typedef struct RegressionMethod{
     unsigned int varStab;
     unsigned int estiMethod;
     double tol;
+    unsigned int maxiter;
     unsigned int n; // used in binomial regression
 } reg_Method;
 
@@ -249,10 +266,10 @@ class glm
 
            unsigned int n; // used in binomial and logistic regression
            unsigned int rdf;
-	   double *phi, *ll, *dev, *aic;
+	   double *theta, *ll, *dev, *aic;
 	   unsigned int *iterconv;  
            unsigned int maxiter;
-	   double eps, maxtol;
+	   double eps, mintol, maxtol, maxth;
            unsigned int nRows, nVars, nParams;
 //   private: 
   	   // abstract 	
@@ -279,9 +296,10 @@ class PoissonGlm : public glm
 	        { return EstIRLS ( Y, X, O, B, NULL); }
 	   int EstIRLS( gsl_matrix *, gsl_matrix *, gsl_matrix *, gsl_matrix *, double * );
 	   int betaEst( unsigned int id, unsigned int iter, double *tol, double a );
-	   double getDisper( unsigned int id ) const;
+	   double getDisper( unsigned int id, double th ) const;
            int update(gsl_vector *bj, unsigned int id);
-           int predict(gsl_vector_view bj, gsl_vector *coef_old, unsigned int id, double a);
+           int predict(gsl_vector_view bj, unsigned int id, double a);
+//           int predict(gsl_vector_view, gsl_vector *, unsigned int id, double a);
 
 
 //    private: 
@@ -300,7 +318,7 @@ class PoissonGlm : public glm
 	        { if (yi==0) return 2*(-mui); else
 		  return 2*(yi*log(mui) - mui - gsl_sf_lngamma(yi+1) ); }
 	   double devfunc(double yi, double mui, double a) const
-	        { return 2*(yi*log(GSL_MAX(yi, eps)/mui)-yi+mui); }
+	        { return 2*(yi*log(MAX(1,yi)/mui)-yi+mui); }
 	   double pdf(double yi, double mui, double a) const
                 { return Rf_dpois(yi, mui, FALSE); }
 	   double cdf(double yi, double mui, double a) const
@@ -344,7 +362,7 @@ class BinGlm : public PoissonGlm
 //                { if (n==1) return (ui<1)?0:1;
                 { return (unsigned int)Rf_qbinom(ui, n, mui/n, TRUE, FALSE); }
            unsigned int genRandist(double mui, double a) const
-                { return (unsigned int)Rf_rbinom(n, mui/n); }
+                { return Rf_rbinom(n, mui/n); }
 
 };
 
@@ -358,29 +376,42 @@ class NBinGlm : public PoissonGlm // Y~NB(n, p)
 	      { return nbinfit ( Y, X, O, B); }
 	   int nbinfit(gsl_matrix *, gsl_matrix *, gsl_matrix *, gsl_matrix *);
 //    private:
-	   double weifunc(double mui, double a) const
-	        { return (mui/(1+a*mui)); }
-	   double varfunc(double mui, double a) const
-	        { return (mui*(1+a*mui)); }
-	   double llfunc(double yi, double mui, double a) const;
-	   double devfunc(double yi, double mui, double a) const
-                { return 2*((yi==0)?0:yi*log(yi/mui)-(yi+1/GSL_MAX(a,eps))*log((1+yi*a)/(1+mui*a))); }
-           // mu=y*p(y), y=k, r=1/phi, p=1-(1+phi*mu)^-1 (the wiki definition)
-           // mu=y*p(y), y=k, n=1/phi, p=(1+phi*mu)^-1 (the GSL definition)
-	   double pdf(double yi, double mui, double a) const
-                { if (a==0) return Rf_dpois(yi, mui, FALSE);
-                  else return Rf_dnbinom(yi, 1/a, 1/(1+a*mui), FALSE); }
-	   double cdf(double yi, double mui, double a) const
-                { if (a==0) return Rf_ppois(yi, mui, TRUE, FALSE);
-                  else return Rf_pnbinom(yi, 1/a, 1/(1+a*mui), TRUE, FALSE); }
-           unsigned int cdfinv(double ui, double mui, double a) const
-                { if (a==0) return Rf_qpois(ui, mui, TRUE, FALSE);
-                  else return (unsigned int)Rf_qnbinom(ui, 1/a, 1/(1+a*mui), TRUE, FALSE); }
-           unsigned int genRandist(double mui, double a) const
-                { if (a==0) return Rf_rpois(mui);
-                  else return Rf_rnbinom(1/a, 1/(1+a*mui)); }
+	   // See help(rnbinom) for the parameterisation used in ecoloy  
+	   // *nbinom( , size, prob, mu, ) 
+	   // size = th (dispersion)
+	   // prob = size/(size+mu)
+	   double weifunc(double mui, double th) const
+	        { return MAX(mui*th, eps)/MAX(mui+th, eps); }
+	   double varfunc(double mui, double th) const
+	        { return mui+mui*mui/MAX(th, eps); }
+	   double llfunc(double yi, double mui, double th) const;
+	   double devfunc(double yi, double mui, double th) const
+	        { if (th==0) return 0; 
+	          else if (th>maxth) return 2*(yi*log(MAX(1,yi)/mui)-yi+mui); 
+                  else return 2*(yi*log(MAX(1,yi)/mui)-(yi+th)*log((yi+th)/(mui+th)));
+		}  
+	   double pdf(double yi, double mui, double th) const
+                { if (th==0) return 0;
+		  else if (th>maxth) return Rf_dpois(yi, mui, FALSE);
+		  else return Rf_dnbinom(yi, th, th/(mui+th), FALSE); }
+	   double cdf(double yi, double mui, double th) const
+                { if (th==0) return 1;
+		  else if (th>maxth) return Rf_ppois(yi, mui, TRUE, FALSE);
+                  else return Rf_pnbinom(yi, th, th/(mui+th), TRUE, FALSE); }
+           unsigned int cdfinv(double ui, double mui, double th) const
+                { if (th==0) return 0;
+		  else if (th>maxth) return Rf_qpois(ui, mui, TRUE, FALSE);
+                  else return (unsigned int)Rf_qnbinom(ui, th, th/(mui+th), TRUE, FALSE); }
+           unsigned int genRandist(double mui, double th) const
+	        { if (th==0) return 0;
+                  else if (th>maxth) return Rf_rpois(mui);
+		  // Gamma-Poisson mixture, see rngbin()
+		  // rpois(lambda) where lambda=mu * rgamma(k, theta))/theta
+		  // for NB with mean mu and var=mu+mu^2/theta
+                  else return Rf_rnbinom(th, th/(mui+th)); }
 
-	   int getfAfAdash (double a, unsigned int id, double *fA, double *fAdash);
+	   int getfAfAdash (double th, unsigned int id, double *fA, double *fAdash);
+	   double thetaML(double th0, unsigned int id, unsigned int limit);
 };
 
 
@@ -413,15 +444,14 @@ class GlmTest
 	    int getBootID(void);
 
 //	    int geeCalc(glm *PtrAlt, glm *PtrNull, gsl_matrix *);
-	    int GeeWald(glm *, gsl_matrix *, gsl_vector *, double lambda);
-	    int GeeScore(gsl_matrix *, glm *, gsl_vector *, double lambda);
+	    int GeeWald(glm *, gsl_matrix *, gsl_vector *);
+	    int GeeScore(gsl_matrix *, glm *, gsl_vector *);
 	    int GeeLR(glm *PtrAlt, glm *PtrNull, gsl_vector *teststat);
 
 //            int resampSmryCase(glm *, gsl_matrix *, GrpMat *, GrpMat *, unsigned int i ); // summary
             int resampSmryCase(glm *, gsl_matrix *, GrpMat *, gsl_matrix *, unsigned int i ); // summary
 	    int resampAnovaCase(glm *, gsl_matrix *, gsl_matrix *, gsl_matrix *, unsigned int i);
 	    int resampNonCase(glm *, gsl_matrix *, unsigned int i);
-	    int setMonteCarlo(glm *model, gsl_matrix *, gsl_matrix *);
 
 	    // the following used in resampling
 	    unsigned int nModels;
@@ -476,6 +506,8 @@ int GetMean(gsl_matrix *X, gsl_matrix *Y, gsl_matrix *Mu);
 int GetPdstbtion(double *p, unsigned int nVars, unsigned int *isH0var, unsigned int *cnt, unsigned int *cntfwe);
 //int GetCov (gsl_matrix *Mu, gsl_matrix *Y, unsigned int AR1MAT, gsl_matrix *Sigma);
 //int GetMeanCov(gsl_matrix *X, gsl_matrix *Y, mv_Method *mm, unsigned int AR1MAT, gsl_matrix *Mu, gsl_matrix *Sigma);
+int setMonteCarlo(glm *model, gsl_matrix *XBeta, gsl_matrix *Sigma);
+int McSample(glm *model, gsl_rng *rnd, gsl_matrix *XBeta, gsl_matrix *Sigma, gsl_matrix *bT);
 
 // rnd.c - functions to generate random numbers from multivariate (normal) distributions
 // MVN random number generator

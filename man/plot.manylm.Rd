@@ -18,7 +18,7 @@
   n.vars=12, var.subset=NULL, sub.caption=NULL, studentized= TRUE, ...)
 
 \method{plot}{manyglm}(
-  x, res.type="pearson", which=1, caption=c("Residuals vs Fitted", "Normal Q-Q", 
+  x, res.type="pit.norm", which=1, caption=c("Residuals vs Fitted", "Normal Q-Q", 
   "Scale-Location", "Cook's distance"), overlay=TRUE, 
   n.vars=12, var.subset=NULL, sub.caption=NULL, ...)
 
@@ -26,7 +26,9 @@
 \arguments{
  \item{x}{ \code{manylm} object or \code{manyglm} object, typically the 
   result of a call to \code{\link{manylm}} or \code{manyglm}.}
- \item{res.type}{type of residuals to plot. By default, plot the Pearson residuals. It is recommended to use \code{res.type="pit"} to use Probability Integral Residuals for presence-absence data or discrete data with a small number of integer values. }
+ \item{res.type}{type of residuals to plot. By default, \code{res.type="pit-norm"} uses randomised quantile
+ residuals (Dunn & Smyth 2996), related to the probability integral transform, for manyglm.
+ These residuals are especially recommended for presence-absence data or discrete data. }
   \item{which}{if a subset of the plots is required, specify a subset of
     the numbers \code{1:4}.}
   \item{caption}{captions to appear above the plots}
@@ -47,11 +49,17 @@
   \code{plot.manylm} is used to check the linear model assumptions that are made
   when fitting a model via \code{manylm}. Similarly, \code{plot.manyglm} checks
   the generalised linear model assumptions made when using \code{manyglm}.
-  You should check the residual vs fits plot for no pattern (hence no suggestion
-  of failure of key linearity and mean-variance assumptions). For manylm fits of
-  small datasets, it is desirable that residuals on the normal Q-Q plot be close
+  As in Wang et al (2012), you should check the residual vs fits plot for no pattern
+  (hence no suggestion of failure of key linearity and mean-variance assumptions).
+  For manylm fits of small datasets, it is desirable that residuals on the normal Q-Q plot be close
   to a straight line, although in practice the most important thing is to make
   sure there are no big outliers and no suggestion of strong skew in the data.
+  
+  The recommended \code{res.type} option for manyglm calls, "pit-norm", uses randomised quantile
+  residuals as defined in Dunn & Smyth (1996). Note that for discrete data, these residuals
+  involve random number generation, and will not return identical results on replicate runs.
+  The other main residual option is "pearson", Pearson residuals. Note that all res.type options
+  are equivalent for manylm.
 
   Some technical details on usage of this function:  \cr
    \code{sub.caption} - by default the function call - is shown as
@@ -78,6 +86,12 @@
  For restrictions on \code{filename} see R's help on eps/pdf/jpeg.
  Note that \code{keep.window} will be ignored if \code{write.plot} is 
  not \code{show}.
+}
+\references{
+
+Wang Y., Naumann U., Wright S.T. & Warton D.I. (2012). mvabund - an R package for model-based 
+analysis of multivariate abundance data. Methods in Ecology and Evolution 3, 471-474.
+
 }
 \author{
 Ulrike Naumann and David Warton <David.Warton@unsw.edu.au>.
