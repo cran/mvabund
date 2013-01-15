@@ -4,15 +4,19 @@
 # 11-Nov-2011
 ###############################################################################
 
-anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none", nBoot=1000, cor.type=object$cor.type, show.time=FALSE, rep.seed=FALSE, bootID=NULL)
+anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none", nBoot=1000, cor.type=object$cor.type, show.time="total", show.warning=FALSE, rep.seed=FALSE, bootID=NULL)
 {
     if (cor.type!="I" & test=="LR") {
         warning("The likelihood ratio test can only be used if correlation matrix of the abundances is is assumed to be the Identity matrix. The Wald Test will be used.")
         test <- "wald"
     }
    
-    if (show.time==TRUE) st=1
-    else st=0
+    if (show.time=="none") st=0
+    else if (show.time=="all") st=1
+    else st=2
+
+    if (show.warning==TRUE) warn=1
+    else warn=0
 
     if (any(class(object) == "manylm")) {
         if ( test == "LR" ) 
@@ -70,6 +74,7 @@ anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none
 
     if (object$theta.method == "ML") methodnum <- 0
     else if (object$theta.method == "Chi2") methodnum <- 1 
+    else if (object$theta.method == "PHI") methodnum <- 2
 
     if (substr(resamp,1,1)=="c") resampnum <- 0  #case
     # To exclude case resampling
@@ -136,12 +141,9 @@ anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none
     }
 
     # construct for param list     
-    tol = 1e-4
-    modelParam <- list(tol=tol, regression=familynum, maxiter=object$maxiter,
-                       estimation=methodnum, stablizer=0, n=object$K)
+    modelParam <- list(tol=object$tol, regression=familynum, maxiter=object$maxiter, maxiter2=object$maxiter2, warning=warn, estimation=methodnum, stablizer=0, n=object$K)
     # note that nboot excludes the original data set
-    testParams <- list(tol=tol, nboot=nBoot-1, cor_type=corrnum, test_type=testnum, 
-              resamp=resampnum, reprand=rep.seed, punit=pu, showtime=st)
+    testParams <- list(tol=object$tol, nboot=nBoot-1, cor_type=corrnum, test_type=testnum, resamp=resampnum, reprand=rep.seed, punit=pu, showtime=st, warning=warn)
 
     # ANOVA
     if (nModels==1)

@@ -7,7 +7,7 @@ Fits for Abundance Data}
 generalized linear model fits.}
 \usage{
 \method{anova}{manyglm}(object, \dots, resamp="pit.trap", test="LR", 
-    p.uni="none", nBoot=1000, cor.type=object$cor.type, show.time=FALSE, rep.seed=FALSE, bootID=NULL) 
+    p.uni="none", nBoot=1000, cor.type=object$cor.type, show.time="total", show.warning=FALSE, rep.seed=FALSE, bootID=NULL) 
 \method{print}{anova.manyglm}(x, \dots) 
 }
 \arguments{
@@ -28,7 +28,8 @@ step-down resampling procedure.
 \item{nBoot}{the number of Bootstrap iterations, default is \code{nBoot=999}.}
 \item{cor.type}{structure imposed on the estimated correlation matrix under the fitted model. Can be "I", "shrink", or "R". By default, the value is inherited from the first \code{\link{manyglm}} object. See Details.
 }
-\item{show.time}{logical. Whether to display timing information for the resampling procedure.}
+\item{show.time}{Whether to display timing information for the resampling procedure: "none" shows none, "all" shows all timing information and "total" shows only the overall time taken for the tests. }
+\item{show.warning}{logical. Whether to display warning messages in the operation procedure.}
 \item{rep.seed}{logical. Whether to fix random seed in resampling data. Useful for simulation or diagnostic purposes.}
 \item{bootID}{an integer matrix where each row specifies bootstrap id's in each resampling run. When \code{bootID} is supplied, \code{nBoot} is set to the number of rows in \code{bootID}. Default is \code{NULL}.}
 \item{x}{an object of class "summary.manyglm", usually, a result of a call to

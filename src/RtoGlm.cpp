@@ -22,6 +22,8 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
     mm.varStab = as<unsigned int>(rparam["stablizer"]);
     mm.n = as<unsigned int>(rparam["n"]);
     mm.maxiter = as<unsigned int>(rparam["maxiter"]);
+    mm.maxiter2 = as<unsigned int>(rparam["maxiter2"]);
+    mm.warning = as<unsigned int>(rparam["warning"]);
 // for debug
 //    Rprintf("tol=%g, model=%d, estiMethod=%d, varStab=%d\n", mm.tol, mm.model, mm.estiMethod, mm.varStab);
 

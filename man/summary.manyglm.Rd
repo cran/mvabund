@@ -4,7 +4,7 @@
 \title{Summarizing Multivariate Generalized Linear Model Fits for Abundance Data}
 \description{\code{summary} method for class "manyglm". }
 \usage{
-\method{summary}{manyglm}(object, resamp="pit.trap", test="wald", p.uni="none", nBoot=1000, cor.type=object$cor.type, show.cor = FALSE, show.est=FALSE, show.residuals=FALSE, symbolic.cor = FALSE, show.time=FALSE, \dots)
+\method{summary}{manyglm}(object, resamp="pit.trap", test="wald", p.uni="none", nBoot=1000, cor.type=object$cor.type, show.cor = FALSE, show.est=FALSE, show.residuals=FALSE, symbolic.cor = FALSE, show.time="total", show.warning=FALSE,\dots)
 \method{print}{summary.manyglm}(x, \dots)
 }
 \arguments{
@@ -27,7 +27,8 @@ step-down resampling procedure.
 \item{symbolic.cor}{logical. If \code{TRUE}, the correlation is printed in a
 symbolic form (see \code{\link{symnum}} ) rather than in numerical format.
 }
-\item{show.time}{logical. Whether to display timing information for the resampling procedure.}
+\item{show.time}{Whether to display timing information for the resampling procedure: "none" shows none, "all" shows all timing information and "total" shows only the overall time taken for the tests. }
+\item{show.warning}{logical. Whether to display warnings in the operation procedure.}
 \item{\dots}{for \code{summary.manyglm} method, these are additional arguments including: \cr
 \code{rep.seed} - logical. Whether to fix random seed in resampling data. Useful for simulation or diagnostic purposes.\cr
 \code{bootID} - this matrix should be integer numbers where each row specifies bootstrap id's in each resampling run. When \code{bootID} is supplied, \code{nBoot} is set to the number of rows in \code{bootID}. Default is \code{NULL}.\cr
