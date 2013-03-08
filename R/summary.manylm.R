@@ -148,7 +148,8 @@ summary.manylm <- function(object, nBoot=1000,resamp="residual", test=object$tes
         colnames(correlation) <- rownames(correlation) <- corrnames 
     }
     else correlation <- NULL
-    dimnames(R) <- dimnames(X)[c(2,2)]
+    rownames(R) <- rownames(X)[p1]
+    colnames(R) <- colnames(X)[p1]
 
     # test statistics
     if(!is.null(test)) {    

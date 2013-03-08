@@ -90,78 +90,52 @@ int testStatCalc(mv_mat *H0, mv_mat *H1, mv_Method *mmRef, const unsigned int if
 
 int calcSS(gsl_matrix *Y, mv_mat *Hat, mv_Method *mmRef, const unsigned int ifcalcHat, const unsigned int ifcalcCoef, const unsigned int ifcalcSS)
 {
-    unsigned int j; 
+    gsl_set_error_handler_off();
+
+    double mean, dd;	
+    unsigned int j, status; 
     unsigned int nP=Hat->X->size2;
     unsigned int nRows=Hat->mat->size1;
     unsigned int nVars=Hat->SS->size1;
+    gsl_matrix *tXX = gsl_matrix_alloc(nP, nP);
+    gsl_matrix *tXXtX = gsl_matrix_alloc(nP, nRows);
+    gsl_matrix *I_Hat = gsl_matrix_alloc(nRows, nRows);
+    gsl_vector *e = gsl_vector_alloc(nRows);
+    gsl_vector_set_all (e, 1.0); 
 
      // It is possible later to feed data with more varialbes (columns) 
      // than observations (rows). So better use SVD than QR
-     if (ifcalcHat == TRUE) {
-	gsl_matrix *U=gsl_matrix_alloc(nRows, nP);
-        gsl_vector *t=gsl_vector_alloc(MIN(nRows, nP));
-
-	gsl_vector *trj=gsl_vector_alloc(nRows);
-	gsl_vector *tcj=gsl_vector_alloc(nP);
-
-	gsl_matrix *Q=gsl_matrix_alloc(nRows, nRows);
-        gsl_matrix *R=gsl_matrix_alloc(nRows, nP);
-
-	gsl_matrix_memcpy(U, Hat->X);
-	gsl_linalg_QR_decomp (U, t);
-
-	gsl_vector_view yj, cj, rj;
-        for (j=0; j<nVars; j++){
-	    yj = gsl_matrix_column(Y, j);
-	    if (ifcalcCoef == TRUE)
-	       cj = gsl_matrix_column(Hat->Coef, j);
-	    else
-	       cj = gsl_vector_subvector (tcj, 0, nP);
-	    rj = gsl_matrix_column(Hat->Res, j);
-	    gsl_linalg_QR_lssolve (U, t, &yj.vector, &cj.vector, &rj.vector); 
-        }
-
-	gsl_linalg_QR_unpack (U, t, Q, R);	
-	// Q'\R ie., solve Rx=Q'
-        gsl_linalg_QR_decomp (R, t);
-	gsl_vector_view mj, qj;
-	gsl_matrix_view Xsub;
-	for (j=0; j<nRows; j++){
-	    qj=gsl_matrix_row(Q, j); // Q'[j, :]
-	    gsl_linalg_QR_lssolve (R, t, &qj.vector, tcj, trj); 
-	    // X*(Q'\R)
-	    mj=gsl_matrix_subcolumn(Hat->mat, j, j, nRows-j);	    
-	    Xsub=gsl_matrix_submatrix(Hat->X, j, 0, nRows-j, nP);
-	    gsl_blas_dgemv (CblasNoTrans,1.0,&Xsub.matrix,tcj,0.0,&mj.vector);
-	}
-//        displaymatrix (Hat->Res, "Hat.Res from calcHat");
-	gsl_matrix_free(U);
-	gsl_matrix_free(Q);
-	gsl_matrix_free(R);
-	gsl_vector_free(t);
-	gsl_vector_free(trj);
-	gsl_vector_free(tcj);
-    }
-
-    // Compute SS
-    gsl_matrix *I=NULL;
-    if ( ifcalcSS == TRUE) {
-       // generate the same residual as above
-       if (ifcalcHat == FALSE) {
-          I = gsl_matrix_alloc(nRows, nRows);
-          gsl_matrix_set_identity(I);
-          gsl_matrix_sub(I, Hat->mat);
-          gsl_blas_dsymm (CblasLeft, CblasLower, 1.0, I, Y, 0.0, Hat->Res);
- //         displaymatrix (Hat->Res, "Hat.Res from (I-Hat)*Y");
-       }
-       // rcalc:  rcalc(Hat->Res, shrink_param, corr, Hat->SS);
-        gsl_vector *e = gsl_vector_alloc(nRows);
-        gsl_vector_set_all (e, 1.0); 
-
+     // As in manyglm use (X'X)^-1 X' and cholesky on (X'X) instead 
+     gsl_matrix_set_identity(tXX);
+     gsl_blas_dsyrk (CblasLower, CblasTrans, 1.0, Hat->X, 0.0, tXX);
+     status=gsl_linalg_cholesky_decomp(tXX);
+     if (status==GSL_EDOM) {
+       // if (mmRef->warning==TRUE) { 
+       //    printf("Warning: Model may be too complexed. Fitting is not reliable\n");
+       // }
+        gsl_matrix_set_identity(tXX);
+        // add an eps*I to the diagonal matrix
+        gsl_blas_dsyrk (CblasLower, CblasTrans, 1.0, Hat->X, TOL, tXX);
+        status=gsl_linalg_cholesky_decomp(tXX);
+     }
+     gsl_linalg_cholesky_invert (tXX);
+     // Hat = X (XX)^-1 t(X) 
+     gsl_blas_dgemm (CblasNoTrans, CblasTrans, 1.0, tXX, Hat->X, 0.0, tXXtX); 
+     if (ifcalcCoef==TRUE) {
+        gsl_blas_dgemm (CblasNoTrans, CblasTrans, 1.0, tXXtX, Y, 0.0, Hat->Coef); 
+     }   
+     if ( (ifcalcHat==TRUE)|(ifcalcSS==TRUE) ) {
+        gsl_blas_dgemm (CblasNoTrans, CblasNoTrans, 1.0, Hat->X, tXXtX, 0.0, Hat->mat); 
+     }
+     if (ifcalcSS==TRUE) {
+        gsl_matrix_set_identity(I_Hat);
+        gsl_matrix_sub(I_Hat, Hat->mat);   
+        gsl_blas_dgemm (CblasNoTrans, CblasNoTrans, 1.0, I_Hat, Y, 0.0, Hat->Res); 
+        // subtract mean
+        // rcalc:  rcalc(Hat->Res, shrink_param, corr, Hat->SS);
         gsl_matrix_set_zero(Hat->SS);
-        double mean, dd;	
         // subtract mean = Rs^T e(12) from res
-	for ( j=0; j<nVars; j++ ) {
+        for ( j=0; j<nVars; j++ ) {
             gsl_vector_view rj=gsl_matrix_column(Hat->Res, j);
             gsl_blas_ddot (&rj.vector, e, &mean); 
             gsl_vector_add_constant (&rj.vector, -mean/nRows); 
@@ -170,26 +144,23 @@ int calcSS(gsl_matrix *Y, mv_mat *Hat, mv_Method *mmRef, const unsigned int ifca
                if ( dd < TOL ) dd = 0.5*M_1_PI;
                gsl_matrix_set(Hat->SS, j, j, dd);
             }
-	} 
-
+         } 
         // compute the covariance matrix SS= (res'*res)/Rows-1
-        if ( mmRef->corr != IDENTITY ){
-           gsl_blas_dsyrk(CblasLower, CblasTrans,1.0, Hat->Res, 0.0, Hat->SS);
-           gsl_matrix_scale ( Hat->SS, 1.0/(double)(nRows-1) );
-           if ( mmRef->corr == SHRINK ) {
-              gsl_vector_view dj=gsl_matrix_diagonal (Hat->SS);
-              gsl_vector_scale (&dj.vector, 1.0/(mmRef->shrink_param));
-           }
-        } 
- 
-       gsl_vector_free(e);
-       //displaymatrix(Hat->SS, "Hat->SS");
-   }
-   if ( I!=NULL )
-      gsl_matrix_free(I);
+         if ( mmRef->corr != IDENTITY ){
+            gsl_blas_dsyrk(CblasLower, CblasTrans,1.0, Hat->Res, 0.0, Hat->SS);
+            gsl_matrix_scale ( Hat->SS, 1.0/(double)(nRows-1) );
+            if ( mmRef->corr == SHRINK ) {
+               gsl_vector_view dj=gsl_matrix_diagonal (Hat->SS);
+               gsl_vector_scale (&dj.vector, 1.0/(mmRef->shrink_param));
+            }
+         } 
+     }
+     gsl_vector_free(e);
+     gsl_matrix_free(I_Hat);
+     gsl_matrix_free(tXX);
+     gsl_matrix_free(tXXtX);
 
-   return 0;
-
+     return 0;
 }
 
 double calcDet(gsl_matrix *SS)

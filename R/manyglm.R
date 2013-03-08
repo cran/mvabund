@@ -162,6 +162,7 @@ else {
 
     z$stderr.coefficients <- sqrt(z$var.coefficients)
     dimnames(z$stderr.coefficients) <- list(colnames(X), labAbund)
+    z$phi <- 1/z$theta
     z$tol <- tol
     z$maxiter <- maxiter
     z$maxiter2 <- maxiter2

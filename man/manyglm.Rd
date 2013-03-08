@@ -38,8 +38,9 @@ manyglm(formula, family="negative.binomial", K=1, data=NULL, subset=NULL,
     \code{NULL}, no action.  Value \code{\link{na.exclude}} can be useful.}
   \item{theta.method}{the method used for the estimation of the overdisperson 
   parameter theta, such that the mean-variance relationship is V=m+m^2/theta for 
-  the negative binomial family. Here offers two options \cr
-  "ML" = Maximum likelihood estimation (default), as in Lawless(1987), \cr
+  the negative binomial family. Here offers three options \cr
+  "PHI" = Maximum likelihood estimation with respect to phi (default)\cr
+  "ML" = Maximum likelihood estimation with respect to theta, as in Lawless(1987), \cr
   "Chi2" = Moment estimation using chi-square dampening on the log scale, as
   in Hilbe(2008).
   %"MLFisher" (= ML with Fisher scoring, only available for the negative.binomial
@@ -160,6 +161,7 @@ If \code{cor.type=="shrink"}, a numerical value will be assigned to \code{shrink
   \item{variance.estimator}{the variance estimator for the corresponding family function.}
   \item{sqrt.weight}{the matrix of square root of \emph{working} weights,  estimated for the corresponding family function.}
   \item{theta}{the estimated nuisance parameters accounting for overdispersion}
+  \item{phi}{the inverse of theta}
   \item{two.loglike}{two times the log likelihood.}
   \item{deviance}{up to a constant, minus twice the maximized log-likelihood.  Where sensible, the constant is chosen so that a saturated model has deviance zero.}
   \item{aic}{Akaike's \emph{An Information Criterion}, minus twice the

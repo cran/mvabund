@@ -112,13 +112,25 @@ anova.manylm <- function(object, ..., resamp="perm.resid", test="F", p.uni="none
         varseq <- object$assign
         nterms <- max(0, varseq)+1
         resdf  <- resdev <- NULL
-
+        tl <- attr(object$terms, "term.labels")
+        # if intercept is included
+        if (attr(object$terms,"intercept")==0)
+        {
+           minterm = 1
+           nterms = max(1, varseq)
+        }
+        else
+        {
+           minterm = 0
+           nterms <- max(0, varseq)+1
+           tl <- c("(Intercept)", tl)
+        }
         XvarIn <- matrix(ncol=nParam, nrow=nterms, 1)
         XvarIn[nterms, varseq>0] <- 0
-        fit <- manylm(Y~1) # to avoid double intercept column: something to improve for manylm.R
+        fit <- manylm(Y~1) 
         resdev <- c(resdev, as.numeric(deviance.manylm(fit)))
         resdf <- c(resdf, nRows-dim(fit$coefficients)[1])
-        if ((nterms-2)>1) {
+        if ((nterms-2)>0) {
            for ( i in 1:(nterms-2)){ # exclude object itself
                XvarIn[nterms-i, varseq>i] <- 0 # in reversed order            
                Xi <- X[, varseq<=i, drop=FALSE] 
@@ -137,8 +149,6 @@ anova.manylm <- function(object, ..., resamp="perm.resid", test="F", p.uni="none
 
         ord <- (nterms-1):1
         topnote <- paste("Model:", deparse(object$call) )
-        tl <- attr(object$terms, "term.labels")
-        tl <- c("Null", tl)
     }
     else {
         targs <- match.call(call = sys.call(which = 1), expand.dots = FALSE)

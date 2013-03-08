@@ -62,6 +62,7 @@ print.summary.manylm <- function (x, digits = max(getOption("digits") - 3, 3), s
 	
 	if(!is.null(test)) {
   	    # format the test statistic
+	    coefs <- x$coefficients
 	    testvalue <- format(round(coefs[,1], digits = dig.tst), digits = digits)
             if (!is.logical(signif.stars) || is.na(signif.stars)) {
                 warning("option \"show.signif.stars\" is invalid: assuming TRUE")
