@@ -15,18 +15,18 @@
 \method{plot}{manylm}(
   x, res.type="pearson", which=1:4, caption=c("Residuals vs Fitted", "Normal Q-Q", 
   "Scale-Location", "Cook's distance"), overlay=TRUE, 
-  n.vars=12, var.subset=NULL, sub.caption=NULL, studentized= TRUE, ...)
+  n.vars=Inf, var.subset=NULL, sub.caption=NULL, studentized= TRUE, ...)
 
 \method{plot}{manyglm}(
   x, res.type="pit.norm", which=1, caption=c("Residuals vs Fitted", "Normal Q-Q", 
   "Scale-Location", "Cook's distance"), overlay=TRUE, 
-  n.vars=12, var.subset=NULL, sub.caption=NULL, ...)
+  n.vars=Inf, var.subset=NULL, sub.caption=NULL, ...)
 
 }
 \arguments{
  \item{x}{ \code{manylm} object or \code{manyglm} object, typically the 
   result of a call to \code{\link{manylm}} or \code{manyglm}.}
- \item{res.type}{type of residuals to plot. By default, \code{res.type="pit-norm"} uses randomised quantile
+ \item{res.type}{type of residuals to plot. By default, \code{res.type="pit-norm"} uses Dunn-Smyth
  residuals (Dunn & Smyth 2996), related to the probability integral transform, for manyglm.
  These residuals are especially recommended for presence-absence data or discrete data. }
   \item{which}{if a subset of the plots is required, specify a subset of
@@ -55,9 +55,10 @@
   to a straight line, although in practice the most important thing is to make
   sure there are no big outliers and no suggestion of strong skew in the data.
   
-  The recommended \code{res.type} option for manyglm calls, "pit-norm", uses randomised quantile
-  residuals as defined in Dunn & Smyth (1996). Note that for discrete data, these residuals
-  involve random number generation, and will not return identical results on replicate runs.
+  The recommended \code{res.type} option for manyglm calls, "pit-norm", uses randomised quantile or "Dunn-Smyth"
+  residuals (Dunn & Smyth 1996). Note that for discrete data, these residuals
+  involve random number generation, and will not return identical results on replicate runs - so it is recommended
+  that you plot your data a few times to check if any pattern shows up consistently across replicate plots.
   The other main residual option is "pearson", Pearson residuals. Note that all res.type options
   are equivalent for manylm.
 
@@ -89,6 +90,9 @@
 }
 \references{
 
+Dunn, P.K., & Smyth, G.K. (1996). Randomized quantile residuals. Journal of Computational and
+Graphical Statistics 5, 236-244.
+
 Wang Y., Naumann U., Wright S.T. & Warton D.I. (2012). mvabund - an R package for model-based 
 analysis of multivariate abundance data. Methods in Ecology and Evolution 3, 471-474.
 
@@ -111,6 +115,14 @@ spidlm <- manylm(spiddat~X)
 plot(spidlm,which=1:2,col.main="red",cex=3,overlay=FALSE)
 
 plot(spidlm,which=1:4,col.main="red",cex=3,overlay=TRUE)
+
+## plot the diagnostics for Poisson and negative binomial regression of the spider data
+glmP.spid <- manyglm(spiddat~X, family="poisson")
+plot(glmP.spid, which=1) #note the marked fan-shape on the plot
+
+glmNB.spid <- manyglm(spiddat~X, family="negative.binomial")
+plot(glmNB.spid, which=1) #no fan-shape
+plot(glmNB.spid, which=1) #note the residuals change on re-plotting, but no consistent trend
 
 }
 \keyword{hplot}

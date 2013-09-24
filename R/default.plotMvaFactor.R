@@ -119,6 +119,9 @@ if(!any(is.na(subset))) {
 N <- nrow(mvabund.object)     # number of sites
 p <- ncol(mvabund.object)     # number of organism types
 
+# Automatically correct n.vars if > p
+n.vars <- min(n.vars,p)
+
 if (any(c(p,N)==0)) stop("The mvabund object 'x' has invalid dimensions.")
 
 miss.varsubset <- missing(var.subset)

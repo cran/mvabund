@@ -9,8 +9,9 @@ multivariate abundance data in ecology.
 }
 
 \usage{
-\method{anova}{manylm}(
-  object, \dots, resamp="perm.resid", test="F", p.uni="none", nBoot=1000, cor.type=object$cor.type, shrink.param=object$shrink.param, studentize=TRUE, calc.rss = FALSE, tol=1.0e-10, rep.seed=FALSE, bootID=NULL )
+\method{anova}{manylm}(object, \dots, resamp="perm.resid", test="F", p.uni="none",
+        nBoot=1000, cor.type=object$cor.type, shrink.param=object$shrink.param, 
+	studentize=TRUE, calc.rss = FALSE, tol=1.0e-10, rep.seed=FALSE, bootID=NULL )
 \method{print}{anova.manylm}(
     x, digits = max(getOption("digits") - 3, 3),
     signif.stars = getOption("show.signif.stars"),

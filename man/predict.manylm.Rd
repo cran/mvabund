@@ -6,30 +6,19 @@
   result of the model fitting function \code{manylm}.  }
 \usage{
 % predict.manylm
-\method{predict}{manylm}(object, newdata, se.fit = FALSE, scale = NULL, df = Inf,
-    interval = c("none", "confidence",  "prediction"), level = 0.95,
-    type = c("response", "terms"), terms = NULL, na.action = na.pass,
-    pred.var = res.var/weights, weights = 1, \dots)
+\method{predict}{manylm}(object, newdata=NULL, se.fit = FALSE, 
+    type = c("response", "terms"), terms = NULL, na.action = na.pass, ...)
 }
 \arguments{
 \item{object}{object of class inheriting from \code{manylm}.}
 \item{newdata}{an optional data frame in which to look for variables with which
 to predict. If omitted, the fitted values are used.}
 \item{se.fit}{a switch indicating if standard errors are required.}
-\item{scale}{description of Scale (parameter) matrix (q x q with q the number
-of response variables) for std.err. calculation.}
-\item{df}{description of Degrees of freedom for scale.}
-\item{interval}{type of interval calculation. Possible values:
-"none", "confidence",  "prediction".}
-\item{level}{tolerance/confidence level.}
 \item{type}{type of prediction (response or model term), Possible values:
 "response", "terms".}
 \item{terms}{if type="terms", which terms (default is all terms).}
 \item{na.action}{function determining what should be done with missing values in
 newdata. The default is to predict \code{NA}.}
-\item{pred.var}{the variance(s) for future observations to be assumed for
-prediction intervals. See Details.}
-\item{weights}{variance weights for prediction, a numeric vector.}
 \item{\dots}{further arguments passed to or from other methods.}
 }
 \details{ \code{predict.manylm} produces predicted values, obtained by evaluating
@@ -108,16 +97,13 @@ If \code{se.fit} is \code{TRUE}, a list with the following components is returne
 }
 \examples{
 data(spider)
-spiddat <- mvabund(spider$abund)
-X <- spider$x
-
-manylm.fit <- manylm(spiddat~X)
-
+spiddat <- mvabund(spider$abund[1:20, ])
+dat = data.frame(spider$x[1:20, ])
+manylm.fit <- manylm(spiddat~soil.dry+bare.sand, data=dat)
 predict(manylm.fit)
-
 predict(manylm.fit, se.fit = TRUE)
 
-new <- mvabund(matrix(ceiling(runif(180, 0,10)), ncol=6, nrow=15))
+new <- data.frame(spider$x[21:28, ])
 predict(manylm.fit, new, se.fit = TRUE)
 
 }

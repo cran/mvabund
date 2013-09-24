@@ -244,11 +244,15 @@ title <- c("\n\nAlopecosa accentuata", "\n\nAlopecosa cuneata",
            "\n\nTrochosa terricola", "\n\nZora spinimana")
 
 #Plot Species Abundance vs Environmental variable
-plot.mvformula(log(spiddat+1) ~ exp(soilWater), main=title, xlab="\% Soil Moist - Log Scale  ", ylab="Abundance [log scale]", overall.main="Species Abundance vs \%Soil Moisture", col=pch.vec, fg="grey", pch=pch.vec, las=1, scale.lab="ss",t.lab="o", mfrow=c(4,3),log="x")
+plot.mvformula(log(spiddat+1) ~ exp(soilWater), main=title, 
+xlab="\% Soil Moist - Log Scale  ", ylab="Abundance [log scale]", 
+overall.main="Species Abundance vs \%Soil Moisture", col=pch.vec, 
+fg="grey", pch=pch.vec, las=1, scale.lab="ss",t.lab="o", mfrow=c(4,3),log="x")
 
 #Add a Margin
 par(xpd=NA)
-legend("topright",pch=c(1,3),col=c(1,3),legend = c("few twigs", "many twigs"), cex = 1, inset=c(0,-0.19))
+legend("topright",pch=c(1,3),col=c(1,3),legend = c("few twigs", "many twigs"), 
+cex = 1, inset=c(0,-0.19))
 
 
 ############################
@@ -261,7 +265,8 @@ year <- tikus$x[,1]
 tikusdat <- mvabund(tikus$abund)
 site <- tikus$x[,2]
 
-plot(tikusdat[year==81,], tikusdat[year==83,], col.main="blue", xlab="1981 abundance", ylab="1983 abundance")
+plot(tikusdat[year==81,], tikusdat[year==83,], col.main="blue", 
+xlab="1981 abundance", ylab="1983 abundance")
 
 }
 \keyword{hplot}

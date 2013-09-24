@@ -8,7 +8,7 @@ extern "C"{
 //#include "time.h"
 }
 
-RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp) 
+RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp, SEXP Osexp) 
 {
     using namespace Rcpp;
 
@@ -29,6 +29,7 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
 
     NumericMatrix Yr(Ysexp);
     NumericMatrix Xr(Xsexp);
+    NumericMatrix Or(Osexp);
     unsigned int nRows = Yr.nrow();
     unsigned int nVars = Yr.ncol();
     unsigned int nParam = Xr.ncol();
@@ -39,6 +40,7 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
     unsigned int i, j, k;
     gsl_matrix *X = gsl_matrix_alloc(nRows, nParam);        
     gsl_matrix *Y = gsl_matrix_alloc(nRows, nVars);
+    gsl_matrix *O = gsl_matrix_alloc(nRows, nVars);
 
 //  Must be careful about using std::copy for matrix. The following direct
 //  use is not doing right - row elements are copied to columns. Need to
@@ -51,6 +53,7 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
     for (i=0; i<nRows; i++){
         for (j=0; j<nVars; j++) {
             gsl_matrix_set(Y, i, j, Yr(i, j));
+            gsl_matrix_set(O, i, j, Or(i, j));
 //            Rprintf("%.2f ", gsl_matrix_get(Y, i, j));
         }
 //        Rprintf("\t");
@@ -71,7 +74,7 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
     NBinGlm nbfit(&mm);
     glm *glmPtr[3] = { &pfit, &nbfit, &lfit };
     unsigned int mtype = mm.model-1;
-    glmPtr[mtype]->regression(Y, X, NULL, NULL);
+    glmPtr[mtype]->regression(Y, X, O, NULL);
 //    glmPtr[mtype]->display();
 	
 //    clk_end = clock();
@@ -95,6 +98,7 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
     NumericMatrix Vars(nRows, nVars);
     NumericMatrix wHalf(nRows, nVars);
     NumericMatrix Res(nRows, nVars);
+    NumericMatrix PearRes(nRows, nVars);
     NumericMatrix PitRes(nRows, nVars);
     NumericMatrix sqrt1_Hii(nRows, nVars);
 
@@ -111,6 +115,7 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
 	Vars(i, j) = gsl_matrix_get(glmPtr[mtype]->Var, i, j);        
 	wHalf(i, j) = gsl_matrix_get(glmPtr[mtype]->wHalf, i, j);        
 	Res(i, j) = gsl_matrix_get(glmPtr[mtype]->Res, i, j);        
+	PearRes(i, j) = gsl_matrix_get(glmPtr[mtype]->PearRes, i, j);        
 	PitRes(i, j) = gsl_matrix_get(glmPtr[mtype]->PitRes, i, j);        
 	sqrt1_Hii(i, j) = gsl_matrix_get(glmPtr[mtype]->sqrt1_Hii, i, j);        
 //        Rprintf("%d ", (int)gsl_matrix_get(Y, i, j));
@@ -129,7 +134,8 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
          _["var.coefficients"] = varBeta,
          _["fitted.values"] = Mu,
          _["linear.predictor"] = Eta,
-	 _["Pearson.residuals"] = Res,
+	 _["residuals"] = Res,
+	 _["Pearson.residuals"] = PearRes,
 	 _["PIT.residuals"] = PitRes,
 	 _["sqrt.1_Hii"] = sqrt1_Hii,
          _["var.estimator"] = Vars,
@@ -145,6 +151,7 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp)
     glmPtr[mtype]->releaseGlm();
     gsl_matrix_free(Y);
     gsl_matrix_free(X);
+    gsl_matrix_free(O);
 
     return rs;
 }

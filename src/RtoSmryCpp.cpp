@@ -90,9 +90,9 @@ RcppExport SEXP RtoSmryCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
     smry.resampTest();
 //    smry.display();
 
-    clk_end = clock();
-    double dif = (double)(clk_end - clk_start)/(double)(CLOCKS_PER_SEC);
-    Rprintf("Time elapsed: %d seconds\n", (unsigned int) dif);
+//    clk_end = clock();
+ //   double dif = (double)(clk_end - clk_start)/(double)(CLOCKS_PER_SEC);
+//    Rprintf("Time elapsed: %d seconds\n", (unsigned int) dif);
 
     // Wrap gsl vectors with Rcpp 
     NumericVector Vec_signific(smry.multstat+1, smry.multstat+nParam+1);

@@ -89,18 +89,29 @@ default.print.summary.manyglm <- function (x, digits = max(getOption("digits") -
                print.default(cbind(tests, format(Signif)), quote = FALSE, right = TRUE, na.print = "NA",...)
                cat("--- \nSignif. codes: ", attr(Signif, "legend"), "\n") 
 	       if(x$p.uni == "none"){
-                   if(x$resamp!="none")
-		      cat("Arguments: with", n.bootsdone, "resampling iterations using",    x$resamp, "resampling and",corname, "\n")  
-            }    } 
+#                   if(x$resamp!="none")
+#		      cat("Arguments: with", n.bootsdone, "resampling iterations using",    x$resamp, "resampling and",corname, "\n")  
+#                   cat("Arguments:\n", "Test statistics calculated assuming", corname, 
+#                       "\n P-value calculated using", n.bootsdone, "resampling iterations via",       x$resamp, "resampling (to account for correlation in testing).\n")
+	       }    } 
             else {
                if(x$resamp!="none")
 	          print.default(tests, quote = FALSE, right = TRUE, na.print = "NA",...)
 	       else 
                   print.default(tests[,-zap.i, drop=FALSE], quote = FALSE, right = TRUE, na.print = "NA",...)
                if (x$p.uni == "none" & x$resamp!="none")
-                  cat("Arguments: with", n.bootsdone, "resampling iterations using",        x$resamp, "resampling and",corname, "\n")
-	    }
+                 if(dim(x$Pearson)[2]>1)
+                 {   
+                   cat("Arguments:\n", "Test statistics calculated assuming", corname, 
+                       "\n P-value calculated using", n.bootsdone, "resampling iterations via",       x$resamp, "resampling (to account for correlation in testing).\n")
+                 }
+                  if(dim(x$Pearson)[2]==1)
+                  {   
+                     cat("Arguments: P-value calculated using", n.bootsdone, "resampling iterations via",       x$resamp, "resampling.\n")
+                  }
+            }
 
+      
   	   if(x$p.uni == "none" & x$resamp=="case" & sum(x$n.iter.sing)>0) {
 		cat("\nNumber of iterations with adjusted tests (including skipped tests)      because of singularities in X due to the case resampling\n")
 		print.default(x$n.iter.sing, quote = FALSE, right = TRUE, na.print = "", ...)	
@@ -171,7 +182,18 @@ default.print.summary.manyglm <- function (x, digits = max(getOption("digits") -
        if(x$resamp!="none"){
           cat(statname, paste(formatC(x$statistic[1], digits = digits),",",sep=""), "p-value:", format.pval(x$statistic[2], digits = dig.tst, eps = eps.Pvalue),"\n")
           if (x$p.uni == "none") 
-             cat("Arguments: with", n.bootsdone, "resampling iterations using", x$resamp, "resampling and",corname, "\n")    
+#             cat("Arguments: with", n.bootsdone, "resampling iterations using", x$resamp, "resampling and",corname, "\n")    
+#          cat("Arguments:\n", "Test statistics calculated assuming", corname, 
+#              "\n P-value calculated using", n.bootsdone, "resampling iterations via",       x$resamp, "resampling (to account for correlation in testing).\n")
+            if(dim(x$Pearson)[2]>1)
+            {   
+              cat("Arguments:\n", "Test statistics calculated assuming", corname, 
+                  "\n P-value calculated using", n.bootsdone, "resampling iterations via",       x$resamp, "resampling (to account for correlation in testing).\n")
+            }
+            if(dim(x$Pearson)[2]==1)
+            {   
+              cat("Arguments: P-value calculated using", n.bootsdone, "resampling iterations via",       x$resamp, "resampling.\n")
+            }
        } 
        else cat(statname, paste(formatC(x$statistic[1], digits = digits),"\n",sep=""))
     
@@ -186,12 +208,16 @@ default.print.summary.manyglm <- function (x, digits = max(getOption("digits") -
           cat("\nUnivariate test statistic: \n")
           if(x$resamp!="none"){
              print.default(t(x$statistic.j), quote =FALSE, right = TRUE, na.print = "NA",...)
-             cat("\nArguments: with", n.bootsdone, "resampling iterations using", x$resamp, "resampling and",corname, "\n")
+             cat("Arguments:\n", "Test statistics calculated assuming", corname, 
+                 "\n P-value calculated using", n.bootsdone, "resampling iterations via",       x$resamp, "resampling (to account for correlation in testing).\n")
+#             cat("\nArguments: with", n.bootsdone, "resampling iterations using", x$resamp, "resampling and",corname, "\n")
           } else {
              uni.stat <- x$statistic.j[,-zap.ij, drop=FALSE]
              rownames(x$statistic.j)
              print.default(t(uni.stat),quote=FALSE,right=TRUE,na.print="NA",...)
     }   }   }
+
+    
     ###################### END print overall test statistics ###################
 
     ######################## BEGIN print residual summary ######################

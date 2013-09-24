@@ -31,7 +31,7 @@ anova.manylm <- function(object, ..., resamp="perm.resid", test="F", p.uni="none
     nVars <- ncol(object$y)
     nParam <- ncol(object$x)
     nModels = length(objects)
-    Y <- matrix(as.integer(object$y), nrow=nRows, ncol=nVars) 
+    Y <- matrix(object$y, nrow=nRows, ncol=nVars) 
     X <- matrix(object$x, nrow=nRows, ncol=nParam)
 
     # the following values need to be converted to integer types 
@@ -125,6 +125,8 @@ anova.manylm <- function(object, ..., resamp="perm.resid", test="F", p.uni="none
            nterms <- max(0, varseq)+1
            tl <- c("(Intercept)", tl)
         }
+	if (nParam==1) 
+	    stop("An intercept model is comoparing to itself. Stopped.")
         XvarIn <- matrix(ncol=nParam, nrow=nterms, 1)
         XvarIn[nterms, varseq>0] <- 0
         fit <- manylm(Y~1) 
@@ -201,6 +203,10 @@ anova.manylm <- function(object, ..., resamp="perm.resid", test="F", p.uni="none
                   width.cutoff=500), collapse = "\n")) 
         topnote <- paste(modelnamelist, ": ", Xnames, sep = "", collapse = "\n")
         tl <- modelnamelist
+	if (tl[1]==tl[2]) {
+	    warning(paste("Two identical models. Second model's name changed to ", tl[2], "_2", sep=""))
+            tl[2] <- paste(tl[2], "_2", sep="")
+	}
         ord <- (nModels-1):1
     }
 

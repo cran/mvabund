@@ -144,7 +144,8 @@ anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none
     modelParam <- list(tol=object$tol, regression=familynum, maxiter=object$maxiter, maxiter2=object$maxiter2, warning=warn, estimation=methodnum, stablizer=0, n=object$K)
     # note that nboot excludes the original data set
     testParams <- list(tol=object$tol, nboot=nBoot-1, cor_type=corrnum, test_type=testnum, resamp=resampnum, reprand=rep.seed, punit=pu, showtime=st, warning=warn)
-
+    if(is.null(object$offset)) O <- matrix(0, nrow=nRows, ncol=nVars)
+    else O <- as.matrix(object$offset)
     # ANOVA
     if (nModels==1)
     {
@@ -165,6 +166,9 @@ anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none
           nterms <- max(0, varseq)+1
           tl <- c("(Intercept)", tl)
        }
+       if ( nParam==1 )
+           stop("An intercept model is comparing to itself. Stopped")
+
        XvarIn <- matrix(ncol=nParam, nrow=nterms, 1)
        for ( i in 0:(nterms-2))
        { # exclude object itself
@@ -235,45 +239,49 @@ anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none
         else if (corrnum == 1) shrink.param <- c(rep(0,nModels))
 
         # Test if models are nested, construct the full matrix and XvarIn 
-        XNull <- as.matrix(objects[[1]]$x, "numeric")
-        ind <- matrix(ncol=1, nrow=nModels)
-        for ( i in 2:nModels ) {
-            XAlt  <- as.matrix(objects[[i]]$x, "numeric")
-            Xarg  <- cbind(XAlt, XNull)
-            tmp <- qr(Xarg)
-            Xplus <- qr(XAlt)
-            if ( tmp$rank == Xplus$rank ) {
-               Beta <- qr.coef(Xplus, XNull)  # equivalent to (XAlt\XNull) in matlab 
-               # The following gets the left null space of beta, ie.LT=null(t(beta));
-               # note that LT is an orthogonal complement of Beta, and [Beta, LT] together forms the orthogonal basis that span the column space of XAlt
-               # For some reason, it must be null(beta) instead of null(t(beta)) in R to get the same answer in matlab.
-               tmp <- qr(Beta)
-               set <- if(tmp$rank == 0) 1:ncol(Beta) else  - (1:tmp$rank)
-               LT <- qr.Q(tmp, complete = TRUE)[, set, drop = FALSE]
-               # to get the dimension of Xnull
-               ind[nModels+2-i, 1] <- dim(XNull)[2]
-               XNull <- cbind(XNull, XAlt%*%LT)
-            } 
-            else
-              stop(paste(modelnamelist[i-1], "is note nested in Model", modelnamelist[i]))
-        }
-        # the full matrix template X, note that Xnull and Xalt are reconstructed from X and XvarIn in the resampling process
-        X <- XNull
-        nParam <- ind[1, 1] <- dim(X)[2] 
+#        XNull <- as.matrix(objects[[1]]$x, "numeric")
+#        ind <- matrix(ncol=1, nrow=nModels)
+#        for ( i in 2:nModels ) {
+#            XAlt  <- as.matrix(objects[[i]]$x, "numeric")
+#            Xarg  <- cbind(XAlt, XNull)
+#            tmp <- qr(Xarg)
+#            Xplus <- qr(XAlt)
+#            if ( tmp$rank == Xplus$rank ) {
+#               Beta <- qr.coef(Xplus, XNull)  # equivalent to (XAlt\XNull) in matlab 
+#               # The following gets the left null space of beta, ie.LT=null(t(beta));
+#               # note that LT is an orthogonal complement of Beta, and [Beta, LT] together forms the orthogonal basis that span the column space of XAlt
+#               # For some reason, it must be null(beta) instead of null(t(beta)) in R to get the same answer in matlab.
+#               tmp <- qr(Beta)
+#               set <- if(tmp$rank == 0) 1:ncol(Beta) else  - (1:tmp$rank)
+#               LT <- qr.Q(tmp, complete = TRUE)[, set, drop = FALSE]
+#               # to get the dimension of Xnull
+#               ind[nModels+2-i, 1] <- dim(XNull)[2]
+#               XNull <- cbind(XNull, XAlt%*%LT)
+#            } 
+#        X <- XNull
+        X <- as.matrix(objects[[nModels]]$x, "numeric") # XAlt
+        nParam <- dim(X)[2] 
         XvarIn <- matrix(ncol=nParam, nrow=nModels, as.integer(0))  
         Xnames <- list()   # formula of each model
-        for ( i in 1:nModels ) XvarIn[i, 1:ind[i, 1]] <- as.integer(1) 
-
+        for ( i in 1:nModels ) {
+            nx = dim(as.matrix(objects[[i]]$x, "numeric"))[2]
+            XvarIn[nModels+1-i, 1:nx] <- as.integer(1) 
+        }
+#browser()
         Xnames <- lapply(objects, function(x) paste(deparse(formula(x), 
                          width.cutoff=500), collapse = "\n")) 
         topnote <- paste(modelnamelist, ": ", Xnames, sep = "", collapse = "\n")
         tl <- modelnamelist 
+        if (tl[1]==tl[2]) {
+	    warning(paste("Two identical models. Second model's name changed to ", tl[2], "_2", sep=""))
+	    tl[2] <- paste(tl[2], "_2", sep="")
+	}
         ord <- (nModels-1):1
     }
 
 # browser()
-    ######## call resampTest Rcpp #########
-    val <- .Call("RtoGlmAnova", modelParam, testParams, Y, X, 
+    ######## call resampTest Rcpp #########   
+    val <- .Call("RtoGlmAnova", modelParam, testParams, Y, X, O,
                  XvarIn, bootID, shrink.param, PACKAGE="mvabund")
 
     # prepare output summary

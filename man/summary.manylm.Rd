@@ -9,10 +9,10 @@ abundance data in ecology.}
 
 \usage{
 \method{summary}{manylm}(object, nBoot=1000, resamp="residual", 
-   test=object$test, cor.type=object$cor.type, shrink.param=NULL, 
+   test="F", cor.type=object$cor.type, shrink.param=NULL, 
    p.uni="none", studentize=TRUE, R2="h", show.cor = FALSE, 
    show.est=FALSE, show.residuals=FALSE, symbolic.cor=FALSE, 
-   tol=1.0e-10, \dots )
+   tol=1.0e-6, \dots )
   
 \method{print}{summary.manylm}(
    x, digits = max(getOption("digits") - 3, 3), 

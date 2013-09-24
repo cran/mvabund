@@ -125,7 +125,7 @@ int GetMeanCov(gsl_matrix *X, gsl_matrix *Y, mv_Method *mm, unsigned int AR1MAT,
     // fit the model to Y
     mm->corr = NOSHRINK;  
                       // hat, coef, SS
-    calcSS (Y, &H, mm, TRUE, FALSE, TRUE); 
+    calcSS (Y, &H, mm); 
     mm->corr = INCOR;
 
     /* ---------------------- */
@@ -382,3 +382,5 @@ int McSample(glm *model, gsl_rng *rnd, gsl_matrix *XBeta, gsl_matrix *Sigma, gsl
 
    return SUCCESS;
 }
+
+

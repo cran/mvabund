@@ -112,9 +112,9 @@ RcppExport SEXP RtoAnovaCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
     anova.resampTest();
 //    anova.display();
 
-    clk_end = clock();
-    double dif = (double)(clk_end - clk_start)/(double)(CLOCKS_PER_SEC);
-    Rprintf("Time elapsed: %d seconds\n", (unsigned int) dif);
+//    clk_end = clock();
+//    double dif = (double)(clk_end - clk_start)/(double)(CLOCKS_PER_SEC);
+//    Rprintf("Time elapsed: %d seconds\n", (unsigned int) dif);
 
     // Wrap the gsl objects with Rcpp 
     NumericVector Vec_mul(anova.multstat, anova.multstat+nModels-1);

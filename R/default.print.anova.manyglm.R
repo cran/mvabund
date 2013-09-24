@@ -59,8 +59,17 @@ default.print.anova.manyglm <- function( x, digits = max(getOption("digits") - 3
     
     if(!is.null(test) & substr(anova$resamp,1,1)!="n"){
        if(substr(anova$p.uni,1,1)=="n") {
-              cat("Arguments:\n", "Test statistics calculated assuming", corname, 
-              "\n P-value calculated using", n.bootsdone, "resampling iterations via",       anova$resamp, "resampling (to account for correlation in testing).\n")
+         if(dim(anova$uni.p)[2]>1)
+         {   
+           cat("Arguments:\n", "Test statistics calculated assuming", corname, 
+               "\n P-value calculated using", n.bootsdone, "resampling iterations via",       x$resamp, "resampling (to account for correlation in testing).\n")
+         }
+         if(dim(anova$uni.p)[2]==1)
+         {   
+           cat("Arguments: P-value calculated using", n.bootsdone, "resampling iterations via",       x$resamp, "resampling.\n")
+         }
+#         cat("Arguments:\n", "Test statistics calculated assuming", corname, 
+#              "\n P-value calculated using", n.bootsdone, "resampling iterations via",       anova$resamp, "resampling (to account for correlation in testing).\n")
                 if(sum(anova$nBoot - anova$n.bootsdone)>1){
                     cat("\nNumber of iterations with skipped test statistic as the respective variable/variable-group to test became linear dependent during the case resampling step\n")
                     print.default(anova$nBoot - anova$n.bootsdone - 1, quote = FALSE, right = TRUE, na.print = "", ...) 

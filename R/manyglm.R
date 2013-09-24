@@ -3,10 +3,10 @@
 # the (default) methods coef, residuals, fitted values can be used             
 ###############################################################################
 
-manyglm <- function (formula, family="negative.binomial", K=1, data=NULL, subset=NULL, na.action=options("na.action"), theta.method = "PHI", model = FALSE, x = TRUE, y = TRUE, qr = TRUE, cor.type= "I", shrink.param=NULL, tol=sqrt(.Machine$double.eps), maxiter=25, maxiter2=10, show.coef=FALSE, show.fitted=FALSE, show.residuals=FALSE, show.warning=FALSE,... ) {
+manyglm <- function (formula, family="negative.binomial", K=1, data=NULL, subset=NULL, na.action=options("na.action"), theta.method = "PHI", model = FALSE, x = TRUE, y = TRUE, qr = TRUE, cor.type= "I", shrink.param=NULL, tol=sqrt(.Machine$double.eps), maxiter=25, maxiter2=10, show.coef=FALSE, show.fitted=FALSE, show.residuals=FALSE, show.warning=FALSE, offset, ... ) {
 
+#if (data!=NULL) attach(data)
 # tasmX <- as.matrix(tasmX, "numeric")  
-
 # get family and link
 #fam <- call$family
 #family.char <- as.character(fam)
@@ -31,23 +31,19 @@ if ( is.character(family) ) {
 }
 else stop ("Please specify a family function with a character string. manyglm supports the following members of the exponential family: 'gaussian', 'poisson', 'binomial', 'negative.binomial' distributions.") 
 
-# Obtain regression parameters
-if (familyname=="gaussian") { 
-    return(manylm(formula, data=data, subset=subset, na.action=na.action, model=model, x=x, y =y, qr=qr, cor.type=cor.type, shrink.param=shrink.param, tol=tol, ...))
-}
-else {
-    ret.x <- x
-    ret.y <- y
-    ret.qr <- qr
-    cl <- match.call()
-    mf <- match.call(expand.dots = FALSE)
-    m  <- match(c("formula", "data", "subset", "na.action"), names(mf), 0)
-    mf <- mf[c(1, m)]
+ret.x <- x
+ret.y <- y
+ret.qr <- qr
+cl <- match.call()
+mf <- match.call(expand.dots = FALSE)
+m  <- match(c("formula", "data", "subset", "na.action", "offset"), names(mf), 0)
+mf <- mf[c(1, m)]
 
-    mf$drop.unused.levels <- TRUE
-    mf[[1]] <- as.name("model.frame")
-    mf <- eval(mf, parent.frame())    # Obtain the model.frame. 
-    mt <-  attr(mf, "terms")  # Obtain the model terms.
+mf$drop.unused.levels <- TRUE
+mf[[1]] <- as.name("model.frame")
+data <- mf <- eval(mf, parent.frame())    # Obtain the model.frame. 
+mt <-  attr(mf, "terms")  # Obtain the model terms.
+offset <- as.vector(model.offset(mf))
 
     abundances <- as.matrix(model.response(mf, "numeric"))
     if (any(is.na(abundances)) & is.null(na.action))
@@ -90,9 +86,23 @@ else {
     ##################### BEGIN Estimation ###################
     # Obtain the Designmatrix.
     X <- model.matrix(mt, mf)
+
+# Obtain regression parameters
+if (familyname=="gaussian") { 
+    stop("Please use manylm to fit Guassian")
+#   z <- manylm(formula, data=data, subset=subset, na.action=na.action, model=model, x=x, y =y, qr=qr, cor.type=cor.type, shrink.param=shrink.param, tol=tol, ...)
+#    z$family <- "gaussian"
+#    z$formula <- formula
+#    z$data <- data
+#    class(z) <- c("manylm", "mlm")
+#    return(z)
+}
+else {
     assign <- attr(X, "assign")
     tX <- t(X)
-    tX <- t(tX[!duplicated(tX),])  # remove duplicated col    
+    dup <- duplicated(tX)
+    assign <- assign[!dup]
+    tX <- t(tX[!dup, ])  # remove duplicated col    
     if ( nrow(tX) == nrow(X) ) X <- tX
     else X <- t(tX) # for a single-column matrix 
 
@@ -121,7 +131,10 @@ else {
 
     ######### call Glm Fit Rcpp #########
     modelParam <- list(tol=tol, regression=familynum, estimation=methodnum, stablizer=FALSE, n=K, maxiter=maxiter, maxiter2=maxiter2, warning=warn)
-    z <- .Call("RtoGlm", modelParam, Y, X, PACKAGE="mvabund")
+    if(is.null(offset)) O <- matrix(0, nrow=N, ncol=p)   
+    else if (NCOL(offset)==1) O <- matrix(rep(offset), nrow=N, ncol=p)
+    else O <- as.matrix(offset)
+    z <- .Call("RtoGlm", modelParam, Y, X, O, PACKAGE="mvabund")
 
 # New codes added for estimating ridge parameter 
     if (cor.type=="shrink") {      
@@ -160,6 +173,7 @@ else {
     names(z$aic) <- labAbund
     names(z$iter) <- labAbund
 
+    z$data <- mf
     z$stderr.coefficients <- sqrt(z$var.coefficients)
     dimnames(z$stderr.coefficients) <- list(colnames(X), labAbund)
     z$phi <- 1/z$theta
@@ -167,6 +181,7 @@ else {
     z$maxiter <- maxiter
     z$maxiter2 <- maxiter2
     z$prior.weight <- NULL
+    z$AIC <- z$aic
     z$AICsum <- sum(z$aic)
     z$family    <- familyname
     z$K         <- K
@@ -187,6 +202,7 @@ else {
     z$show.coef <- show.coef
     z$show.fitted <- show.fitted
     z$show.residuals <- show.residuals
+    z$offset <- O 
  
     class(z) <- c("manyglm", "mglm")
     return(z)

@@ -99,7 +99,9 @@ spiddat <- mvabund(spider$abund)
 X <- spider$x
 
 ## Draw a plot of the spider data:
-plot(spiddat, col="gray1", n.vars=8, transformation="sqrt", xlab=c("Hunting Spider"), ylab="Spider Species", scale.lab="s",t.lab="t", shift=TRUE, fg= "lightblue", col.main="red", main="Spiders") 
+plot(spiddat, col="gray1", n.vars=8, transformation="sqrt", 
+xlab=c("Hunting Spider"), ylab="Spider Species", scale.lab="s",
+t.lab="t", shift=TRUE, fg= "lightblue", col.main="red", main="Spiders") 
 
 
 ## A mean-variance plot, data organised by year, 

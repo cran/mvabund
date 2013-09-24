@@ -8,7 +8,9 @@
 manyglm(formula, family="negative.binomial", K=1, data=NULL, subset=NULL, 
     na.action=options("na.action"), theta.method = "PHI", model = FALSE,
     x = TRUE, y = TRUE, qr = TRUE, cor.type= "I", shrink.param=NULL, 
-    tol=sqrt(.Machine$double.eps), maxiter=25, maxiter2=10, show.coef=FALSE, show.fitted=FALSE, show.residuals=FALSE, show.warning=FALSE,\dots )
+    tol=sqrt(.Machine$double.eps), maxiter=25, maxiter2=10, 
+    show.coef=FALSE, show.fitted=FALSE, show.residuals=FALSE, 
+    show.warning=FALSE, offset, \dots )
 }
 \arguments{
   \item{formula}{an object of class \code{"\link{formula}"} (or one that
@@ -78,6 +80,7 @@ manyglm(formula, family="negative.binomial", K=1, data=NULL, subset=NULL,
   \item{maxiter}{maximum allowed iterations in the weighted least square estimation of beta. The default value is 100.}
   \item{maxiter2}{maximum allowed iterations in the internal ML estimations of negative binomial regression. The default value is 5.}
   \item{show.coef, show.fitted, show.residuals, show.warning}{logical. Whether to show model coefficients, fitted values, standardized pearson residuals, or operation warnings.}
+  \item{offset}{this can be used to specify an _a priori_ known component to be included in the linear predictor during fitting. This should be 'NULL' or a numeric vector of length equal to NROW (i.e. number of observations) or a matrix of NROW times p (i.e. number of species).}
   \item{\dots}{further arguments passed to or from other methods.}
 }
 \details{
@@ -164,7 +167,7 @@ If \code{cor.type=="shrink"}, a numerical value will be assigned to \code{shrink
   \item{phi}{the inverse of theta}
   \item{two.loglike}{two times the log likelihood.}
   \item{deviance}{up to a constant, minus twice the maximized log-likelihood.  Where sensible, the constant is chosen so that a saturated model has deviance zero.}
-  \item{aic}{Akaike's \emph{An Information Criterion}, minus twice the
+  \item{AIC}{Akaike's \emph{An Information Criterion}, minus twice the
     maximized log-likelihood plus twice the number of coefficients.} 
   \item{AICsum}{the sum of the AIC's over all variables.}
   \item{iter}{the number of iterations of IWLS used.}
@@ -258,11 +261,13 @@ summary(glm.spid, resamp="residual")
 #To fit a binomial regression model to presence/absence data:
 pres.abs <- spiddat
 pres.abs[pres.abs>0] = 1
-glm.spid.bin <- manyglm(pres.abs~X, family="binomial")
+X <- data.frame(spider$x) #turn into a data frame to refer to variables in formula
+glm.spid.bin <- manyglm(pres.abs~soil.dry+bare.sand+moss, data=X, family="binomial")
 glm.spid.bin
+drop1(glm.spid.bin) #AICs for one-term deletions, suggests dropping bare.sand
 
-summary(glm.spid.bin, nBoot=500)
-
+glm2.spid.bin <- manyglm(pres.abs~soil.dry+moss, data=X, family="binomial")
+drop1(glm2.spid.bin) #backward elimination suggests settling on this model.
 
 }
 \keyword{models}

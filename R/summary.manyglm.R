@@ -4,19 +4,20 @@
 # 05-Jan-2010
 ###############################################################################
 
-summary.manyglm <- function(object, resamp="pit.trap", test="wald", p.uni="none", nBoot=1000, cor.type=object$cor.type, show.cor = FALSE, show.est=FALSE, show.residuals=FALSE, symbolic.cor = FALSE, show.time="total", show.warning=FALSE,... ) 
+summary.manyglm <- function(object, resamp="pit.trap", test="wald", p.uni="none", nBoot=1000, cor.type=object$cor.type, show.cor = FALSE, show.est=FALSE, show.residuals=FALSE, symbolic.cor = FALSE, show.time=FALSE, show.warning=FALSE,... ) 
 {
+    tol = object$tol
     allargs <- match.call(expand.dots = FALSE)
     dots <- allargs$...
-    tol = object$tol 
     if ("rep.seed" %in% names(dots)) rep.seed <- dots$rep.seed
     else rep.seed <- FALSE
+    if ("ld.perm" %in% names(dots)) ld.perm <- dots$ld.perm
+    else ld.perm <- FALSE
     if ("bootID" %in% names(dots)) bootID <- dots$bootID
     else bootID <- NULL
 
-    if (show.time=="none") st=0
-    else if (show.time=="all") st=1
-    else st=2
+    if (show.time==FALSE) st=0
+    else st=1
 
     if (show.warning==TRUE) warn=1
     else warn=0
@@ -27,10 +28,10 @@ summary.manyglm <- function(object, resamp="pit.trap", test="wald", p.uni="none"
     }
     if (any(class(object)=="manylm")) {
         if ( test == "LR" ) 
-           return(summary.manylm(object, resamp=resamp, test="LR", p.uni=p.uni, nBoot=nBoot, cor.type=cor.type, show.cor=show.cor, show.est=show.est, show.residuals=show.residuals, symbolic.cor=symbolic.cor, tol=tol, bootID=bootID, ... ))
+           return(summary.manylm(object, resamp=resamp, test="LR", p.uni=p.uni, nBoot=nBoot, cor.type=cor.type, show.cor=show.cor, show.est=show.est, show.residuals=show.residuals, symbolic.cor=symbolic.cor, tol=tol, ld.perm=ld.perm, bootID=bootID, ... ))
 	else {   
 	   warning("For an manylm object, only the likelihood ratio test and F test are supported. So the test option is changed to `'F''. ")
-           return(summary.manylm(object, resamp=resamp, test="F", p.uni=p.uni, nBoot=nBoot, cor.type=cor.type, show.cor=show.cor, show.est=show.est, show.residuals=show.residuals, symbolic.cor=symbolic.cor, tol=tol, bootID=bootID, ... ))
+           return(summary.manylm(object, resamp=resamp, test="F", p.uni=p.uni, nBoot=nBoot, cor.type=cor.type, show.cor=show.cor, show.est=show.est, show.residuals=show.residuals, symbolic.cor=symbolic.cor, tol=tol, ld.perm=ld.perm, bootID=bootID, ... ))
 	}   
     }
     else if (!any(class(object)=="manyglm"))
@@ -54,10 +55,10 @@ summary.manyglm <- function(object, resamp="pit.trap", test="wald", p.uni="none"
     else if (object$family == "binomial") familynum <- 3 
     else stop("'family' not defined. Choose one of 'poisson', 'negative.binomial', 'binomial' for an manyglm object") 
 
-    if (object$theta.method == "ML") methodnum <- 0
+    if(object$theta.method == "ML") methodnum <- 0
     else if (object$theta.method == "Chi2") methodnum <- 1 
-    else if (object$theta.method == "PHI") methodnum <- 2
-    else stop("'method' not defined. Choose one of 'ML', 'Chi2', 'PHI' for an manyglm object") 
+    else if (object$theta.method == "PHI") methodnum <- 2 
+    else stop("'method' not defined. Choose one of 'PHI', 'ML', 'Chi2' for an manyglm object") 
     if (substr(resamp,1,1)=="c") resampnum <- 0  #case
     # To exclude case resampling
     #if (resamp=="case") stop("Sorry, case resampling is not yet available.")
@@ -71,9 +72,9 @@ summary.manyglm <- function(object, resamp="pit.trap", test="wald", p.uni="none"
 
     # allows case and parametric bootstrap only for binomial regression
     if (familynum == 3 && ( (resampnum !=5) && (resampnum!=8) ) ) {
-       warning("'montecarlo' or 'pit.trap' should be used for binomial regression..")
-      # resamp <- "pit.trap"
-      # resampnum <- 8 
+       warning("'montecarlo' or 'pit.trap' should be used for binomial regression. Resampling option is changed to 'pit.trap'.")
+       resamp <- "pit.trap"
+       resampnum <- 8 
     }
   
     if (substr(test,1,1) == "w") testnum <- 2 # wald
@@ -101,18 +102,21 @@ summary.manyglm <- function(object, resamp="pit.trap", test="wald", p.uni="none"
     } else
        stop("'p.uni' not defined. Choose one of 'single', 'adjusted', 'unadjusted', 'none'.")
 
- if (!is.null(bootID)) {
-     nBoot<-dim(bootID)[2]
-     if (is.integer(bootID)) {
-        cat(paste("Input bootID matrix being used for testing.","\n"))       
-     }
-     else {
-        bootID <- NULL
-	cat(paste("Invalid bootID. Calculate bootID matrix on the fly.","\n"))
-     }
- } 
+    if (ld.perm && is.null(bootID)) {
+       warning("bootID not supplied. Calc bootID on the fly (default)...")
+       ld.perm <- FALSE
+    }
+    else if (is.integer(bootID)) {
+       ld.perm <- TRUE
+       nBoot <- dim(bootID)[2]
+    }
+    else if (ld.perm && !is.integer(bootID)){
+       warning("Invalid bootID. Calc bootID on the fly (default)...")
+       ld.perm <- FALSE
+       bootID <- NULL
+    }
 
-  if (corrnum == 2 | resampnum==5 ) {
+    if (corrnum == 2 | resampnum==5 ) {
        # get the shrinkage estimates
        shrink.param <- c(rep(NA,nParam+2))
        tX <- matrix(1, nRows, 1)
@@ -133,9 +137,10 @@ summary.manyglm <- function(object, resamp="pit.trap", test="wald", p.uni="none"
     modelParam <- list(tol=tol, regression=familynum, estimation=methodnum, stablizer=0, n=object$K, maxiter=object$maxiter, maxiter2=object$maxiter2, warning=warn)
     # note that nboot excludes the original dataset
     testParams <- list(tol=tol, nboot=nBoot-1, cor_type=corrnum, test_type=testnum, resamp=resampnum, reprand=rep.seed, punit=pu, showtime=st, warning=warn)
-
+    if(is.null(object$offset)) O <- matrix(0, nrow=nRows, ncol=nVars)
+    else O <- as.matrix(object$offset)
     ######## Call Summary Rcpp #########
-    val <- .Call("RtoGlmSmry", modelParam, testParams, Y, X, bootID, shrink.param, PACKAGE="mvabund")
+    val <- .Call("RtoGlmSmry", modelParam, testParams, Y, X, O, bootID, shrink.param, PACKAGE="mvabund")
 
     ######## Collect Summary Values ######## 
     smry  <- list()

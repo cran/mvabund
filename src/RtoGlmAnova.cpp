@@ -8,7 +8,7 @@ extern "C"{
 #include "time.h"
 }
 
-RcppExport SEXP RtoGlmAnova(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,  
+RcppExport SEXP RtoGlmAnova(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp, SEXP Osexp, 
                             SEXP INsexp, SEXP bIDsexp, SEXP LamSexp) 
 {
     using namespace Rcpp;
@@ -43,6 +43,7 @@ RcppExport SEXP RtoGlmAnova(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
 
     NumericMatrix Yr(Ysexp);
     NumericMatrix Xr(Xsexp);
+    NumericMatrix Or(Osexp);
     IntegerMatrix INr(INsexp);
     NumericVector lambda(LamSexp);
 
@@ -68,6 +69,7 @@ RcppExport SEXP RtoGlmAnova(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
 
     gsl_matrix *X = gsl_matrix_alloc(nRows, nParam);        
     gsl_matrix *Y = gsl_matrix_alloc(nRows, nVars);
+    gsl_matrix *O = gsl_matrix_alloc(nRows, nVars);
     gsl_matrix *isXvarIn = gsl_matrix_alloc(nModels, nParam);
 //  Must be careful using std::copy for matrix. The following direct
 //  use is not right as row elements are copied column-wise.  
@@ -78,6 +80,7 @@ RcppExport SEXP RtoGlmAnova(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
     for (i=0; i<nRows; i++) {
         for (j=0; j<nVars; j++) {
             gsl_matrix_set(Y, i, j, Yr(i, j));
+            gsl_matrix_set(O, i, j, Or(i, j));
 //            Rprintf("%d ", (int)gsl_matrix_get(Y, i, j));
         }
 //        Rprintf("\t");
@@ -107,7 +110,7 @@ RcppExport SEXP RtoGlmAnova(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
     BinGlm binfit(&mm);
     glm *glmPtr[3] = { &pfit, &nbfit, &binfit };
     unsigned int mtype = mm.model-1;
-    glmPtr[mtype]->regression(Y, X, NULL, NULL);
+    glmPtr[mtype]->regression(Y, X, O, NULL);
 //    glmPtr[mtype]->display();
 
     GlmTest myTest(&tm);
@@ -184,6 +187,7 @@ RcppExport SEXP RtoGlmAnova(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
     glmPtr[mtype]->releaseGlm();
     gsl_matrix_free(Y);
     gsl_matrix_free(X);
+    gsl_matrix_free(O);
     gsl_matrix_free(isXvarIn);
     gsl_vector_free(tm.anova_lambda);
 

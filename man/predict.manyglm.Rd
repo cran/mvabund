@@ -7,8 +7,8 @@ predictions from a fitted manyglm object.
 }
 \usage{
 % predict.manyglm
-\method{predict}{manyglm}(object, newdata = NULL, type = c("link", "response",
-    "terms"), se.fit = FALSE, dispersion = object$theta, terms = NULL,
+\method{predict}{manyglm}(object, newdata, type = c("link", "response",
+    "terms"), se.fit = FALSE, dispersion = NULL, terms = NULL,
     na.action = na.pass, \dots)
 }
 \arguments{
@@ -37,7 +37,9 @@ predictions from a fitted manyglm object.
   \item{\dots}{further arguments passed to or from other methods.}
 }
 \details{
- If \code{newdata} is omitted the predictions are based on the data
+predict.manyglm refits the model using glm before making predictions.  In rare (usually pathological) cases this may lead to differences in predictions as compared to what would be expected if using the manyglm coefficients directly.
+
+If \code{newdata} is omitted the predictions are based on the data
   used for the fit.  In that case how cases with missing values in the
   original fit is determined by the \code{na.action} argument of that
   fit.  If \code{na.action = na.omit} omitted cases will not appear in
@@ -63,11 +65,11 @@ predictions from a fitted manyglm object.
 \examples{
 data(spider)
 spiddat <- mvabund(spider$abund)
-X <- spider$x[1:20,]
-
-glm.spid.poiss <- manyglm(spiddat[1:20,]~X, family="poisson")
-
-newdata <- spiddat[21:28,]
+Y <- spiddat[1:20, ]
+X <- data.frame(spider$x[1:20, ])
+glm.spid.poiss <- manyglm(Y~soil.dry+bare.sand, family="poisson", data=X)
+glm.spid.poiss$data = X
+newdata <- data.frame(spider$x[21:28,])
 predict(glm.spid.poiss, newdata)
 pred.w.plim <- predict(glm.spid.poiss, newdata, interval="prediction")
 pred.w.clim <- predict(glm.spid.poiss, newdata, interval="confidence")

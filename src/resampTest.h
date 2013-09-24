@@ -145,10 +145,12 @@ typedef struct MethodStruc {
 typedef struct matStruc {
     gsl_matrix *mat;   // hat(X)
     gsl_matrix *SS;
+    gsl_matrix *R;
     gsl_matrix *Coef;
     gsl_matrix *Res;
     gsl_matrix *X;
     gsl_matrix *Y;
+    gsl_vector *sd;
     double teststat;
 } mv_mat;
 
@@ -261,6 +263,7 @@ class glm
 	   gsl_matrix *Mu;
 	   gsl_matrix *Eta;
 	   gsl_matrix *Res;
+	   gsl_matrix *PearRes;
 	   gsl_matrix *Var;
 	   gsl_matrix *wHalf;
 	   gsl_matrix *sqrt1_Hii;
@@ -277,7 +280,8 @@ class glm
   	   // abstract 	
 	   virtual double link(double) const=0;	   
 	   virtual double invLink(double) const=0;	   
-	   virtual double rcpLinkDash(double) const=0;	   
+	   virtual double muEta(double) const=0;	   
+	   virtual double LinkDash(double) const=0;	   
 	   virtual double weifunc(double, double) const=0;   
 	   virtual double varfunc(double, double) const=0;	   
 	   virtual double llfunc(double, double, double) const=0;	   
@@ -310,8 +314,10 @@ class PoissonGlm : public glm
                 { return log(mui); } 
            double invLink(double etai) const 
 	        { return exp(etai); }
-	   double rcpLinkDash(double mui) const
-                { return mui; }
+           double muEta(double etai) const 
+	        { return exp(etai); }
+	   double LinkDash(double mui) const
+                { return 1/MAX(mui, mintol); }
 	   double weifunc(double mui, double a) const
 	        { return mui; }
 	   double varfunc(double mui, double a) const
@@ -343,11 +349,15 @@ class BinGlm : public PoissonGlm
            double link(double mui) const // pi=mui/n
                { return log(mui/(n-mui)); }
            double invLink(double ei) const
-                { return n*exp(ei)/(1+exp(ei)); }
-           double rcpLinkDash(double mui) const
-                { return (mui/n)*(1-mui/n); }
+                { return n*(exp(ei)/(1+exp(ei))); }
+           double muEta(double ei) const
+                { return n*(invLink(ei)*(1-invLink(ei))); }
+//           double muEta(double mui) const
+//                { return mui*(1-mui/n); }
+           double LinkDash(double mui) const
+                { return n/MAX(mintol, mui*(n-mui)); }
            double weifunc(double mui, double a) const
-                { return rcpLinkDash(mui)/n; }
+                { return mui*(1-mui/n); }
            double varfunc(double mui, double a) const
                 { return mui*(1-mui/n); } // n*pi*(1-pi)
            double llfunc(double yi, double mui, double a) const
@@ -488,7 +498,7 @@ void displaymatrix(gsl_matrix * m, const char * name);
 void displayvector(gsl_vector * v, const char * name);
 
 // calctest.c - utility functions
-double calcDet(gsl_matrix *SS);
+double logDet(gsl_matrix *SS);
 int is_sym_matrix(const gsl_matrix *mat);
 int subX(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi);
 int subX1(gsl_matrix *X, gsl_vector *ref, gsl_matrix *Xi);
@@ -501,7 +511,7 @@ int GetR(gsl_matrix *Res, unsigned int corr, double lambda, gsl_matrix *R);
 int subtractMean(gsl_matrix *dat);
 // calctest.c - manylm related functions
 int testStatCalc(mv_mat *H0, mv_mat *H1, mv_Method *mmRef, const unsigned int ifcalcH1det, double *stat, gsl_vector *statj);
-int calcSS(gsl_matrix *Y, mv_mat *Hat, mv_Method *mmRef, const unsigned int ifcalcHat, const unsigned int ifcalcCoef, const unsigned int ifcalcSS);
+int calcSS(gsl_matrix *Y, mv_mat *Hat, mv_Method *mmRef);
 int calcAdjustP(const unsigned int punit, const unsigned int nVars, double *bj, double *sj, double *pj, gsl_permutation *sortid);
 int reinforceP(double *p, unsigned int nVars, gsl_permutation *sortid);
 int getHat(gsl_matrix *X, gsl_matrix *W, gsl_matrix *Hat);

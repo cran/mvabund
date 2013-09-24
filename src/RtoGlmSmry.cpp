@@ -9,7 +9,7 @@ extern "C"{
 //#include "math.h"
 }
 
-RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,  
+RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp, SEXP Osexp,
                              SEXP bIDsexp, SEXP LamSexp )
 {
     using namespace Rcpp;
@@ -25,7 +25,6 @@ RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
     mm.maxiter = as<unsigned int>(sparam["maxiter"]);
     mm.maxiter2 = as<unsigned int>(sparam["maxiter2"]);
     mm.warning = as<unsigned int>(sparam["warning"]);
-
     List rparam(tpar);
     // pass parameters
     mv_Method tm;
@@ -43,6 +42,7 @@ RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
 
     NumericMatrix Yr(Ysexp);
     NumericMatrix Xr(Xsexp);
+    NumericMatrix Or(Osexp);
     NumericVector lambda(LamSexp);
     unsigned int nRows = Yr.nrow();
     unsigned int nVars = Yr.ncol();
@@ -51,7 +51,7 @@ RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
     tm.nRows = nRows;
     tm.nVars = nVars;
     tm.nParam = nParam;
-
+//printf("nRows=%d, nVars=%d, nParam=%d\n", nRows, nVars, nParam);
     // Rcpp -> gsl
     unsigned int i, j, k;
     tm.smry_lambda = gsl_vector_alloc(nLambda);
@@ -59,6 +59,7 @@ RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
         gsl_vector_set(tm.smry_lambda, i, lambda(i));	    
     gsl_matrix *X = gsl_matrix_alloc(nRows, nParam);        
     gsl_matrix *Y = gsl_matrix_alloc(nRows, nVars);    
+    gsl_matrix *O = gsl_matrix_alloc(nRows, nVars);    
     
 //  Must be careful about using std::copy for matrix. The following direct
 //  use is not doing right - row elements are copied to columns. Need to 
@@ -69,10 +70,11 @@ RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
     for (i=0; i<nRows; i++)
     for (j=0; j<nVars; j++){ 
         gsl_matrix_set(Y, i, j, Yr(i, j));
+        gsl_matrix_set(O, i, j, Or(i, j));
+    //    printf("%.2f ", Or(i, j));
         for (k=0; k<nParam; k++)
             gsl_matrix_set(X, i, k, Xr(i, k));
     }
-       
     // do stuff	
     clock_t clk_start, clk_end;
     clk_start = clock();
@@ -83,7 +85,7 @@ RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
     NBinGlm nbfit(&mm);
     glm *glmPtr[3] = { &pfit, &nbfit, &lfit };
     unsigned int mtype = mm.model-1;
-    glmPtr[mtype]->regression(Y, X, NULL, NULL);
+    glmPtr[mtype]->regression(Y, X, O, NULL);
 //    glmPtr[mtype]->display();
 
     GlmTest myTest(&tm);    
@@ -113,7 +115,7 @@ RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
 
     // resampling test
     myTest.summary(glmPtr[mtype]);
-//    myTest.displaySmry();
+//    myTest.displaySmry(glmPtr[mtype]);
 
     clk_end = clock();
     unsigned long int dif = floor((double)(clk_end - clk_start)/(double)(CLOCKS_PER_SEC));
@@ -175,6 +177,7 @@ RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp,
     myTest.releaseTest();    
     gsl_matrix_free(Y);
     gsl_matrix_free(X);
+    gsl_matrix_free(O);
     gsl_vector_free(tm.smry_lambda);
     
     return rs;

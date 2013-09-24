@@ -4,7 +4,7 @@
 # 05-Jan-2010
 ###############################################################################
 
-summary.manylm <- function(object, nBoot=1000,resamp="residual", test=object$test, cor.type=object$cor.type, shrink.param=NULL, p.uni="none", studentize=TRUE, R2="h", show.cor = FALSE, show.est=FALSE, show.residuals=FALSE, symbolic.cor = FALSE, tol=1.0e-10, ... ) 
+summary.manylm <- function(object, nBoot=1000,resamp="residual", test="F", cor.type=object$cor.type, shrink.param=NULL, p.uni="none", studentize=TRUE, R2="h", show.cor = FALSE, show.est=FALSE, show.residuals=FALSE, symbolic.cor = FALSE, tol=1.0e-6, ... ) 
 {
     allargs <- match.call(expand.dots = FALSE)
     dots <- allargs$...
@@ -22,7 +22,7 @@ summary.manylm <- function(object, nBoot=1000,resamp="residual", test=object$tes
     nRows = nrow(object$y)
     nVars = ncol(object$y)
     nParam = ncol(object$x)
-    Y <- matrix(as.integer(object$y), nrow=nRows, ncol=nVars)
+    Y <- as.matrix(object$y, nrow=nRows, ncol=nVars)
     X <- as.matrix(object$x, "numeric")
     if(substr(p.uni,1,1) == "n"){
        pu <- 0

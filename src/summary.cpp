@@ -34,49 +34,50 @@ Summary::Summary(mv_Method *mm, gsl_matrix *Y, gsl_matrix *X):mmRef(mm), Yref(Y)
     for (i=0; i<nParam+2; i++ ) {
         Hats[i].mat=gsl_matrix_alloc(nRows, nRows);
         Hats[i].SS=gsl_matrix_alloc(nVars, nVars);
+        Hats[i].R=gsl_matrix_alloc(nVars, nVars);
         Hats[i].Res=gsl_matrix_alloc(nRows, nVars);
         Hats[i].Y = gsl_matrix_alloc(nRows, nVars);
+        Hats[i].sd = gsl_vector_alloc(nVars);
+    }
 
-        // calc test statistics
-	if ( i == 0 ) { // the complete model
-           Hats[i].X = gsl_matrix_alloc(nRows, nParam);
-           gsl_matrix_memcpy (Hats[i].X, Xref);
-	   Hats[i].Coef = gsl_matrix_alloc(nParam, nVars);
-           calcSS(Yref, &(Hats[i]), mmRef, TRUE, TRUE, TRUE); 
-           // no need to calc test stat as this is the H1 model
-        }
-	else {
-           if ( i==1 ) { // the intercept model
-              Hats[i].X = gsl_matrix_alloc(nRows, 1);
-              gsl_matrix_set_all (Hats[i].X, 1.0);
-	      Hats[i].Coef = gsl_matrix_alloc(1, nVars);
-           }
-	   else { // subtract a term to test significance
-	      if ( nParam == 1 ) {  
-                 Hats[i].X = gsl_matrix_alloc(nRows, 1);
-	         gsl_matrix_memcpy(Hats[i].X, Xref);
-                 Hats[i].Coef=gsl_matrix_alloc(1, nVars);
-	      }
-	      else {
-                 Hats[i].X = gsl_matrix_alloc(nRows, nParam-1);
-                 Hats[i].Coef=gsl_matrix_alloc(nParam-1, nVars);
-                 gsl_vector_set (ref, i-2, 0);
-                 subX(Xref, ref, Hats[i].X);
-                 gsl_vector_set (ref, i-2, 1);
-            }	}  	 
-      
-            calcSS(Yref, &(Hats[i]),mmRef,TRUE,TRUE,TRUE);
-            gsl_vector_view sj=gsl_matrix_row(unitstat, i-1);
-            testStatCalc(&(Hats[i]),&(Hats[0]),mmRef,TRUE,(multstat+i-1),&sj.vector);
-           // printf("multstat=%.3f\n", &(multistat+i-1));
-            // sortid
-            sortid[i-1] = gsl_permutation_alloc(nVars);
-            gsl_sort_vector_index (sortid[i-1], &sj.vector); 
-            // rearrange sortid in descending order
-            gsl_permutation_reverse (sortid[i-1]);
-       }  
+    // the complete model
+    Hats[0].X = gsl_matrix_alloc(nRows, nParam);
+    gsl_matrix_memcpy (Hats[0].X, Xref);
+    Hats[0].Coef = gsl_matrix_alloc(nParam, nVars);
+    // the intercept model
+    Hats[1].X = gsl_matrix_alloc(nRows, 1);
+    gsl_matrix_set_all (Hats[1].X, 1.0);
+    Hats[1].Coef = gsl_matrix_alloc(1, nVars);
+
+    // delete-one-term to test the significance 
+    for (i=2; i<nParam+2; i++) {
+        if ( nParam == 1 ) {  
+	     Hats[i].X = gsl_matrix_alloc(nRows, 1);
+	     gsl_matrix_memcpy(Hats[i].X, Xref);
+             Hats[i].Coef=gsl_matrix_alloc(1, nVars);
+	}
+        else {
+             Hats[i].X = gsl_matrix_alloc(nRows, nParam-1);
+             Hats[i].Coef=gsl_matrix_alloc(nParam-1, nVars);
+	     gsl_vector_set (ref, i-2, 0);
+	     subX(Xref, ref, Hats[i].X);
+	     gsl_vector_set (ref, i-2, 1);
+	}     
+    }
+    // calc test statistics
+    for (i=0; i<nParam+2; i++) {
+        calcSS(Yref, &(Hats[i]), mmRef);
+//	displaymatrix(Hats[i].mat, "hat");
+//      displaymatrix(Hats[i].Res, "Res");
+    }
+    for (i=0; i<nParam+1; i++) {
+         gsl_vector_view sj=gsl_matrix_row(unitstat, i);
+         testStatCalc(&(Hats[i+1]),&(Hats[0]),mmRef,TRUE,(multstat+i),&sj.vector);
+         sortid[i] = gsl_permutation_alloc(nVars);
+         gsl_sort_vector_index (sortid[i], &sj.vector); 
+         // rearrange sortid in descending order
+         gsl_permutation_reverse (sortid[i]);
    }
-   
     // fit = Y- resi 
     for (i=0; i<nParam+2; i++) {
         gsl_matrix_memcpy (Hats[i].Y, Yref);
@@ -107,10 +108,12 @@ void Summary::releaseSummary()
     for ( i=0; i<nParam+2; i++ ){
         gsl_matrix_free(Hats[i].mat);
         gsl_matrix_free(Hats[i].SS);
+        gsl_matrix_free(Hats[i].R);
 	gsl_matrix_free(Hats[i].Res);
         gsl_matrix_free(Hats[i].Coef);
 	gsl_matrix_free(Hats[i].X);
 	gsl_matrix_free(Hats[i].Y);
+	gsl_vector_free(Hats[i].sd);
     }
     free(bMultStat);
     gsl_matrix_free(bUnitStat);
@@ -412,8 +415,8 @@ int Summary::smrycase(gsl_matrix *bY, gsl_matrix *bX)
 
    // calc overall stats
    gsl_matrix_memcpy (Hats[0].X, bX);
-   calcSS(Hats[0].Y, &(Hats[0]), mmRef, TRUE, FALSE, TRUE);
-   calcSS(Hats[0].Y, &(Hats[1]), mmRef, FALSE, FALSE, TRUE);
+   calcSS(Hats[0].Y, &(Hats[0]), mmRef);
+   calcSS(Hats[0].Y, &(Hats[1]), mmRef);
    gsl_vector_view buj=gsl_matrix_row(bUnitStat, 0);
    testStatCalc(&(Hats[1]),&(Hats[0]), mmRef,TRUE,bMultStat,&buj.vector);
 
@@ -433,7 +436,7 @@ int Summary::smrycase(gsl_matrix *bY, gsl_matrix *bX)
       subX(bX, ref, Hats[i+1].X);
       gsl_vector_set (ref, i-1, 1);
      
-      calcSS(Hats[0].Y, &(Hats[i+1]), mmRef, TRUE, FALSE, TRUE);
+      calcSS(Hats[0].Y, &(Hats[i+1]), mmRef);
       buj = gsl_matrix_row (bUnitStat, i);
       testStatCalc(&(Hats[i+1]),&(Hats[0]),mmRef,FALSE,(bMultStat+i),&buj.vector);
 
@@ -454,8 +457,8 @@ int Summary::smryresi(gsl_matrix *bY)
 {
     unsigned int i;
     // count the right-hand tails
-    calcSS(bY, &(Hats[0]), mmRef, FALSE, FALSE, TRUE);
-    calcSS(bY, &(Hats[1]), mmRef, FALSE, FALSE, TRUE);
+    calcSS(bY, &(Hats[0]), mmRef);
+    calcSS(bY, &(Hats[1]), mmRef);
     gsl_vector_view buj=gsl_matrix_row(bUnitStat, 0);
     testStatCalc(&(Hats[1]),&(Hats[0]),mmRef,TRUE,(bMultStat+0),&buj.vector);
     // calc overal test unistat 
@@ -470,7 +473,7 @@ int Summary::smryresi(gsl_matrix *bY)
     calcAdjustP(mmRef->punit, nVars, bj, sj, pj, sortid[0]);
     // calc significance stats
     for (i=1; i<nParam+1; i++) {    
-       calcSS(bY, &(Hats[i+1]), mmRef, FALSE, FALSE, TRUE);
+       calcSS(bY, &(Hats[i+1]), mmRef);
        gsl_vector_view buj=gsl_matrix_row (bUnitStat, i);
   //  displaymatrix (Hats[i+1].SS, "hypo.SS");
        testStatCalc(&(Hats[i+1]),&(Hats[0]),mmRef,FALSE,(bMultStat+i),&buj.vector);
@@ -502,7 +505,7 @@ int Summary::calcR2(void)
     // get fit
     gsl_matrix_memcpy (FminusM, Hats[0].Y);
     gsl_matrix_memcpy (YminusM, Yref);
-    unsigned int i, j;
+    unsigned int j;
     double mean;
     for (j=0; j<nVars; j++) {
        // get mean(Y)
@@ -525,13 +528,6 @@ int Summary::calcR2(void)
     gsl_vector_set_all (e, 1.0);
     // calc R squared
     if ( mmRef->rsquare == HOOPER ) {
-       // fill mss;
-       for (i=0; i<nVars; i++) {
-          for (j=i+1; j<nVars; j++){
-              gsl_matrix_set(mss, i, j, gsl_matrix_get(mss, j, i));
-	      gsl_matrix_set(tss, i, j, gsl_matrix_get(tss, j, i));
-           }
-       }
        // tmp=inv(tss)*mss;
        int s;
        R2=0;
@@ -547,7 +543,7 @@ int Summary::calcR2(void)
      }
     else if ( mmRef->rsquare == VECTOR )
        // R2 = det(mss)/det(tss); 
-       R2 = (double)calcDet(mss)/calcDet(tss);      
+       R2 = (double)exp(logDet(mss) - logDet(tss));      
     else 
        GSL_ERROR("Invalid R2 option", GSL_EINVAL);
 

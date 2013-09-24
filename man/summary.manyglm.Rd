@@ -4,45 +4,68 @@
 \title{Summarizing Multivariate Generalized Linear Model Fits for Abundance Data}
 \description{\code{summary} method for class "manyglm". }
 \usage{
-\method{summary}{manyglm}(object, resamp="pit.trap", test="wald", p.uni="none", nBoot=1000, cor.type=object$cor.type, show.cor = FALSE, show.est=FALSE, show.residuals=FALSE, symbolic.cor = FALSE, show.time="total", show.warning=FALSE,\dots)
-\method{print}{summary.manyglm}(x, \dots)
-}
-\arguments{
-\item{object}{an object of class \code{manyglm}, typically the result of a call to \code{\link{manyglm}}.
-}
-\item{resamp}{the method of resampling used. Can be one of "residual", "perm.resid", "score" or "montecarlo" (default). See Details.}
-\item{test}{the test to be used. If \code{test="I"}, this can be one of "wald" for a Wald-Test or "score" for a Score-Test or "LR" for a Likelihood-Ratio-Test, otherwise only "wald" and "score" is allowed. The default value is "LR".
-}
-\item{p.uni}{whether to calculate univariate test statistics and their P-values, and if so, what type. This can be one of the following options. \cr
-"none" = No univariate P-values (default) \cr
-"unadjusted" = A test statistic and (ordinary unadjusted) P-value are reported
-for each response variable. \cr
-"adjusted" = Univariate P-values are adjusted for multiple testing, using a
-step-down resampling procedure.
-}
-\item{nBoot}{the number of Bootstrap iterations, default is \code{nBoot=999}.}
-\item{cor.type}{structure imposed on the estimated correlation matrix under the fitted model. Can be "I", "shrink", or "R". The default value is inherited from the \code{\link{manyglm}} object. See Details.
-}
-\item{show.cor, show.est, show.residuals}{logical, if \code{TRUE}, the correlation matrix of the estimated parameters, or the estimated model parameters, or the residual summary is shown.}
-\item{symbolic.cor}{logical. If \code{TRUE}, the correlation is printed in a
-symbolic form (see \code{\link{symnum}} ) rather than in numerical format.
-}
-\item{show.time}{Whether to display timing information for the resampling procedure: "none" shows none, "all" shows all timing information and "total" shows only the overall time taken for the tests. }
-\item{show.warning}{logical. Whether to display warnings in the operation procedure.}
-\item{\dots}{for \code{summary.manyglm} method, these are additional arguments including: \cr
-\code{rep.seed} - logical. Whether to fix random seed in resampling data. Useful for simulation or diagnostic purposes.\cr
-\code{bootID} - this matrix should be integer numbers where each row specifies bootstrap id's in each resampling run. When \code{bootID} is supplied, \code{nBoot} is set to the number of rows in \code{bootID}. Default is \code{NULL}.\cr
-for \code{print.summary.manyglm} method, these are optional further arguments passed to or from other methods. See \code{\link{print.summary.glm}} for more details.}
-\item{x}{an object of class "summary.manyglm", usually, a result of a call to
-\code{summary.manyglm}.}
-}
+\method{summary}{manyglm}(object, resamp="pit.trap", test="wald", 
+        p.uni="none", nBoot=1000, cor.type=object$cor.type, 
+	show.cor = FALSE, show.est=FALSE, show.residuals=FALSE, 
+	symbolic.cor = FALSE, show.time=FALSE, show.warning=FALSE,\dots) 
+\method{print}{summary.manyglm}(x, \dots) } \arguments{ \item{object}{an 
+object of class \code{manyglm}, typically the result of a call to 
+\code{\link{manyglm}}. } \item{resamp}{the method of resampling used. Can be 
+one of "case", "perm.resid", "montecarlo" or "pit.trap" (default). See 
+Details.} \item{test}{the test to be used. If \code{test="I"}, this can be 
+one of "wald" for a Wald-Test or "score" for a Score-Test or "LR" for a 
+Likelihood-Ratio-Test, otherwise only "wald" and "score" is allowed. The 
+default value is "LR". } \item{p.uni}{whether to calculate univariate test 
+statistics and their P-values, and if so, what type. This can be one of the 
+following options. \cr "none" = No univariate P-values (default) \cr 
+"unadjusted" = A test statistic and (ordinary unadjusted) P-value are 
+reported for each response variable. \cr "adjusted" = Univariate P-values are 
+adjusted for multiple testing, using a step-down resampling procedure. } 
+\item{nBoot}{the number of Bootstrap iterations, default is 
+\code{nBoot=999}.} \item{cor.type}{structure imposed on the estimated 
+correlation matrix under the fitted model. Can be "I", "shrink", or "R". The 
+default value is inherited from the \code{\link{manyglm}} object. See 
+Details. } \item{show.cor, show.est, show.residuals}{logical, if \code{TRUE}, 
+the correlation matrix of the estimated parameters, or the estimated model 
+parameters, or the residual summary is shown.} \item{symbolic.cor}{logical. 
+If \code{TRUE}, the correlation is printed in a symbolic form (see 
+\code{\link{symnum}} ) rather than in numerical format. } 
+\item{show.time}{Whether to display timing information for the resampling 
+procedure: "none" shows none, "all" shows all timing information and "total" 
+shows only the overall time taken for the tests. } 
+\item{show.warning}{logical. Whether to display warnings in the operation 
+procedure.} \item{\dots}{for \code{summary.manyglm} method, these are 
+additional arguments including: \cr \code{rep.seed} - logical. Whether to fix 
+random seed in resampling data. Useful for simulation or diagnostic 
+purposes.\cr \code{bootID} - this matrix should be integer numbers where each 
+row specifies bootstrap id's in each resampling run. When \code{bootID} is 
+supplied, \code{nBoot} is set to the number of rows in \code{bootID}. Default 
+is \code{NULL}.\cr for \code{print.summary.manyglm} method, these are 
+optional further arguments passed to or from other methods. See 
+\code{\link{print.summary.glm}} for more details.} \item{x}{an object of 
+class "summary.manyglm", usually, a result of a call to 
+\code{summary.manyglm}.} } 
 
-\details{
-The \code{summary.manyglm} function returns a table summarising the statistical
-significance of each multivariate term specified in the fitted manyglm model (Warton (2011)).
-For each model term, it returns a test statistic as determined by the argument
-\code{test}, and a P-value calculated by resampling rows of the data using a
-method determined by the argument \code{resamp}. The four possible resampling methods (residual, score resampling, residual permutation, and parametric boostrap) are described in more detail in Davison and Hinkley (1997, chapter 6) and Wu (1986), and involve resampling under the alternative hypothesis. These methods ensure approximately valid inference even when the mean-variance relationship or the correlation between variables has been misspecified. Standardized pearson residuals (see \code{\link{manyglm}} are used in residual and score resampling, and where necessary, resampled response values are truncated so that they fall in the required range (e.g. counts cannot be negative). However, this can introduce bias, especially for \code{family=binomial}, so we have disabled \code{residual} and \code{score} options in this case, advise extreme caution using \code{perm.resid} for presence/absence data, and recommend \code{case} or \code{parametric} in this context. If \code{resamp="none"}, p-values cannot be calculated, however the test statistics are returned.
+\details{ The \code{summary.manyglm} function returns a table summarising the 
+statistical significance of each multivariate term specified in the fitted 
+manyglm model (Warton (2011)). For each model term, it returns a test 
+statistic as determined by the argument \code{test}, and a P-value calculated 
+by resampling rows of the data using a method determined by the argument 
+\code{resamp}. Of the four possible resampling methods, three (case, residual 
+permutation and parametric boostrap) are described in more detail in Davison 
+and Hinkley (1997, chapter 6), but the default (PIT-trap) is a new method (in 
+review) which bootstraps probability integral transform residuals, and which 
+we have found to give the most reliable Type I error rates. All methods 
+involve resampling under the alternative hypothesis. These methods ensure 
+approximately valid inference even when the mean-variance relationship or the 
+correlation between variables has been misspecified. Standardized pearson 
+residuals (see \code{\link{manyglm}} are currently used in residual 
+permutation, and where necessary, resampled response values are truncated so 
+that they fall in the required range (e.g. counts cannot be negative). 
+However, this can introduce bias, especially for \code{family=binomial}, so 
+we advise extreme caution using \code{perm.resid} for presence/absence data. 
+If \code{resamp="none"}, p-values cannot be calculated, however the test 
+statistics are returned. 
 
 If you have a specific hypothesis of primary interest that you want to test, then you should use the \code{\link[mvabund:anova.manyglm]{anova.manyglm}} function, which can resample rows of the data under the null hypothesis and so usually achieves a better approximation to the true significance level.
 
@@ -192,13 +215,12 @@ X <- spider$x
 ## Estimate the coefficients of a multivariate glm
 glm.spid <- manyglm(spiddat[,1:3]~X, family="negative.binomial")
 
-## Estimate the statistical significance of different multivariate terms in
-## the model, using the default settings of LR test, parametric resampling and
-## 100 bootstrap resamples
-summary(glm.spid, show.time=TRUE)
+## Estimate the statistical significance of different multivariate terms in 
+## the model, using the default settings of LR test, and 100 PIT-trap resamples
+summary(glm.spid, show.time=TRUE) 
 
-## Repeat summary with residual resampling and wald statistics
-summary(glm.spid, resamp="residual", test="wald", nBoot=500)
+## Repeat with the parametric bootstrap and wald statistics 
+summary(glm.spid, resamp="monte.carlo", test="wald", nBoot=500) 
 
 }
 \keyword{models}

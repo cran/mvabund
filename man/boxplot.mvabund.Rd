@@ -6,8 +6,9 @@
 Draw Boxplots of \code{mvabund} or \code{mvformula} Objects
 }
 \usage{
-\method{boxplot}{mvabund}(
-    x, y, range=1.5, names=NULL, at=NULL, n.vars=min(12,NCOL(x)), overall.main="Boxplot", var.subset=NA, transformation="log", ...)
+\method{boxplot}{mvabund}(x, y, range=1.5, names=NULL, at=NULL, 
+                 n.vars=min(12,NCOL(x)), overall.main="Boxplot", 
+                 var.subset=NA, transformation="log", ...)
 
 \method{boxplot}{mvformula}(
     x, n.vars=12, overall.main="", var.subset=NA, ...)

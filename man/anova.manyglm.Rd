@@ -7,7 +7,8 @@ Fits for Abundance Data}
 generalized linear model fits.}
 \usage{
 \method{anova}{manyglm}(object, \dots, resamp="pit.trap", test="LR", 
-    p.uni="none", nBoot=1000, cor.type=object$cor.type, show.time="total", show.warning=FALSE, rep.seed=FALSE, bootID=NULL) 
+        p.uni="none", nBoot=1000, cor.type=object$cor.type, 
+	show.time="total", show.warning=FALSE, rep.seed=FALSE, bootID=NULL) 
 \method{print}{anova.manyglm}(x, \dots) 
 }
 \arguments{
@@ -15,7 +16,7 @@ generalized linear model fits.}
 }
 \item{\dots}{for the \code{anova.manyglm} method, these are optional further objects of class \code{manyglm}, which are usually a result of a call to \code{\link{manyglm}}
 for the \code{print.anova.manyglm} method these are optional further arguments passed to or from other methods. See \code{\link{print.summary.glm}} for more details.}        
-\item{resamp}{the method of resampling used. Can be one of "residual", "perm.resid", "score", or "montecarlo" (default). See Details.}
+\item{resamp}{the method of resampling used. Can be one of "perm.resid", "montecarlo" or "pit.trap" (default). See Details.}
 \item{test}{the test to be used. If \code{test="I"}, this can be one of "wald" for a Wald-Test or "score" for a Score-Test or "LR" for a Likelihood-Ratio-Test, otherwise only "wald" and "score" is allowed. The default value is "LR".
 }
 \item{p.uni}{whether to calculate univariate test statistics and their P-values, and if so, what type. This can be one of the following options. \cr
@@ -39,7 +40,24 @@ step-down resampling procedure.
 \details{
 The \code{anova.manyglm} function returns a table summarising the statistical significance of a fitted manyglm model (Warton 2011), or of the differences between several nested models. If one model is specified, sequential test statistics (and P values) are returned for that fit. If more than one object is specified, the table contains test statistics (and P values) comparing their fits, provided that the models are fitted to the same dataset.
 
-The test statistics are determined by the argument \code{test}, and the P-values are calculated by resampling rows of the data using a method determined by the argument \code{resamp}. The five possible resampling methods (residual, score resampling, residual permutation and parametric bootstrap) are described in more detail in Davison and Hinkley (1997, chapter 6) and Wu (1986), and involve resampling under the null hypothesis. These methods ensure approximately valid inference even when the mean-variance relationship or the correlation between variables has been misspecified. Standardized pearson residuals (see \code{\link{manyglm}} are used in residual and score resampling, and where necessary, resampled response values are truncated so that they fall in the required range (e.g. counts cannot be negative). However, this can introduce bias, especially for \code{family=binomial}, so we have disabled \code{residual} and \code{score} options in this case, advise extreme caution using \code{perm.resid} for presence/absence data, and recommend \code{case} or \code{parametric} in this context. If \code{resamp="none"}, p-values cannot be calculated, however the test statistics are returned.
+The test statistics are determined by the argument \code{test}, and the 
+P-values are calculated by resampling rows of the data using a method 
+determined by the argument \code{resamp}. \code{resamp}. Two of the three 
+available resampling methods (residual permutation and parametric bootstrap) 
+are described in more detail in Davison and Hinkley (1997, chapter 6), 
+whereas the default (the ``PIT-trap") is a new method (in review) which 
+bootstraps probability integral transform residuals, and which we have found 
+to give the most reliable Type I error rates. All methods involve resampling 
+under the resampling under the null hypothesis. These methods ensure 
+approximately valid inference even when the mean-variance relationship or the 
+correlation between variables has been misspecified.  Standardized Pearson 
+residuals (see \code{\link{manyglm}} are currently used in residual 
+permutation, and where necessary, resampled response values are truncated so 
+that they fall in the required range (e.g. counts cannot be negative). 
+However, this can introduce bias, especially for \code{family=binomial}, so 
+we advise extreme caution using \code{perm.resid} for presence/absence data. 
+If \code{resamp="none"}, p-values cannot be calculated, however the test 
+statistics are returned. 
 
 If you do not have a specific hypothesis of primary interest that you want to test, and are instead interested in which model terms are statistically significant, then the \code{summary.manyglm} function is more appropriate. Whereas \code{summary.manyglm} tests the significance of each explanatory variable, \code{anova.manyglm}, given one \code{manyglm} object tests each  term of the formula, e.g. if the formula is 'y~a+b' then a and b, that can be vectors or matrices, are tested for significance.
 
@@ -127,15 +145,6 @@ tasm.cop.nb <- manyglm(tasm.cop ~ block*treatment, family="negative.binomial")
 ## Testing hypotheses about the treatment effect and treatment-by-block interactions, 
 ## using the default settings of parametric resampling and deviance as test statistics: 
 anova(tasm.cop.nb, nBoot=400, test="wald")
-
-## Checking model assumptions
-#plot(tasm.cop.nb)
-
-## Accounting for correlation between variables (with shrinkage):
-#tasm.cop.nb2 <- manyglm(tasm.cop ~ block*treatment, family="negative.binomial", cor.type="shrink")
-
-## Repeat ANOVA test with P-values adjusted for multiple testing, using parametric bootstrap and wald statistics:
-#anova(tasm.cop.nb2, p.uni="adjusted", nBoot=500, test="wald", show.time=TRUE)
 
 }
 \keyword{models}

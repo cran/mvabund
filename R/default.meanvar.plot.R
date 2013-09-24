@@ -616,7 +616,7 @@ if (write.plot!="show"){
 	on.exit(palet, add=TRUE )
 }
 
-mar <- par("mar")
+#mar <- par("mar")
 namesub	<- deparse(terms(formula.mvabund)[[2]])
 
 
@@ -636,8 +636,9 @@ cat("START SECTION 1\n")
 	}
 
 	# Get all the graphical parameters
-	opp <- par("ask", "mar", "mfrow", "mfcol")
-		
+	opp <- par("ask", "mfrow", "mfcol")
+#opp <- par("ask", "mar", "mfrow", "mfcol")
+
 	if (is.null(mfr)) {
 		# tmp       <- par("mfrow")
 		row  <- par("mfrow")[1]
@@ -750,8 +751,9 @@ cat("START SECTION 1\n")
 cat("FINISHED SECTION 1 \n")
 } else {
 cat("START SECTION 2 \n")
-	opp <- par("ask", "mar", "mfrow", "mfcol") 
-	
+	opp <- par("ask", "mfrow", "mfcol") 
+#opp <- par("ask", "mar", "mfrow", "mfcol") 
+
 	if (length(mfrow)==1) { perwindow <- mfrow } 
 	else {
 		if(is.null(mfr)) { 
@@ -798,7 +800,7 @@ cat("START SECTION 2 \n")
 
 	if (overlay) {
 cat("Plotting if overlay is TRUE\n")
-		mar[c(3,4)] <- c(3.1,2)
+#		mar[c(3,4)] <- c(3.1,2)
 
 		if (!missing(main)) {
 			if(length(main)==1) main <- rep(main, times=index)
@@ -861,7 +863,7 @@ cat("Plotting if overlay is TRUE\n")
 			layout(layoutmat, widths= widths )
 	
 			for (ind in kchoice) { 
-				par(mar=mar)
+#				par(mar=mar)
 				var.mvabund[[ind]][is.na(var.mvabund[[ind]])] <-0
 
 				# Otherwise all the variances for only one group member are NA.
@@ -999,7 +1001,7 @@ cat("Plotting if overlay is TRUE\n")
 		}
 	} else { 
 cat("Plotting if overlay is FALSE\n")
-		if(!all.labels) mar[4] <- 0.5
+#		if(!all.labels) mar[4] <- 0.5
 
 		if (!missing(main)) {
 			if(is.list(main)){
@@ -1182,11 +1184,11 @@ cat("Plotting if overlay is FALSE\n")
 					else ylabj <- "" 
 						
 					for (yj in rowsj){
-						if(!all.labels) {
-							if (yj==rowsj[1]) par(mar=c(3.1,mar[2:4]))
-							else par(mar=c(mar[1:2],2.6,mar[4]))
+#						if(!all.labels) {
+#							if (yj==rowsj[1]) par(mar=c(3.1,mar[2:4]))
+#							else par(mar=c(mar[1:2],2.6,mar[4]))
 
-						} else par(mar=mar)
+#						} else par(mar=mar)
 							
 						if (all.labels | yj == rowsj[length(rowsj)]) xlabj <- xlab
 						else xlabj <- ""
@@ -1242,11 +1244,11 @@ cat("Plotting if overlay is FALSE\n")
 						
 					if (legend) {
 						if(!mfr) {
-							par(mar=c(0,0.5,4.1,0.5)) 
+#							par(mar=c(0,0.5,4.1,0.5)) 
 							ncolmax <- 4
 							ncolfact <- 9
 						} else {
-							par(mar=c(0,4.1,0.5,0.5))
+#							par(mar=c(0,4.1,0.5,0.5))
 							ncolmax <- 3
 							ncolfact <- 12
 						}

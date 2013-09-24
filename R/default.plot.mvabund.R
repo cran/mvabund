@@ -569,13 +569,14 @@ if (missing(x)) { stop("The mvabund object 'x' is missing.") }
       		}
       
 		posy <- 0.5 
-
+#browser()
       		# Specify the left axis.
-	      	axis( side=2,at=c((n.vars+0.5), n.vars:1,0.5), 
+		if (is.null(dots$yaxt)) {
+	      	      axis( side=2,at=c((n.vars+0.5), n.vars:1,0.5), 
 		      labels=c("" , substring(mvabund.colnames,first=1,
      	              last= max(10, nchar(mvabund.colnames, type="char"))),""),
         	      las=las,pos=posx, col=fg, outer=TRUE, cex.axis=0.6)
-
+                } 
 		# Add a label for the y axis.
       		mtext(ylab,side=2,line=4,cex=par("cex.lab")*par("cex")*clab, col=colab )
       

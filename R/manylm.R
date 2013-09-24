@@ -30,13 +30,13 @@ ret.x <- x
 ret.y <- y
 ret.qr <- qr
 cl <- match.call()
-#mf <- match.call(expand.dots = FALSE)
-#m  <- match(c("formula", "data", "subset", "weights", "na.action", "offset"), names(mf), 0)
-#mf <- mf[c(1, m)]
-#mf$drop.unused.levels <- TRUE
-#mf[[1]] <- as.name("model.frame")
-#mf <- eval(mf, parent.frame())    # Obtain the model.frame.
-mf <- model.frame(formula)
+mf <- match.call(expand.dots = FALSE)
+m  <- match(c("formula", "data", "subset", "weights", "na.action", "offset"), names(mf), 0)
+mf <- mf[c(1, m)]
+mf$drop.unused.levels <- TRUE
+mf[[1]] <- as.name("model.frame")
+data <- mf <- eval(mf, parent.frame())    # Obtain the model.frame.
+#mf <- model.frame(formula)
 
 if (method == "model.frame") { 
     return(mf)
@@ -238,6 +238,7 @@ manylm.fit <- function(x, y, offset = NULL, tol=1.0e-010, singular.ok = TRUE, ..
     results$df.residual         <- df.residual
     results$hat.X               <- hat.X  
     results$txX                 <- t(x.ind)%*% x.ind
+    results$data                <- data
 
     # To add: results$effects
     # (for not null fits) 'n' vector of orthogonal single-df effects.

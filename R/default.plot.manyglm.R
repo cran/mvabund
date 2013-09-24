@@ -3,7 +3,7 @@
 # Plot for evaluation of goodness of fit for lm.mvabund objects                #
 ################################################################################
 
-default.plot.manyglm  <- function(x, which = 1, res.type="pit.norm", caption = c("Residuals vs Fitted","Normal Q-Q", "Scale-Location", "Cook's distance"), overlay=TRUE, n.vars=12, var.subset=NULL, panel = if (add.smooth) panel.smooth else points, sub.caption = NULL, main = "", ask, ..., col=palette(rainbow(n.vars+1))[2:(n.vars+1)], id.n = if (overlay) 0 else 3, labels.id=rownames(x$Pearson.residuals), cex.id = 0.75, qqline = TRUE, add.smooth = if(!is.null(getOption("add.smooth"))){ getOption("add.smooth") } else TRUE, label.pos = c(4, 2), cex.caption=1.5, asp = 1, legend.pos= if(length(col)==1) "none" else "nextplot",	mfrow= if(overlay) {length(which)+(legend.pos=="nextplot")} else if(write.plot=="show") c(min(n.vars,3),length(which)) else length(which), mfcol=NULL, write.plot="show", filename="plot.mvabund", keep.window= if(is.null(c(mfrow,mfcol))) TRUE else FALSE, legend=FALSE) 
+default.plot.manyglm  <- function(x, which = 1, res.type="pit.norm", caption = c("Residuals vs Fitted","Normal Q-Q", "Scale-Location", "Cook's distance"), overlay=TRUE, n.vars=Inf, var.subset=NULL, panel = if (add.smooth) panel.smooth else points, sub.caption = NULL, main = "", ask, ..., col=palette(rainbow(n.vars+1))[2:(n.vars+1)], id.n = if (overlay) 0 else 3, labels.id=rownames(x$Pearson.residuals), cex.id = 0.75, qqline = TRUE, add.smooth = if(!is.null(getOption("add.smooth"))){ getOption("add.smooth") } else TRUE, label.pos = c(4, 2), cex.caption=1.5, asp = 1, legend.pos= if(length(col)==1) "none" else "nextplot",	mfrow= if(overlay) {length(which)+(legend.pos=="nextplot")} else if(write.plot=="show") c(min(n.vars,3),length(which)) else length(which), mfcol=NULL, write.plot="show", filename="plot.mvabund", keep.window= if(is.null(c(mfrow,mfcol))) TRUE else FALSE, legend=FALSE) 
 {        
     allargs <- match.call(expand.dots = FALSE)
     dots <- allargs$...
@@ -75,7 +75,7 @@ default.plot.manyglm  <- function(x, which = 1, res.type="pit.norm", caption = c
 
     if (substr(res.type,1,3)=="pit") {
         r <- as.matrix(x$PIT.residuals) 
-        if (res.type=="pit.norm") r <- qnorm(r) 
+        if (res.type=="pit.norm") r <- residuals(x)
     }
     else r <- as.matrix(x$Pearson.residuals) # residuals(x)
     yh <- as.matrix(x$linear.predictor)
@@ -129,8 +129,8 @@ default.plot.manyglm  <- function(x, which = 1, res.type="pit.norm", caption = c
     if (missing(var.subset) | is.null(var.subset) | !is.numeric(var.subset)) {
        # Plot the n.var variables with highest abundances
        if ( p < n.vars ) {
-          warning("You have passed an invalid number of variables 'n.vars' to be included in the plot. All variables will be included instead.")        
-          n.var <- p
+   #       warning("You have passed an invalid number of variables 'n.vars' to be included in the plot. All variables will be included instead.")        
+          n.vars <- p
        }      
        y <- as.matrix(x$y)
        if(any(na.action.type == "pass") | is.null(na.action.type)) {
@@ -317,7 +317,7 @@ default.plot.manyglm  <- function(x, which = 1, res.type="pit.norm", caption = c
          rs <- if (is.null(w)) { r } # weighed residuals
 	       else sqrt(w) * r   
          if (substr(res.type,1,3)=="pit") {
-             if (res.type=="pit.norm") ylab23<-"Random Quantile Residuals"
+             if (res.type=="pit.norm") ylab23<-"Dunn-Smyth Residuals"
              else ylab23 <- "PIT Residuals."
          }
          else ylab23 <- "Standard Pearson residuals."
@@ -417,11 +417,10 @@ default.plot.manyglm  <- function(x, which = 1, res.type="pit.norm", caption = c
 
       # The residual vs. fitted value plot	
       yhtmp <- c(yh)
-#      yh.is.zero <- yhtmp < (-8)
-      yh.is.zero <- yhtmp < max(-6,(-max(yhtmp)))
-      yh0 <- yhtmp[!yh.is.zero]
+      yh.is.zero <- yhtmp < (-6)
+#       yh.is.zero <- yhtmp < max(-6,(-max(yhtmp)))#this line is wrong - it kicks out any value more negative than max(yh)
+       yh0 <- yhtmp[!yh.is.zero]
       xlim <- range(yh0)
-
       if (id.n > 0) # for compatibility with R2.2.1
           ylim <- ylim + c(-0.08, 0.08) * diff(ylim) 
           
@@ -443,7 +442,7 @@ default.plot.manyglm  <- function(x, which = 1, res.type="pit.norm", caption = c
           color0 <- colortmp[!yh.is.zero]
             
           if (substr(res.type,1,3)=="pit") {
-              if (res.type=="pit.norm") ylab="Random Quantile Residuals"
+              if (res.type=="pit.norm") ylab="Dunn-Smyth Residuals"
               else ylab="PIT Residuals"
           }
           else ylab="Pearson residuals"
