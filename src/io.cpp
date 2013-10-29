@@ -87,7 +87,7 @@ void displaymatrix(gsl_matrix * m, const char * name)
 	for (i = 0; i < m->size1; i++)
 	{
 	    for (j = 0; j < m->size2; j++)
-		printf("%.4f\t", gsl_matrix_get(m, i, j));
+		printf("%g\t", gsl_matrix_get(m, i, j));
 	    printf("\n");
 	}
 

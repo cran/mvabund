@@ -56,7 +56,7 @@ anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none
     if (is.null(Y)) {
     #      mu.eta <- object$family$mu.eta
         eta <- object$linear.predictor
-        Y <- object$fitted.values + object$Pearson.residuals * log(eta)      
+        Y <- object$fitted.values + object$residuals * log(eta)      
      }
 
     w <- object$weights
@@ -130,13 +130,17 @@ anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none
        stop("'p.uni' not defined. Choose one of 'adjusted', 'unadjusted', 'none'.")
 
     if (!is.null(bootID)) {
-       nBoot<-dim(bootID)[2]
+       nBoot<-dim(bootID)[1]
        if (is.integer(bootID)) {
-       cat(paste("Input bootID matrix being used for testing.","\n"))
+           cat(paste("Using bootID matrix from input.","\n"))
+           if (max(bootID)==nRows) # to fit the format in C i.e. (0, nObs-1)
+               bootID <- matrix(as.integer(bootID-1), nrow=nBoot, ncol=nRows)
+           if (max(bootID)>nRows)
+              cat(paste("Invalid bootID -- sample id larger than no. of observations. Calculate bootID matrix on the fly.","\n"))
        }
        else {
            bootID <- NULL
-       cat(paste("Invalid bootID. Calculate bootID matrix on the fly.","\n"))
+       cat(paste("Invalid bootID -- sample id should be integer numbers up to the no. of observations. Calculate bootID matrix on the fly.","\n"))
        }
     }
 
@@ -189,17 +193,17 @@ anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none
               shrink.param <- rep(object$shrink.param,nterms)
           }
       else  {
-#              shrink.param[1] <- ridgeParamEst(dat=object$Pearson.residuals, X=tX, 
+#              shrink.param[1] <- ridgeParamEst(dat=object$residuals, X=tX, 
 #                        only.ridge=TRUE)$ridgeParam      
   
-              lambda <- ridgeParamEst(dat=object$Pearson.residuals, X=tX, 
+              lambda <- ridgeParamEst(dat=object$residuals, X=tX, 
                          only.ridge=TRUE)$ridgeParam          
               shrink.param <- rep(lambda, nterms)
           }
 #          for ( i in 0:(nterms-2)){ # exclude object itself
 #              fit <- .Call("RtoGlm", modelParam, Y, X[,varseq<=i+minterm,drop=FALSE], 
 #                 PACKAGE="mvabund")
-#              shrink.param[nterms-i] <- ridgeParamEst(dat=fit$Pearson.residuals, 
+#              shrink.param[nterms-i] <- ridgeParamEst(dat=fit$residuals, 
 #                      X=tX, only.ridge=TRUE)$ridgeParam # in reversed order
 #           }
        }   
@@ -232,7 +236,7 @@ anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none
         for ( i in 1:nModels ) {
             if (objects[[i]]$cor.type == "shrink") 
                     shrink.param[i] <- objects[[i]]$shrink.param
-            else shrink.param[i] <- ridgeParamEst(dat=objects[[i]]$Pearson.residuals, X=tX, only.ridge=TRUE)$ridgeParam 
+            else shrink.param[i] <- ridgeParamEst(dat=objects[[i]]$residuals, X=tX, only.ridge=TRUE)$ridgeParam 
         }
     }
         else if (corrnum == 0) shrink.param <- c(rep(1,nModels))

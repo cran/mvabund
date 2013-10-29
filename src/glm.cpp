@@ -11,7 +11,7 @@
 
 glm::glm(const reg_Method *mm)
    : mmRef(mm), Yref(NULL), Xref(NULL), Oref(NULL), 
-     Beta(NULL), varBeta(NULL), Mu(NULL), Eta(NULL), Res(NULL), PearRes(NULL), 
+     Beta(NULL), varBeta(NULL), Mu(NULL), Eta(NULL), Res(NULL), 
      Var(NULL), wHalf(NULL), sqrt1_Hii(NULL), PitRes(NULL), 
      theta(NULL), ll(NULL), dev(NULL), aic(NULL), iterconv(NULL) 
 { 
@@ -71,8 +71,6 @@ void glm::releaseGlm(void)
         gsl_matrix_free(Eta);
     if (Res!=NULL)
         gsl_matrix_free(Res);
-    if (PearRes!=NULL)
-        gsl_matrix_free(PearRes);
     if (Var!=NULL)
         gsl_matrix_free(Var);
     if (wHalf!=NULL)
@@ -122,7 +120,6 @@ void glm::initialGlm(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B)
     Mu = gsl_matrix_alloc(nRows, nVars);
     Eta = gsl_matrix_alloc(nRows, nVars);
     Res = gsl_matrix_alloc(nRows, nVars);
-    PearRes = gsl_matrix_alloc(nRows, nVars);
     Var = gsl_matrix_alloc(nRows, nVars);
     wHalf = gsl_matrix_alloc(nRows, nVars);
     sqrt1_Hii = gsl_matrix_alloc(nRows, nVars);
@@ -203,8 +200,6 @@ void glm::initialGlm(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B)
     }
 
    rdf = nRows - nParams;
-
-//   displaymatrix(Oref, "Oref");
 }
 
 
@@ -222,7 +217,6 @@ int glm::copyGlm(glm *src)
     gsl_matrix_memcpy(wHalf, src->wHalf);
     gsl_matrix_memcpy(sqrt1_Hii, src->sqrt1_Hii);
     gsl_matrix_memcpy(PitRes, src->PitRes);
-    gsl_matrix_memcpy(PearRes, src->PearRes);
     
     for (unsigned int i=0; i<nVars; i++) {
         theta[i] = src->theta[i];   
@@ -243,7 +237,7 @@ int PoissonGlm::EstIRLS(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix 
     gsl_rng *rnd=gsl_rng_alloc(gsl_rng_mt19937);
     unsigned int i, j;   
     int status;
-    double yij, mij, eij, vij, wij, tol, hii, uij, wei;
+    double yij, mij, vij, wij, tol, hii, uij, wei;
     gsl_vector_view Xwi, Xi, vj, hj, dj;
 
     gsl_matrix *WX = gsl_matrix_alloc(nRows, nParams);   
@@ -259,7 +253,6 @@ int PoissonGlm::EstIRLS(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix 
        gsl_matrix_memcpy (WX, X);
        for (i=0; i<nRows; i++) {
             mij = gsl_matrix_get(Mu, i, j);
-            eij = gsl_matrix_get(Eta, i, j);
             // get variance
             vij = varfunc( mij, theta[j] );
             gsl_matrix_set(Var, i, j, vij); 
@@ -268,8 +261,7 @@ int PoissonGlm::EstIRLS(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix 
             gsl_matrix_set(wHalf, i, j, wij);             
             // get (Pearson) residuals
             yij = gsl_matrix_get(Y, i, j);
-            gsl_matrix_set(PearRes, i, j, (yij-mij)/sqrt(vij));        
-            gsl_matrix_set(Res, i, j, (yij-mij)/muEta(eij));        
+            gsl_matrix_set(Res, i, j, (yij-mij)/sqrt(vij));        
             // get PIT residuals for discrete data
             wei = gsl_rng_uniform_pos (rnd); // wei ~ U(0, 1)
             uij = wei*cdf(yij, mij, theta[j]);
@@ -313,8 +305,8 @@ int PoissonGlm::EstIRLS(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix 
        } 
    } 
    // standardize perason residuals by rp/sqrt(1-hii) 
-   gsl_matrix_div_elements (PearRes, sqrt1_Hii);
-   subtractMean(PearRes);  // have mean subtracted
+   gsl_matrix_div_elements (Res, sqrt1_Hii);
+   subtractMean(Res);  // have mean subtracted
 
    gsl_matrix_free(XwX);
    gsl_matrix_free(WX);
@@ -330,10 +322,9 @@ int PoissonGlm::betaEst( unsigned int id, unsigned int iter, double *tol, double
    gsl_set_error_handler_off();
    int status, isValid;
   // unsigned int j, ngoodobs;
-   unsigned int i, j, ngoodobs, step, step1; 
-   unsigned int *good = new unsigned int [nRows];
+   unsigned int i, step, step1; 
    double wij, zij, eij, mij, yij; //, bij;   
-   double dev_old, dev_grad=1.0;
+   double det, dev_old, dev_grad=1.0;
    gsl_vector_view Xwi;
    gsl_matrix *WX, *XwX;
    gsl_vector *z, *Xwz;
@@ -349,26 +340,14 @@ int PoissonGlm::betaEst( unsigned int id, unsigned int iter, double *tol, double
    *tol = 1.0;
    gsl_vector_memcpy (coef_old, &bj.vector);
    while ( step<iter ) {
-       ngoodobs = 0;
-       for (i=0; i<nRows; i++) {
-            good[i]=TRUE;
-	    eij = gsl_matrix_get(Eta, i, id);
-	    mij = gsl_matrix_get(Mu, i, id);
-	    if ((mij<mintol)|(mij>maxtol)) good[i]=FALSE;
-//	    if (rcpLinkDash(mij)<eps) good[i]=FALSE;
-	    if (good[i]==TRUE) ngoodobs++;
-       }									             z = gsl_vector_alloc(ngoodobs);
-       WX = gsl_matrix_alloc(ngoodobs, nParams);
-       j=0;  // index for z and WX
        for (i=0; i<nRows; i++) { // (y-m)/g'
-       if (good[i]==TRUE) {
            yij = gsl_matrix_get(Yref, i, id);
            eij = gsl_matrix_get(Eta, i, id);
            mij = gsl_matrix_get(Mu, i, id);
         //   if (mij<mintol) mij=mintol;
         //   if (mij>maxtol) mij=maxtol;
            zij = eij + (yij-mij)*LinkDash(mij);
-           if (Oref!=NULL)  
+           if (Oref!=NULL) 
               zij = zij - gsl_matrix_get(Oref, i, id);
            // wt=sqrt(weifunc);
            wij = sqrt(weifunc(mij, th));
@@ -379,7 +358,7 @@ int PoissonGlm::betaEst( unsigned int id, unsigned int iter, double *tol, double
            gsl_matrix_set_row (WX, i, &Xwi.vector);
            Xwi = gsl_matrix_row (WX, i);
            gsl_vector_scale(&Xwi.vector, wij); 
-       }  }
+       }
        // in glm2, solve WXb=Wz, David suggested not good 
        // So back to solving X'WXb=X'Wz
        gsl_matrix_set_identity (XwX);
@@ -458,7 +437,6 @@ int PoissonGlm::betaEst( unsigned int id, unsigned int iter, double *tol, double
        if (*tol<eps) break;
    } 
 
-   delete[] good;
    gsl_vector_free(z);
    gsl_matrix_free(WX); 
    gsl_matrix_free(XwX); 
@@ -523,8 +501,8 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B)
 
     gsl_rng *rnd=gsl_rng_alloc(gsl_rng_mt19937);
     unsigned int i, j; //, isConv;
-    double yij, eij, mij, vij, hii, uij, wij, wei;
-    double th=0, d1, tol, dev_th_b_old;
+    double yij, mij, vij, hii, uij, wij, wei;
+    double lm, lm0, d1, th, tol, dev_th_b_old;
     int status;
  //   gsl_vector_view b0j, m0j, e0j, v0j;
     gsl_matrix *WX = gsl_matrix_alloc(nRows, nParams);   
@@ -557,7 +535,7 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B)
                tol=ABS((dev[j]-dev_th_b_old)/(ABS(dev[j])+0.1));
                if (tol<eps) break;
         }  } 
-       else { // (mmRef->estiMethod==PHI) {
+       else {
            th = getfAfAdash(0, j, maxiter);
 /*           lm=0;
            for (i=0; i<nRows; i++) {
@@ -592,13 +570,11 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B)
        for (i=0; i<nRows; i++) {
            yij = gsl_matrix_get(Y, i, j);
            mij = gsl_matrix_get(Mu, i, j);
-           eij = gsl_matrix_get(Eta, i, j);
            vij = varfunc( mij, th);
            gsl_matrix_set(Var, i, j, vij); 
            wij = sqrt(weifunc(mij, th));
            gsl_matrix_set(wHalf, i, j, wij); 
-           gsl_matrix_set(PearRes, i, j, (yij-mij)/sqrt(vij));        
-           gsl_matrix_set(Res, i, j, (yij-mij)/muEta(eij));        
+           gsl_matrix_set(Res, i, j, (yij-mij)/sqrt(vij));        
            ll[j] = ll[j] + llfunc( yij, mij, th);
            // get PIT residuals for discrete data
            wei = gsl_rng_uniform_pos (rnd); // wei ~ U(0, 1)
@@ -640,8 +616,8 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B)
            gsl_vector_set(&hj.vector, i, GSL_MAX(eps,sqrt(1-wij*wij*hii)));
        }
    } // end nVar for j loop
-   gsl_matrix_div_elements (PearRes, sqrt1_Hii);
-   subtractMean(PearRes);
+   gsl_matrix_div_elements (Res, sqrt1_Hii);
+   subtractMean(Res);
 
    gsl_matrix_free(XwX);
    gsl_matrix_free(WX);

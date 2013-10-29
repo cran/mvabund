@@ -100,12 +100,12 @@ default.print.summary.manyglm <- function (x, digits = max(getOption("digits") -
 	       else 
                   print.default(tests[,-zap.i, drop=FALSE], quote = FALSE, right = TRUE, na.print = "NA",...)
                if (x$p.uni == "none" & x$resamp!="none")
-                 if(dim(x$Pearson)[2]>1)
+                 if(dim(x$residuals)[2]>1)
                  {   
                    cat("Arguments:\n", "Test statistics calculated assuming", corname, 
                        "\n P-value calculated using", n.bootsdone, "resampling iterations via",       x$resamp, "resampling (to account for correlation in testing).\n")
                  }
-                  if(dim(x$Pearson)[2]==1)
+                  if(dim(x$residuals)[2]==1)
                   {   
                      cat("Arguments: P-value calculated using", n.bootsdone, "resampling iterations via",       x$resamp, "resampling.\n")
                   }
@@ -185,12 +185,12 @@ default.print.summary.manyglm <- function (x, digits = max(getOption("digits") -
 #             cat("Arguments: with", n.bootsdone, "resampling iterations using", x$resamp, "resampling and",corname, "\n")    
 #          cat("Arguments:\n", "Test statistics calculated assuming", corname, 
 #              "\n P-value calculated using", n.bootsdone, "resampling iterations via",       x$resamp, "resampling (to account for correlation in testing).\n")
-            if(dim(x$Pearson)[2]>1)
+            if(dim(x$residuals)[2]>1)
             {   
               cat("Arguments:\n", "Test statistics calculated assuming", corname, 
                   "\n P-value calculated using", n.bootsdone, "resampling iterations via",       x$resamp, "resampling (to account for correlation in testing).\n")
             }
-            if(dim(x$Pearson)[2]==1)
+            if(dim(x$residuals)[2]==1)
             {   
               cat("Arguments: P-value calculated using", n.bootsdone, "resampling iterations via",       x$resamp, "resampling.\n")
             }

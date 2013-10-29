@@ -263,7 +263,6 @@ class glm
 	   gsl_matrix *Mu;
 	   gsl_matrix *Eta;
 	   gsl_matrix *Res;
-	   gsl_matrix *PearRes;
 	   gsl_matrix *Var;
 	   gsl_matrix *wHalf;
 	   gsl_matrix *sqrt1_Hii;
@@ -279,8 +278,7 @@ class glm
 //   private: 
   	   // abstract 	
 	   virtual double link(double) const=0;	   
-	   virtual double invLink(double) const=0;	   
-	   virtual double muEta(double) const=0;	   
+	   virtual double invLink(double) const=0;
 	   virtual double LinkDash(double) const=0;	   
 	   virtual double weifunc(double, double) const=0;   
 	   virtual double varfunc(double, double) const=0;	   
@@ -313,8 +311,6 @@ class PoissonGlm : public glm
            double link(double mui) const 
                 { return log(mui); } 
            double invLink(double etai) const 
-	        { return exp(etai); }
-           double muEta(double etai) const 
 	        { return exp(etai); }
 	   double LinkDash(double mui) const
                 { return 1/MAX(mui, mintol); }
@@ -349,11 +345,7 @@ class BinGlm : public PoissonGlm
            double link(double mui) const // pi=mui/n
                { return log(mui/(n-mui)); }
            double invLink(double ei) const
-                { return n*(exp(ei)/(1+exp(ei))); }
-           double muEta(double ei) const
-                { return n*(invLink(ei)*(1-invLink(ei))); }
-//           double muEta(double mui) const
-//                { return mui*(1-mui/n); }
+                { return n*exp(ei)/(1+exp(ei)); }
            double LinkDash(double mui) const
                 { return n/MAX(mintol, mui*(n-mui)); }
            double weifunc(double mui, double a) const

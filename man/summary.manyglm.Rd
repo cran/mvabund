@@ -12,20 +12,21 @@
 object of class \code{manyglm}, typically the result of a call to 
 \code{\link{manyglm}}. } \item{resamp}{the method of resampling used. Can be 
 one of "case", "perm.resid", "montecarlo" or "pit.trap" (default). See 
-Details.} \item{test}{the test to be used. If \code{test="I"}, this can be 
+Details.}
+\item{test}{the test to be used. If \code{cor.type="I"}, this can be 
 one of "wald" for a Wald-Test or "score" for a Score-Test or "LR" for a 
 Likelihood-Ratio-Test, otherwise only "wald" and "score" is allowed. The 
-default value is "LR". } \item{p.uni}{whether to calculate univariate test 
+default value is "LR". }
+\item{p.uni}{whether to calculate univariate test 
 statistics and their P-values, and if so, what type. This can be one of the 
 following options. \cr "none" = No univariate P-values (default) \cr 
 "unadjusted" = A test statistic and (ordinary unadjusted) P-value are 
 reported for each response variable. \cr "adjusted" = Univariate P-values are 
 adjusted for multiple testing, using a step-down resampling procedure. } 
 \item{nBoot}{the number of Bootstrap iterations, default is 
-\code{nBoot=999}.} \item{cor.type}{structure imposed on the estimated 
-correlation matrix under the fitted model. Can be "I", "shrink", or "R". The 
-default value is inherited from the \code{\link{manyglm}} object. See 
-Details. } \item{show.cor, show.est, show.residuals}{logical, if \code{TRUE}, 
+\code{nBoot=999}.}
+\item{cor.type}{structure imposed on the estimated correlation matrix under the fitted model. Can be "I"(default), "shrink", or "R". See Details.}
+\item{show.cor, show.est, show.residuals}{logical, if \code{TRUE}, 
 the correlation matrix of the estimated parameters, or the estimated model 
 parameters, or the residual summary is shown.} \item{symbolic.cor}{logical. 
 If \code{TRUE}, the correlation is printed in a symbolic form (see 
@@ -185,8 +186,6 @@ Association} 103, 340-349.
 Warton D.I. (2008b). Which Wald statistic?  Choosing a parameterisation of the 
 Wald statistic to maximise power in \emph{k}-sample generalised estimating 
 equations. \emph{Journal of Statistical Planning and Inference}, 138, 3269-3282.
-
-Warton D.I. and Guttorp P. (in press April 2010) Compositional analysis of overdispersed counts using generalized estimating equations. \emph{Environmental and Ecological Statistics.}
 
 Warton D. I., Wright S., and Wang, Y. (2012). Distance-based multivariate analyses confound location and dispersion effects. \emph{Methods in Ecology and Evolution}, 3(1), 89-101.
 

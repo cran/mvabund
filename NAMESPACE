@@ -12,7 +12,6 @@ export(RcppVersion,
        formulaUnimva, 
        is.mvabund,
        is.mvformula,
-       logLik.manylm,
        mvabund, 
        mvformula,
        manylm, 
@@ -49,3 +48,5 @@ importFrom(stats,dbinom, pbinom, qbinom, rbinom)
 importFrom(stats,dnbinom, pnbinom, qnbinom, rnbinom)
 
 S3method(extractAIC, manyglm)
+S3method(logLik, manyglm)
+S3method(logLik, manylm)

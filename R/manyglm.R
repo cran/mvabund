@@ -140,7 +140,7 @@ else {
     if (cor.type=="shrink") {      
         if (is.null(shrink.param)) {
 	    tX <- matrix(1, NROW(X), 1)
-            shrink.param <- ridgeParamEst(dat=z$Pearson.residuals, X=tX, only.ridge=TRUE, tol=tol)$ridgeParameter
+            shrink.param <- ridgeParamEst(dat=z$residuals, X=tX, only.ridge=TRUE, tol=tol)$ridgeParameter
 	}    
         # to simplify later computation
         if(shrink.param == 0) cor.type <- "I"
@@ -162,7 +162,7 @@ else {
     dimnames(z$coefficients) <- list(colnames(X), labAbund)
     dimnames(z$var.coefficients) <- list(colnames(X), labAbund)
     dimnames(z$linear.predictor) <- list(labObs, labAbund)    
-    dimnames(z$Pearson.residuals) <- list(labObs, labAbund)
+    dimnames(z$residuals) <- list(labObs, labAbund)
     dimnames(z$PIT.residuals) <- list(labObs, labAbund)
     dimnames(z$sqrt.1_Hii) <- list(labObs, labAbund)
     dimnames(z$var.estimator) <- list(labObs, labAbund)

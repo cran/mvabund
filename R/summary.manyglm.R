@@ -108,10 +108,15 @@ summary.manyglm <- function(object, resamp="pit.trap", test="wald", p.uni="none"
     }
     else if (is.integer(bootID)) {
        ld.perm <- TRUE
-       nBoot <- dim(bootID)[2]
+       nBoot <- dim(bootID)[1]
+       cat(paste("Using bootID matrix from input.","\n"))
+           if (max(bootID)==nRows) # to fit the format in C i.e.(0, nRows-1)
+               bootID <- matrix(as.integer(bootID-1), nrow=nBoot, ncol=nRows)       
+                  if (max(bootID)>nRows)
+       cat(paste("Invalid bootID -- sample id larger than no. of observations. Calculate bootID matrix on the fly.","\n"))
     }
     else if (ld.perm && !is.integer(bootID)){
-       warning("Invalid bootID. Calc bootID on the fly (default)...")
+       warning("Invalid bootID -- sample id should be integer numbers up to the no. of observations. Calc bootID on the fly.")
        ld.perm <- FALSE
        bootID <- NULL
     }
@@ -147,7 +152,7 @@ summary.manyglm <- function(object, resamp="pit.trap", test="wald", p.uni="none"
     rankX <- object$rank
 
     # residual statistics  (from the previous R codes)
-    r <- as.matrix(object$Pearson.residuals)
+    r <- as.matrix(object$residuals)
     rss <- t(r)%*% r
     rdf <- nRows - rankX   # residual rdf
     resvar <- rss/rdf 
@@ -242,7 +247,7 @@ summary.manyglm <- function(object, resamp="pit.trap", test="wald", p.uni="none"
     smry$aliased <- c(is.na(object$coefficients)[,1])
 
     # residual stats
-    smry$Pearson.residuals <- object$Pearson.residuals 
+    smry$residuals <- object$residuals 
     smry$df <- c(rankX, rdf, NCOL(Qr$qr))
     smry$genVar <- genVar 
     smry$est <- est     # coefficient estimates, i.e. Beta

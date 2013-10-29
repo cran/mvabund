@@ -72,7 +72,7 @@ void GlmTest::releaseTest(void)
 int GlmTest::summary(glm *fit)
 {
     double lambda;
-    unsigned int i, k;
+    unsigned int k;
     unsigned int nRows=tm->nRows, nVars=tm->nVars, nParam=tm->nParam;
     unsigned int mtype = fit->mmRef->model-1;
     PoissonGlm pNull(fit->mmRef), pAlt(fit->mmRef);
@@ -168,18 +168,15 @@ int GlmTest::summary(glm *fit)
     gsl_matrix *bStat = gsl_matrix_alloc((nParam+1), nVars+1);
     gsl_matrix_set_zero (bStat);
     gsl_matrix *bY = gsl_matrix_alloc(nRows, nVars);
- //   gsl_matrix *bO = NULL;
-    double diff, timelast=0;
     gsl_matrix *bO = gsl_matrix_alloc(nRows, nVars);
-    gsl_matrix_memcpy(bO, fit->Eta);
+    gsl_matrix_memcpy (bO, fit->Eta);
+    double diff, timelast=0;
     clock_t clk_start=clock();
-    for ( i=0; i<tm->nboot; i++) {        
+
+    for ( unsigned int i=0; i<tm->nboot; i++) {        
         if ( tm->resamp==CASEBOOT ) 
-            resampSmryCase(fit, bY, GrpXs, bO, i);
-        else {
-            resampNonCase(fit, bY, i);
- //          gsl_matrix_sub(bY, fit->Yref);
-        }
+             resampSmryCase(fit,bY,GrpXs,bO,i);
+        else resampNonCase(fit, bY, i);
 //      displaymatrix(bY, "bY");
 
         if ( tm->test == WALD ) {
@@ -822,7 +819,7 @@ int GlmTest::resampAnovaCase(glm *model, gsl_matrix *bT, gsl_matrix *bX, gsl_mat
 int GlmTest::resampNonCase(glm *model, gsl_matrix *bT, unsigned int i)
 {
    unsigned int j, k, id;
-   double bt, score, yij, mij, eij, rij;
+   double bt, score, yij, mij;
    gsl_vector_view yj;
    unsigned int nRows=tm->nRows, nVars=tm->nVars;
 
@@ -838,12 +835,7 @@ int GlmTest::resampNonCase(glm *model, gsl_matrix *bT, unsigned int i)
            else id = (unsigned int) nRows * Rf_runif(0, 1);
            // bY = mu+(bootr*sqrt(variance))
            for (k=0; k<nVars; k++) { 
-               mij = gsl_matrix_get(model->Mu, j, k);
-//               rij = gsl_matrix_get(model->PearRes, id, k);
-//               bt=mij+sqrt(gsl_matrix_get(model->Var,j,k))*rij;  
-               eij = gsl_matrix_get(model->Eta, j, k);
-               rij = gsl_matrix_get(model->Res, id, k);
-               bt=mij+model->muEta(eij)*rij;  
+               bt=gsl_matrix_get(model->Mu,j,k)+sqrt(gsl_matrix_get(model->Var,j,k))*gsl_matrix_get(model->Res, id, k);  
                bt = MAX(bt, 0.0);
                bt = MIN(bt, model->maxtol);
                gsl_matrix_set(bT, j, k, bt);
@@ -859,12 +851,7 @@ int GlmTest::resampNonCase(glm *model, gsl_matrix *bT, unsigned int i)
            else score = Rf_rnorm(0.0, 1.0);
            // bY = mu + score*sqrt(variance)  
 	   for (k=0; k<nVars; k++){
-               mij = gsl_matrix_get(model->Mu, j, k);
-//             rij = gsl_matrix_get(model->PearRes, j, k);
-//             bt=mij+sqrt(gsl_matrix_get(model->Var, j, k))*rij*score;
-               eij = gsl_matrix_get(model->Eta, j, k);
-               rij = gsl_matrix_get(model->Res, j, k);
-               bt=mij + score*model->muEta(eij)*rij;
+               bt=gsl_matrix_get(model->Mu, j, k)+sqrt(gsl_matrix_get(model->Var, j, k))*gsl_matrix_get(model->Res, j, k)*score;
                bt = MAX(bt, 0.0);
                bt = MIN(bt, model->maxtol);
                gsl_matrix_set(bT, j, k, bt);
@@ -878,7 +865,7 @@ int GlmTest::resampNonCase(glm *model, gsl_matrix *bT, unsigned int i)
             else id = (unsigned int) gsl_matrix_get(bootID, i, j);
 	    // bY = mu + bootr * sqrt(var)
 	    for (k=0; k<nVars; k++) {
-                bt=gsl_matrix_get(model->Mu,j,k)+sqrt(gsl_matrix_get(model->Var,j,k))*gsl_matrix_get(model->PearRes, id, k);
+                bt=gsl_matrix_get(model->Mu,j,k)+sqrt(gsl_matrix_get(model->Var,j,k))*gsl_matrix_get(model->Res, id, k);
             bt = MAX(bt, 0.0);
             bt = MIN(bt, model->maxtol);
             gsl_matrix_set(bT, j, k, bt);

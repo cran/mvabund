@@ -98,7 +98,6 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp, SEXP Osexp)
     NumericMatrix Vars(nRows, nVars);
     NumericMatrix wHalf(nRows, nVars);
     NumericMatrix Res(nRows, nVars);
-    NumericMatrix PearRes(nRows, nVars);
     NumericMatrix PitRes(nRows, nVars);
     NumericMatrix sqrt1_Hii(nRows, nVars);
 
@@ -115,7 +114,6 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp, SEXP Osexp)
 	Vars(i, j) = gsl_matrix_get(glmPtr[mtype]->Var, i, j);        
 	wHalf(i, j) = gsl_matrix_get(glmPtr[mtype]->wHalf, i, j);        
 	Res(i, j) = gsl_matrix_get(glmPtr[mtype]->Res, i, j);        
-	PearRes(i, j) = gsl_matrix_get(glmPtr[mtype]->PearRes, i, j);        
 	PitRes(i, j) = gsl_matrix_get(glmPtr[mtype]->PitRes, i, j);        
 	sqrt1_Hii(i, j) = gsl_matrix_get(glmPtr[mtype]->sqrt1_Hii, i, j);        
 //        Rprintf("%d ", (int)gsl_matrix_get(Y, i, j));
@@ -135,7 +133,6 @@ RcppExport SEXP RtoGlm(SEXP params, SEXP Ysexp, SEXP Xsexp, SEXP Osexp)
          _["fitted.values"] = Mu,
          _["linear.predictor"] = Eta,
 	 _["residuals"] = Res,
-	 _["Pearson.residuals"] = PearRes,
 	 _["PIT.residuals"] = PitRes,
 	 _["sqrt.1_Hii"] = sqrt1_Hii,
          _["var.estimator"] = Vars,

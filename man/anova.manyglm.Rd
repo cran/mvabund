@@ -17,7 +17,7 @@ generalized linear model fits.}
 \item{\dots}{for the \code{anova.manyglm} method, these are optional further objects of class \code{manyglm}, which are usually a result of a call to \code{\link{manyglm}}
 for the \code{print.anova.manyglm} method these are optional further arguments passed to or from other methods. See \code{\link{print.summary.glm}} for more details.}        
 \item{resamp}{the method of resampling used. Can be one of "perm.resid", "montecarlo" or "pit.trap" (default). See Details.}
-\item{test}{the test to be used. If \code{test="I"}, this can be one of "wald" for a Wald-Test or "score" for a Score-Test or "LR" for a Likelihood-Ratio-Test, otherwise only "wald" and "score" is allowed. The default value is "LR".
+\item{test}{the test to be used. If \code{cor.type="I"}, this can be one of "wald" for a Wald-Test or "score" for a Score-Test or "LR" for a Likelihood-Ratio-Test, otherwise only "wald" and "score" is allowed. The default value is "LR".
 }
 \item{p.uni}{whether to calculate univariate test statistics and their P-values, and if so, what type. This can be one of the following options. \cr
 "none" = No univariate P-values (default) \cr
@@ -27,8 +27,7 @@ for each response variable. \cr
 step-down resampling procedure.
 }
 \item{nBoot}{the number of Bootstrap iterations, default is \code{nBoot=999}.}
-\item{cor.type}{structure imposed on the estimated correlation matrix under the fitted model. Can be "I", "shrink", or "R". By default, the value is inherited from the first \code{\link{manyglm}} object. See Details.
-}
+\item{cor.type}{structure imposed on the estimated correlation matrix under the fitted model. Can be "I"(default), "shrink", or "R". See Details.}
 \item{show.time}{Whether to display timing information for the resampling procedure: "none" shows none, "all" shows all timing information and "total" shows only the overall time taken for the tests. }
 \item{show.warning}{logical. Whether to display warning messages in the operation procedure.}
 \item{rep.seed}{logical. Whether to fix random seed in resampling data. Useful for simulation or diagnostic purposes.}
@@ -112,8 +111,6 @@ Warton D.I. (2011). Regularized sandwich estimators for analysis of high dimensi
 %Warton D.I. (2008a). Which Wald statistic?  Choosing a parameterisation of the Wald statistic to maximise power in \emph{k}-sample generalised estimating equations. \emph{Journal of Statistical Planning and Inference}, 138, 3269-3282.
 
 Warton D.I. (2008). Penalized normal likelihood and ridge regularization of correlation and covariance matrices. \emph{Journal of the American Statistical Association} 103, 340-349.
-
-%Warton D.I. and Guttorp P. (2011) Compositional analysis of overdispersed counts using generalized estimating equations. \emph{Environmental and Ecological Statistics}, 18, 427-446. 
 
 Warton D. I., Wright S., and Wang, Y. (2012). Distance-based multivariate analyses confound location and dispersion effects. \emph{Methods in Ecology and Evolution}, 3(1), 89-101.
 

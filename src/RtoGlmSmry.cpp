@@ -94,25 +94,15 @@ RcppExport SEXP RtoGlmSmry(SEXP mpar, SEXP tpar, SEXP Ysexp, SEXP Xsexp, SEXP Os
 //      Rprintf("Calc bootID on the fly.\n");
     }	   
     else {
-        if ( tm.resamp == SCOREBOOT ) {
-            NumericMatrix bIDr(bIDsexp);
-            tm.nboot = bIDr.nrow();	   
-            myTest.bootID = gsl_matrix_alloc(tm.nboot, nRows);
-//	    std::copy( bIDr.begin(), bIDr.end(), smry.bootID->data );
-            for (i=0; i<tm.nboot; i++)
-            for (j=0; j<nRows; j++)
-                gsl_matrix_set(myTest.bootID, i, j, bIDr(i, j));
-	}
-        else{
-	    IntegerMatrix bIDr(bIDsexp);
-            tm.nboot = bIDr.nrow();	   
-	    myTest.bootID = gsl_matrix_alloc(tm.nboot, nRows);
-	    // integer -> double
-	    for (i=0; i<tm.nboot; i++)
-            for (j=0; j<nRows; j++)
-                gsl_matrix_set(myTest.bootID, i, j, bIDr(i, j)-1);
-    }   } 
-
+        NumericMatrix bIDr(bIDsexp);
+        tm.nboot = bIDr.nrow();
+        myTest.bootID = gsl_matrix_alloc(tm.nboot,nRows);
+        for (i=0; i<tm.nboot; i++)
+        for (j=0; j<nRows; j++) {
+            gsl_matrix_set(myTest.bootID, i, j, bIDr(i, j));
+//            Rprintf("%d ", gsl_matrix_get(myTest.bootID, i, j));
+        }
+    }
     // resampling test
     myTest.summary(glmPtr[mtype]);
 //    myTest.displaySmry(glmPtr[mtype]);
