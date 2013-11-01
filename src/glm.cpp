@@ -265,7 +265,8 @@ int PoissonGlm::EstIRLS(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix 
             // get PIT residuals for discrete data
             wei = gsl_rng_uniform_pos (rnd); // wei ~ U(0, 1)
             uij = wei*cdf(yij, mij, theta[j]);
-            if (yij>0) uij=uij+(1-wei)*cdf((yij-1),mij,theta[j]);
+//            if (yij>0) 
+                uij=uij+(1-wei)*cdf(MAX(yij-1.0,mintol),mij,theta[j]);
             gsl_matrix_set(PitRes, i, j, uij);
             // get elementry log-likelihood    
             ll[j] = ll[j] + llfunc( yij, mij, theta[j]);
@@ -324,7 +325,7 @@ int PoissonGlm::betaEst( unsigned int id, unsigned int iter, double *tol, double
   // unsigned int j, ngoodobs;
    unsigned int i, step, step1; 
    double wij, zij, eij, mij, yij; //, bij;   
-   double det, dev_old, dev_grad=1.0;
+   double dev_old, dev_grad=1.0;
    gsl_vector_view Xwi;
    gsl_matrix *WX, *XwX;
    gsl_vector *z, *Xwz;
@@ -502,7 +503,7 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B)
     gsl_rng *rnd=gsl_rng_alloc(gsl_rng_mt19937);
     unsigned int i, j; //, isConv;
     double yij, mij, vij, hii, uij, wij, wei;
-    double lm, lm0, th, tol, dev_th_b_old;
+    double th, tol, dev_th_b_old;
     int status;
  //   gsl_vector_view b0j, m0j, e0j, v0j;
     gsl_matrix *WX = gsl_matrix_alloc(nRows, nParams);   
@@ -570,7 +571,9 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B)
            // get PIT residuals for discrete data
            wei = gsl_rng_uniform_pos (rnd); // wei ~ U(0, 1)
            uij=wei*cdf(yij, mij, th);
-           if (yij>0) uij=uij+(1-wei)*cdf((yij-1),mij,th); 
+//           if (yij>0) 
+//              uij=uij+(1-wei)*cdf(yij-1,mij,th); 
+              uij=uij+(1-wei)*cdf(MAX(yij-1.0,mintol),mij,theta[j]);
            gsl_matrix_set(PitRes, i, j, uij);
            // W^1/2 X
            Xwi = gsl_matrix_row (WX, i);
@@ -800,9 +803,9 @@ void glm::display(void)
 //    for ( j=0; j<nVars; j++ ) printf("%.2f ", aic[j]);    
 //    printf("\n");
 //    printf("# of convergence\n");    
-    for ( j=0; j<nVars; j++ )
-        printf("%d ", iterconv[j]); 
-    printf("\n");          
+//    for ( j=0; j<nVars; j++ )
+//        printf("%d ", iterconv[j]); 
+//    printf("\n");          
 //   printf("Residual deviance=\n " );
 //    for ( j=0; j<nVars; j++ ) printf("%.2f ", dev[j]);
 //    printf("\n");        
@@ -811,8 +814,7 @@ void glm::display(void)
 //        for (j=0; j<nVars; j++ ) printf("%.2f ", phi[j]);
 //    }
 //    printf("\n");        
-//    if (Oref != NULL)
-//       displaymatrix(Oref, "O");
+//    if (Oref != NULL) displaymatrix(Oref, "O");
 //    displaymatrix(Xref, "X");
 //    displaymatrix(Eta, "Eta");
 //    displaymatrix(Beta, "Beta");

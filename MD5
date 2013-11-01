@@ -1,4 +1,4 @@
-e72d1f99c2ae84cb31be8477fb391b19 *DESCRIPTION
+2c86ed4653d9da06db1f99f3a7356219 *DESCRIPTION
 8d39d8b15a331b23c82119b331b3038d *NAMESPACE
 cfd0b4c9d0c82a6840b3776b75cd4ff1 *R/AllClass.R
 ac4de34bb6d601a3a125c3017c7c79c9 *R/RcppVersion.R
@@ -126,12 +126,12 @@ fa657d6edf58d1c083be7d84bc269151 *src/RtoAnovaCpp.cpp
 acc525ac2ed0f18fc23bc78fa45dbc2a *src/RtoGlm.cpp
 d3e856d42d59f0bc06d8efeb714bc9ad *src/RtoGlmAnova.cpp
 8d91c79ec56c883a2cbf4092fd08d1cd *src/RtoGlmSmry.cpp
-d6afb1be215230a1ef6393c2ecd48de5 *src/RtoSmryCpp.cpp
+5fa3c11a62d868166f4b57dab717cc33 *src/RtoSmryCpp.cpp
 a1355103da5894be5e0f533935e99864 *src/anova.cpp
 bc9cc56e3e32bb8ff502b1cacf509048 *src/calctest.cpp
-6810e938ccc02f8b0f3345fa66fe3ff3 *src/glm.cpp
-b4234af1d2204d0f5d24a7c3a75c777c *src/glmtest.cpp
-482fcab2ca87a5eebae0e4e6bcae603f *src/io.cpp
+cf7962ec80a594a8c40ac40986181c6c *src/glm.cpp
+9d5fd59c011a09de7d85b50e354acc78 *src/glmtest.cpp
+0a135f0a0448f3e87fdaff4053cc2f9a *src/io.cpp
 5b0cfb79c691512e9ea8298d5d7a96c9 *src/resampTest.h
 f49993633ffe9943c8eb79d335b091ae *src/rmv.h
 4b1f153d182e05515b0b1e122ab22234 *src/rnd.cpp
