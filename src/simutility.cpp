@@ -290,7 +290,7 @@ int setMonteCarlo(glm *model, gsl_matrix *XBeta, gsl_matrix *Sigma)
        // logit(M) = X * sqrt(1+0.346 var) beta = 1.1601 Eta 
        // See MATH5885 LDA lecture notes W9-11, Section 6.6.1
           sd = 1;
-          k = 16*sqrt(3)/15/M_PI;
+          k = 16*sqrt(double(3))/15/M_PI;
           scale = sqrt(1 + gsl_pow_2(k)*gsl_pow_2(sd));
           gsl_matrix_scale (XBeta, scale);
        }

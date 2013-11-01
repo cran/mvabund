@@ -502,7 +502,7 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B)
     gsl_rng *rnd=gsl_rng_alloc(gsl_rng_mt19937);
     unsigned int i, j; //, isConv;
     double yij, mij, vij, hii, uij, wij, wei;
-    double lm, lm0, d1, th, tol, dev_th_b_old;
+    double lm, lm0, th, tol, dev_th_b_old;
     int status;
  //   gsl_vector_view b0j, m0j, e0j, v0j;
     gsl_matrix *WX = gsl_matrix_alloc(nRows, nParams);   
@@ -510,23 +510,22 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B)
     gsl_matrix *XwX = gsl_matrix_alloc(nParams, nParams);   
     gsl_vector_view Xwi, Xi, vj, dj, hj;
 
-    d1 = sqrt(2*MAX(1, rdf));
     for (j=0; j<nVars; j++) {  
         betaEst(j, maxiter, &tol, maxtol); //poisson
         // Get initial theta estimates
-        iterconv[j]=0;  
+        iterconv[j]=0.0;  
         if (mmRef->estiMethod==CHI2) {
-           th = getDisper(j, 0); 
+           th = getDisper(j, 0.0); 
            while ( iterconv[j]<maxiter ) {
                iterconv[j]++;
                dev_th_b_old = dev[j];
-               betaEst(j, 1, &tol, th);  // 1-step beta
+               betaEst(j, 1.0, &tol, th);  // 1-step beta
                th = th*getDisper(j, th); // 1-step theta 
                tol = ABS((dev[j]-dev_th_b_old)/(ABS(dev[j])+0.1));
                if (tol<eps) break;
          }  }
         else if (mmRef->estiMethod==NEWTON) {
-            th = thetaML(0, j, maxiter);
+            th = thetaML(0.0, j, maxiter);
             while ( iterconv[j]<maxiter ) {
                iterconv[j]++;
                dev_th_b_old = dev[j];
@@ -536,7 +535,7 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B)
                if (tol<eps) break;
         }  } 
        else {
-           th = getfAfAdash(0, j, maxiter);
+           th = getfAfAdash(0.0, j, maxiter);
 /*           lm=0;
            for (i=0; i<nRows; i++) {
                yij = gsl_matrix_get(Y, i, j);
@@ -547,16 +546,8 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B)
                iterconv[j]++;
                dev_th_b_old = dev[j];
                betaEst(j, maxiter2, &tol, th);  
-               th = getfAfAdash(th, j, 1);
+               th = getfAfAdash(th, j, 1.0);
                tol=ABS((dev[j]-dev_th_b_old)/(ABS(dev[j])+0.1));
-/*               lm0 = lm;
-               lm=0;
-               for (i=0; i<nRows; i++) {
-                   yij = gsl_matrix_get(Y, i, j);
-                   mij = gsl_matrix_get(Mu, i, j);
-                   lm = lm + llfunc( yij, mij, th);
-               }
-               tol = ABS(lm0-lm)/d1; */
                if (tol<eps) break;
            }
        }       
