@@ -302,12 +302,12 @@ int PoissonGlm::EstIRLS(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix 
            Xi=gsl_matrix_row(Xref, i);
            wij=gsl_matrix_get(wHalf, i, j);
            gsl_blas_ddot(&Xwi.vector, &Xi.vector, &hii);
-           gsl_vector_set(&hj.vector, i, MAX(mintol, sqrt(1-wij*wij*hii)));
+           gsl_vector_set(&hj.vector, i, MAX(mintol, sqrt(MAX(0, 1-wij*wij*hii))));
        } 
    } 
    // standardize perason residuals by rp/sqrt(1-hii) 
-   gsl_matrix_div_elements (Res, sqrt1_Hii);
-   subtractMean(Res);  // have mean subtracted
+//   gsl_matrix_div_elements (Res, sqrt1_Hii);
+//   subtractMean(Res);  // have mean subtracted
 
    gsl_matrix_free(XwX);
    gsl_matrix_free(WX);
@@ -388,7 +388,6 @@ int PoissonGlm::betaEst( unsigned int id, unsigned int iter, double *tol, double
           gsl_matrix_set_identity (XwX);
           gsl_blas_dsyrk (CblasLower,CblasTrans,1.0,WX,mintol,XwX); 
           gsl_linalg_cholesky_decomp(XwX);
-//	  exit(-1);
        }
        gsl_blas_dgemv(CblasTrans,1.0,WX,z,0.0,Xwz);
        gsl_linalg_cholesky_solve (XwX, Xwz, &bj.vector);
@@ -607,11 +606,12 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B)
            Xi=gsl_matrix_row(Xref, i);
            wij=gsl_matrix_get(wHalf, i, j);
            gsl_blas_ddot(&Xwi.vector, &Xi.vector, &hii);
-           gsl_vector_set(&hj.vector, i, GSL_MAX(eps,sqrt(1-wij*wij*hii)));
+           gsl_vector_set(&hj.vector, i, MAX(mintol, sqrt(MAX(0, 1-wij*wij*hii))));
+//printf("hii=%.4f, wij=%.4f, sqrt(1-wij*wij*hii)=%.4f\n", hii, wij, sqrt(1-wij*wij*hii));
        }
    } // end nVar for j loop
-   gsl_matrix_div_elements (Res, sqrt1_Hii);
-   subtractMean(Res);
+//   gsl_matrix_div_elements (Res, sqrt1_Hii);
+//   subtractMean(Res);
 
    gsl_matrix_free(XwX);
    gsl_matrix_free(WX);

@@ -219,7 +219,7 @@ glm.spid <- manyglm(spiddat[,1:3]~X, family="negative.binomial")
 summary(glm.spid, show.time=TRUE) 
 
 ## Repeat with the parametric bootstrap and wald statistics 
-summary(glm.spid, resamp="monte.carlo", test="wald", nBoot=500) 
+summary(glm.spid, resamp="monte.carlo", test="wald", nBoot=300) 
 
 }
 \keyword{models}

@@ -1,8 +1,9 @@
 \name{residuals.manyglm}
 \alias{residuals.manyglm}
-\title{Residuals for MANYGLM Fits}
+\alias{residuals.manyany}
+\title{Residuals for MANYGLM or MANYANY Fits}
 \description{  
-Obtains Dunn-Smyth residuals from a fitted manyglm object.
+Obtains Dunn-Smyth residuals from a fitted manyglm or manyany object.
 }
 \usage{
 % residuals.manyglm

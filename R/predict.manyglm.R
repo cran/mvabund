@@ -18,12 +18,12 @@ predict.manyglm=function(object,newdata = NULL,type = c("link", "response",
         if(is.null(newdata)==F)
             nObs = NROW(newdata)
  	ses <- fts <- matrix(NA,nObs,nVar)
-	dimnames(fts)[[2]] = dimnames(object$fitted.values)[[2]]
 	if(is.null(newdata))
 	   dimnames(fts)[[1]] = dimnames(object$fitted.values)[[1]]
         else
            dimnames(fts)[[1]] = rownames(newdata)
-	
+  dimnames(fts)[[2]] = dimnames(object$fitted.values)[[2]]
+        
 	type <- match.arg(type)
 	na.act <- object$na.action
 	object$na.action <- NULL
