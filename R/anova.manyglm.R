@@ -329,9 +329,12 @@ anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none
     
     dimnames(anova$table) <- list(tl, c("Res.Df", "Df.diff", testname, pname))
    
-    # make several univariate tables 
-    attr(anova$uni.test, "title") <- attr(anova$uni.p, "title") <- "\nUnivariate Tests:\n"
+    # make several univariate tables, if required 
+    attr(anova$uni.test, "title") <- attr(anova$uni.p, "title") <- "Univariate Tests:"
     dimnames(anova$uni.p) <- dimnames(anova$uni.test) <- list(tl, dimnam.a)
+
+    if(p.uni=="none") #hack fix because univariate P's were all coming out as 1/B for "none" (!?)
+      anova$uni.p[is.numeric(anova$uni.p)] <- NA
 
     class(anova) <- "anova.manyglm"
     return(anova)

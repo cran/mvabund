@@ -20,12 +20,14 @@ default.plot.mvformula <- function(	x,
   				data=parent.frame(), 
 				var.subset=NA, 
 				xvar.select=TRUE,
-  				n.xvars=if(any(is.na(xvar.subset))) min(3, sum(!is.interaction)) else length(xvar.subset),
-  				xvar.subset=NA, 
+  			n.xvars=NA,
+#				n.xvars=if(any(is.na(xvar.subset))) min(3, sum(!is.interaction)) else length(xvar.subset),
+				xvar.subset=NA, 
 				scale.lab="ss", 	
 				t.lab="t", 
-				mfrow=c(min(5,n.vars), min(3, n.xvars[xvar.select])), 
-				mfcol=NULL, 
+				mfrow=NULL, 
+#mfrow=c(min(5,n.vars), min(3, n.xvars[xvar.select])), 
+        mfcol=NULL, 
 				shift=TRUE, 
 				border="black",
   				all.labels=FALSE, 
@@ -261,48 +263,62 @@ main<- main[var.subset]
 mvabund.formulaUni <- formulaUnimva( mvabund.formula, var.subset=var.subset, split.x=TRUE, intercept=0 )
 
 ######### BEGIN edit xvar.subset, n.xvars etc #########
-if(xvar.select & pExpl>1) {
-	if(is.list(pch)) {
+if(xvar.select & pExpl>1)
+{
+	if(is.list(pch))
+  {
 		pch2 <- list()
 		
-		for(i in 1:length(xvar.subset)){
+		for(i in 1:length(xvar.subset))
+    {
 			pch2[[xvar.subset[i] ]] <- pch[[i]]
 		}
 		pch <- pch2
 	}
 	
-	if(is.list(col)) {
+	if(is.list(col))
+  {
 		col2 <- list()
 	
-		for(i in 1:length(xvar.subset)) {
+		for(i in 1:length(xvar.subset))
+    {
 			col2[[xvar.subset[i]]] <- pch[[i]]
 		}
 		col<- col2
 	}
 
-	if(miss.xvarsubset) {
-		# Find the n.xvars independent variables with the highest average R^2.
-		if(is.null(n.xvars) || is.na(n.xvars))
-			stop("a proper sQuote(n.xvars) has to be passed if there is no proper sQuote(xvar.subset)")
+	#DW changes, 30/10/14
+  #only define default n.xvars here, once is.interaction has been defined 
+	if(is.na(n.xvars))
+     n.xvars=if(any(is.na(xvar.subset))) min(3, sum(!is.interaction)) else length(xvar.subset)
+  if(miss.xvarsubset)
+  {
+	   # Find the n.xvars independent variables with the highest average R^2.
+	   if(is.null(n.xvars) || is.na(n.xvars))
+	      stop("a proper sQuote(n.xvars) has to be passed if there is no proper sQuote(xvar.subset)")
 	
-		xvar.subset <- best.r.sq(formula= mvabund.formula, # mvabund.formulaUni,
-						var.subset=var.subset, n.xvars= min(n.xvars, pExpl))
+     xvar.subset <- best.r.sq(formula= mvabund.formula, # mvabund.formulaUni,
+				var.subset=var.subset, n.xvars= min(n.xvars, pExpl))
+     xvar.subset=xvar.subset$xs #to keep the indices only
 
-		if (is.null(xvar.subset)) {
-			xvar.subset <- 1:pExpl
-			warning("xvar.subset could not be found")
-		}
-
-	} else if (length(xlab)==length(xvar.subset)) { # that's not good, the order could be changed
-		# Lateron the xvar.subset are selected from xlab.
-		warning("The values of 'xlab' are taken to be corresponding to 'xvar.subset'")
-		lab <- xlab
-		xlab <-  rep("",times=pExpl)
-		xlab[xvar.subset] <- lab
+		if (is.null(xvar.subset))
+    {
+		  xvar.subset <- 1:pExpl
+    	warning("xvar.subset could not be found")
+	  }
+  }
+  else if (length(xlab)==length(xvar.subset))
+  {
+    warning("The values of 'xlab' are taken to be corresponding to 'xvar.subset'")
+    lab <- xlab
+  	xlab <-  rep("",times=pExpl)
+	 	xlab[xvar.subset] <- lab
 		# It is required that xlab has a name for every column of x,
 		# if xvar.subset is passed, xlab of the same length is accepted.
 	}
-} else xvar.subset <- 1:pExpl
+  else xvar.subset <- 1:pExpl
+}
+else xvar.subset <- 1:pExpl
 
 pExpl <- length(xvar.subset)
 ######### END edit xvar.subset, n.xvars etc #########
@@ -339,7 +355,7 @@ if(is.all.factor) {
 
         cat("\n \tPIPING to 1st MVFACTOR PLOT \n") 
 	   do.call( "default.plotMvaFactor", c(list(x=mvabund.object.1, y=expl.data[,xvar.subset, drop=FALSE],transformation="no"), m, dots))
-	return(invisible())
+  return(invisible())
 }
 ########### END factor plot #################
 

@@ -10,8 +10,8 @@ plot.mvformula <- function(	x,
 				n.vars=if(any(is.na(list(var.subset)))) 12 else length(var.subset),
 				xvar.select=TRUE,
 				xvar.subset=NA, 
-				n.xvars=if(any(is.na(xvar.subset))) min(3,4) else length(xvar.subset),
-                                transformation="log", 
+        n.xvars=NA,
+        transformation="log", 
 				... ) 
 {
 
@@ -28,8 +28,10 @@ plot.mvformula <- function(	x,
  
 }
 
+#DW 30/10/14: previous n.xvars default as below, which is weird!?
+#  			n.xvars=if(any(is.na(xvar.subset))) min(3, 4) else length(xvar.subset),
+
+
 ####### END DEFINITION OF FUNCTION ########
 setMethod("plot", "mvformula", plot.mvformula)
 setMethod("plot", signature("formula","logical"), plot.mvformula)
-
-

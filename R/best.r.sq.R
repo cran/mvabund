@@ -3,7 +3,11 @@
 # formula considering only the response variables given by var.subset models   #
 # (or all if var.subset not specified)                                         #
 # at the present stage this function treats interactions just like any         #
-# other variable                                                               #
+# other variable                                                               
+#
+# Modified by DW 31/7/14 to return R^2 as well, bug found in steps 2 onwards
+# where some potential predictors were accidently cut out of the loop
+#
 ################################################################################
 
 best.r.sq <- function (formula, data = parent.frame(), subset, var.subset,
@@ -86,15 +90,17 @@ best.r.sq <- function (formula, data = parent.frame(), subset, var.subset,
    use.kk <-  use.k <- 1:length(xn)
    use.xn <- xn
    order.r.sq <- numeric(n.xvars)
-
+   r.sq.step  <- numeric(n.xvars)
+   r.sq.mat <- matrix(NA,l.vars,n.xvars)
+   dimnames(r.sq.mat)[[2]]=paste("Step",1:n.xvars)
+   dimnames(r.sq.mat)[[1]]=xn 
+ 
   tm.labs <- attr(terms(basic.foo), "term.labels" )
 
   for(xchoose in 1:n.xvars){
 
 	r.squared <- numeric( length(xn) )
 	
-	k <- use.k[1]
-
 	for (i in 1:length(use.xn) ) {
 
       use.foo <- reformulate( termlabels = c(tm.labs,
@@ -106,12 +112,16 @@ best.r.sq <- function (formula, data = parent.frame(), subset, var.subset,
       lmy <- do.call( "manylm", c(list( formula = use.foo,
          subset = subset, data=mfm.list), dots) )
 
-			r.squared[k] <- suppressWarnings( summary(lmy, R2=R2 )$r.squared )
-			k <- use.k[k+1]
+			k = use.k[i]
+      r.squared[k] <- suppressWarnings( summary(lmy, R2=R2 )$r.squared )
 	}
- 	 order.r.sq[xchoose] <-
+  r.sq.mat[,xchoose] = r.squared
+	r.sq.mat[-use.k,xchoose] = NA
+  
+  order.r.sq[xchoose] <-
       order(r.squared, decreasing=TRUE, na.last = TRUE)[1]
-      
+   r.sq.step[xchoose] = max(r.squared)
+  
    use.xn <- xn[ -(order.r.sq[1:(xchoose)]) ]
 
    basic.foo <- reformulate( termlabels = c(tm.labs,
@@ -125,10 +135,11 @@ best.r.sq <- function (formula, data = parent.frame(), subset, var.subset,
    use.k     <-  use.kk[-(order.r.sq[1:(xchoose)])]
 
   }
-  
-  order.r.sq <- xn.no[order.r.sq]
-
-	return(order.r.sq)
-	
+  step.names =  xn[xn.no[order.r.sq]] #naming r.sq.steps by the term that is entered
+  names(r.sq.step) = paste(c("",rep("+",length(step.names)-1)),step.names,sep="") 
+   
+ 
+  res = list(xs=xn.no[order.r.sq], r2Step =r.sq.step, r2Matrix = r.sq.mat)  
+  return(res)
 }
 

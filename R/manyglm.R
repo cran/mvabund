@@ -136,6 +136,12 @@ else {
     else O <- as.matrix(offset)
     z <- .Call("RtoGlm", modelParam, Y, X, O, PACKAGE="mvabund")
 
+    if(any(z$var.est==0)) #DW change, 30/10/14
+    {
+      z$var.estimator = pmax(z$var.est,1.e-6) #1.e-6 is used because it is elsewhere in this matrix. But shouldn't it be tol?
+      z$residuals = (Y - z$fit) / sqrt(z$var.est)
+    }
+
 # New codes added for estimating ridge parameter 
     if (cor.type=="shrink") {      
         if (is.null(shrink.param)) {
@@ -203,7 +209,6 @@ else {
     z$show.fitted <- show.fitted
     z$show.residuals <- show.residuals
     z$offset <- O 
- 
     class(z) <- c("manyglm", "mglm")
     return(z)
   }

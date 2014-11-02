@@ -4,7 +4,7 @@
 Use R^2 to find the variables that best explain a multivariate response.
 }
 \description{
-Finds the subset of explanatory variables in a formula that best explain the variation in a multivariate response, as measured by a chosen definition of R^2. Modifications are included for high dimensional data, such as multivariate abundance data in ecology.
+Finds the subset of explanatory variables in a formula that best explain the variation in a multivariate response, as measured by a chosen definition of R^2. Modifications are included for high dimensional data, such as multivariate abundance data in ecology. 
 }
 \usage{
 best.r.sq(formula, data = parent.frame(), subset, var.subset,
@@ -27,24 +27,32 @@ R^2 that should be found.
 % "t" = using the trace R^2 =tr(SSR)/tr(SST) \cr
  "v" = vector R^2 = det(SSR)/det(SST)\cr
  "n" = none
-Note that for a univariate response, all of these are equivalent to the ordinary product-moment correlation coefficient.
+Note that for a univariate response, all of these are equivalent to the ordinary 
+product-moment correlation coefficient. }
+\item{\dots}{further arguments that are passed on to lm.} }
+
+\details{ 
+\code{best.r.sq} finds the \code{n.xvars} influence variables obtained by a 
+forward selection in a multivariate linear model given by \code{formula}. \cr 
+Only the response variables given by \code{var.subset} are considered. However, 
+if \code{var.subset} is \code{NULL} all response variables are considered.\cr 
+Interactions are excluded from the search mechanism, however the indices that are 
+returned correspond to the indices in the model. This function is intended as an 
+exploratory tool which can be used for example in plotting, and is not intended 
+as a tool for formal model selection. % add an option 'method' that allows to 
+choose 'all possible subsets' % instead of 'forward selection' (which is used at 
+the moment) } 
+
+\value{This function returns a list consisting of:
+\describe{
+\item{xs}{a vector of indices of independent variables with the greatest
+explanatory power, as previously.}
+\item{r2Step}{a vector of total R^2 from sequential model fits including each of
+the model terms identified in \code{xs}.}
+\item{r2Matrix}{a matrix containing the total R^2 for each term in the model at
+each addition step (steps in columns and model terms in rows).}
 }
-\item{\dots}{further arguments that are passed on to lm.}
-}
-\details{
-\code{best.r.sq} finds the \code{n.xvars} influence variables obtained
-by a forward selection in a multivariate linear model given by \code{formula}. \cr
-Only the response variables given by \code{var.subset} are considered. However, if
-\code{var.subset} is \code{NULL} all response variables are considered.\cr
-Interactions are excluded from the search mechanism, however the indices that are
-returned correspond to the indices in the model.
-This function should not be used for model selection,
-but only in plots.
-% add an option 'method' that allows to choose 'all possible subsets'
-% instead of 'forward selection' (which is used at the moment)
-}
-\value{A vector giving the indices of the independent variables
-with the greatest explanatory power.}
+} 
 
 \author{
 Ulrike Naumann and David Warton <David.Warton@unsw.edu.au>.

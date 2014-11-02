@@ -265,8 +265,7 @@ int PoissonGlm::EstIRLS(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix 
             // get PIT residuals for discrete data
             wei = gsl_rng_uniform_pos (rnd); // wei ~ U(0, 1)
             uij = wei*cdf(yij, mij, theta[j]);
-//            if (yij>0) 
-                uij=uij+(1-wei)*cdf(MAX(yij-1.0,mintol),mij,theta[j]);
+            if (yij>0) uij=uij+(1-wei)*cdf((yij-1),mij,theta[j]);
             gsl_matrix_set(PitRes, i, j, uij);
             // get elementry log-likelihood    
             ll[j] = ll[j] + llfunc( yij, mij, theta[j]);
@@ -570,9 +569,7 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B)
            // get PIT residuals for discrete data
            wei = gsl_rng_uniform_pos (rnd); // wei ~ U(0, 1)
            uij=wei*cdf(yij, mij, th);
-//           if (yij>0) 
-//              uij=uij+(1-wei)*cdf(yij-1,mij,th); 
-              uij=uij+(1-wei)*cdf(MAX(yij-1.0,mintol),mij,theta[j]);
+           if (yij>0) uij=uij+(1-wei)*cdf((yij-1),mij,th);
            gsl_matrix_set(PitRes, i, j, uij);
            // W^1/2 X
            Xwi = gsl_matrix_row (WX, i);

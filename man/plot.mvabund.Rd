@@ -17,9 +17,9 @@ data, e.g. from repeated measures. See details below.
 
 \method{plot}{mvformula}(x,y=NA, type="p", var.subset=NA, 
   n.vars= if(any(is.na(list(var.subset)))) 12 else length(var.subset),
-  xvar.select=TRUE, xvar.subset = NA, n.xvars=if(any(is.na(xvar.subset)))min(3, 4)
-  else length(xvar.subset), transformation="log", ...) 
+  xvar.select=TRUE, xvar.subset = NA, n.xvars=NA, transformation="log", ...) 
 }
+
 
 \arguments{
 \item{x}{
@@ -38,7 +38,8 @@ scatterplot, "bx" for boxplot and "n" for no plot. Other types, see
 mvabund.object should be included on the plot.}
 \item{n.vars}{the number of variables to include in the plot.}
 \item{xvar.select}{whether only a subset of x variables should be plotted or all.}
-\item{n.xvars}{the number of the most relevant x variables that should be plotted, is not used if \code{xvar.select = FALSE}.}
+\item{n.xvars}{the number of the most relevant x variables that should be plotted,
+ is not used if \code{xvar.select = FALSE}. If NA it will be set to at most 3.}
 \item{xvar.subset}{a subset of x variables that should be plotted, is not used if \code{xvar.select = FALSE}.}
 \item{transformation}{an optional transformation, if no formula is given,
 "no" = untransformed, "sqrt"=square root transformed,

@@ -46,7 +46,7 @@ exportClasses(mvabund, mvformula)
 
 exportMethods(meanvar.plot)
 
-import(Rcpp, MASS, graphics, methods,tweedie,statmod)
+import(Rcpp,MASS,graphics,methods,tweedie,statmod)
 importFrom(stats,dpois, ppois, qpois, rpois)
 importFrom(stats,dbinom, pbinom, qbinom, rbinom)
 importFrom(stats,dnbinom, pnbinom, qnbinom, rnbinom)
