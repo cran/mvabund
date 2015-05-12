@@ -7,6 +7,7 @@ type = c("response", "terms"), terms=NULL, na.action=na.pass, ...)
         if(is.null(newdata)==F)
             nObs = NROW(newdata)
  	ses <- fts <- matrix(NA,nObs,nVar)
+  dimnames(fts)=vector(2,mode="list") #to avoid error making a null thing a list.
 	dimnames(fts)[[2]] = dimnames(object$fitted.values)[[2]]
 	if(is.null(newdata))
 	   dimnames(fts)[[1]] = dimnames(object$fitted.values)[[1]]

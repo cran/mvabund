@@ -76,31 +76,20 @@ manyglm(formula, family="negative.binomial", K=1, data=NULL, subset=NULL,
   value is stored as an attribute of the \code{manyglm} object, and will be 
   used in subsequent functions for inference.
   }
-  \item{tol}{the tolerance used in estimations.}
-  \item{maxiter}{maximum allowed iterations in the weighted least square estimation of beta. The default value is 100.}
-  \item{maxiter2}{maximum allowed iterations in the internal ML estimations of negative binomial regression. The default value is 5.}
+  \item{tol}{the tolerance used in estimation.}
+  \item{maxiter}{maximum allowed iterations in the weighted least square estimation of beta. The default value is 25.}
+  \item{maxiter2}{maximum allowed iterations in the internal ML estimations of negative binomial regression. The default value is 10.}
   \item{show.coef, show.fitted, show.residuals, show.warning}{logical. Whether to show model coefficients, fitted values, standardized pearson residuals, or operation warnings.}
   \item{offset}{this can be used to specify an _a priori_ known component to be included in the linear predictor during fitting. This should be 'NULL' or a numeric vector of length equal to NROW (i.e. number of observations) or a matrix of NROW times p (i.e. number of species).}
   \item{\dots}{further arguments passed to or from other methods.}
 }
 \details{
 
-\code{manyglm} is used to calculate the parameter estimates of generalised linear models fitted to each of many variables simultaneously as in Warton et. al. (2012) and Wang et.al.(2012). Models for \code{manyglm} are specified symbolically. For details on this compare the details section of \code{\link{lm}} and \code{\link{formula}}. A formula has an implied intercept term.  To remove this use either \code{y ~ x - 1} or \code{y ~ 0 + x}.  See \code{\link{formula}} for more details of allowed formulae.
+\code{manyglm} is used to calculate the parameter estimates of generalised linear models fitted to each of many variables simultaneously as in Warton et. al. (2012) and Wang et.al.(2012). Models for \code{manyglm} are specified symbolically. For details on how to specify a formula see the details section of \code{\link{lm}} and \code{\link{formula}}.
 
-Generalised linear models are designed for non-normal data where a specific alternative distribution offers a reasonable model for data, as specified using the argument \code{family} (Warton (2011)). Count data can be analysed using \code{family="poisson"} if the data is not "overdispersed" (that is, if the variance is not larger than the mean), although for multivariate abundance data it has been shown that the negative binomial distribution (\code{family="negative.binomial"}) is a good choice of model for counts (Warton (2005)). For binary (presence/absence) data, \code{family="binomial"} should be used.
+Generalised linear models are designed for non-normal data for which a distribution can be specified that offers a reasonable model for data, as specified using the argument \code{family}. The \code{manyglm} function currently only accepts a character argument that takes one of three possible values. Count data can be analysed using \code{family="poisson"} if the data is not "overdispersed" (that is, if the variance is not larger than the mean), although for multivariate abundance data it has been shown that the negative binomial distribution (\code{family="negative.binomial"}) is a good choice of model for counts (Warton (2005)). In both cases, a log-link is used. For binary (presence/absence) data, \code{family="binomial"} should be used, which uses a logit-link ("logistic regression"). If another link function or family is desired, this can be specified using the \code{\link{manyany}} function, which accepts regular \code{\link{family}} arguments.
 
-The negative binomial function requires knowledge of the overdispersion
-parameter (\code{theta}) in order to fit a generalised linear model. However, it
-is usual not to have knowledge of the value of \code{theta}. So we estimate 
-%so if it is not specified it will be estimated from the data. The default estimates 
-a separate \code{theta} for each variable from the data.
-The method of estimating \code{theta} is controlled by \code{theta.method} for negative binomial distributions. 
-
-\code{family} not only chooses the type of distribution to fit to data,
-but also controls the link function - the function of the mean that is fitted
-with a linear predictor. The default is the canonical link function, except
-for negative binomial, which uses the log-link. 
-%The variance-stabilising parameterisation (\code{link="varstab"}) is a special type of link function that was introduced to the \code{manyglm} function because it allows construction of Wald statistics with good properties (Warton 2008), in situations where its application is reasonable, such as multi-sample testing.
+The negative binomial function requires knowledge of the overdispersion parameter (\code{theta}) in order to fit a generalised linear model. However, it is usual not to have knowledge of the value of \code{theta}. So we estimate a separate \code{theta} for each variable from the data. The method of estimating \code{theta} is controlled by \code{theta.method} for negative binomial distributions. 
 
 %If \code{family=quasipoisson} is used (that is, the mean-variance relationship
 %is V=phi*m), \code{phi} can be estimated from data as for
@@ -132,9 +121,9 @@ for negative binomial, which uses the log-link.
 
 \code{cor.type} is the structure imposed on the estimated correlation
 matrix under the fitted model. Possible values are: \cr
-"I"(default) = independence is assumed (correlation matrix is the identity) \cr
-"shrink" = sample correlation matrix is shrunk towards I to improve its stability. \cr
-"R" = unstructured correlation matrix is used.  (Only available when N>p.)
+\code{"I"}(default) = independence is assumed (correlation matrix is the identity) \cr
+\code{"shrink"} = sample correlation matrix is shrunk towards I to improve its stability. \cr
+\code{"R"} = unstructured correlation matrix is used.  (Only available when N>p.)
 
 If \code{cor.type=="shrink"}, a numerical value will be assigned to \code{shrink.param} either through the argument or by internal estimation. The working horse function for the internal estimation is \code{\link{ridgeParamEst}}, which is based on cross-validation (Warton 2008). The validation groups are chosen by random assignment, so some slight variation in the estimated values may be observed in repeat analyses. See \code{\link{ridgeParamEst}} for more details. The shrinkage parameter can be any value between 0 and 1 (0="I" and 1="R", values closer towards 0 indicate more shrinkage towards "I").
 }
@@ -145,7 +134,7 @@ If \code{cor.type=="shrink"}, a numerical value will be assigned to \code{shrink
 
   The function \code{summary} (i.e. \code{\link[mvabund:anova.manyglm]{summary.manyglm}}) can be used to obtain or print a summary of the results and the function
   \code{anova} (i.e. \code{\link[mvabund:anova.manyglm]{anova.manyglm}}) to produce an 
-  analysis of variance table.
+  analysis of variance table, although note that these functions use resampling so they can take a while to fit.
 
   The generic accessor functions \code{\link{coefficients}}, 
   \code{fitted.values} and \code{residuals} can be used to
@@ -157,51 +146,40 @@ If \code{cor.type=="shrink"}, a numerical value will be assigned to \code{shrink
   following components:
 
   \item{coefficients}{a named matrix of coefficients.}
+  \item{var.coefficients}{the estimated variances of each coefficient.}
   \item{fitted.values}{the matrix of fitted mean values, obtained by transforming the linear predictors by the inverse of the link function.}
-  \item{linear.predictors}{the linear fit on link scale.}
+  \item{linear.predictor}{the linear fit on the scale of the linear predictor.}
   \item{residuals}{the matrix of \emph{working} residuals, that is the Pearson residuals standardized by the leverage adjustment h obtained from the diagonal elements of the hat matrix H. }
+  \item{PIT.residuals}{probability integral transform (PIT) residuals - for a model that fits well these should be approximately standard uniform values evenly scattered between 0 and 1. Their calculation involves some randomisation, so different fits will return slightly different values for PIT residuals.}
   \item{sqrt.1_Hii}{the matrix of scale terms used to standardize the Pearson reidusals.}
-  \item{variance.estimator}{the variance estimator for the corresponding family function.}
+  \item{var.estimator}{the estimated variance of each observation, computed using the corresponding family function.}
   \item{sqrt.weight}{the matrix of square root of \emph{working} weights,  estimated for the corresponding family function.}
   \item{theta}{the estimated nuisance parameters accounting for overdispersion}
-  \item{phi}{the inverse of theta}
   \item{two.loglike}{two times the log likelihood.}
   \item{deviance}{up to a constant, minus twice the maximized log-likelihood.  Where sensible, the constant is chosen so that a saturated model has deviance zero.}
-  \item{AIC}{Akaike's \emph{An Information Criterion}, minus twice the
+  \item{iter}{the number of iterations of IWLS used.}
+  \item{data}{a data frame storing the input data.}
+  \item{stderr.coefficients}{the estimated standard error of each coefficient.}
+  \item{phi}{the inverse of theta}
+  \item{tol}{the tolerance used in estimations.}
+  \item{maxiter,maxiter2,family,theta.method,cor.type,formula}{arguments supplied in the \code{manyglm} call.}
+  \item{aic}{a vector returning Akaike's \emph{An Information Criterion} for each response variable - minus twice the
     maximized log-likelihood plus twice the number of coefficients.} 
   \item{AICsum}{the sum of the AIC's over all variables.}
-  \item{iter}{the number of iterations of IWLS used.}
-  \item{tol}{the tolerance used in estimations.}
-
-  \item{family}{the \code{\link{family}} argument supplied.}
-  \item{theta.method}{the \code{theta.method} argument supplied.}
-  \item{cor.type}{the \code{cor.type} argument supplied.}
   \item{shrink.param}{the shrink parameter to be used in subsequent inference.}
   \item{call}{the matched call.}
   \item{terms}{the \code{\link{terms}} object used.}
-  \item{formula}{the formula supplied.}
   \item{rank}{the numeric rank of the fitted linear model.}
-  \item{xlevels}{(where relevant) a record of the levels of the factors
-    used in fitting.}
+  \item{xlevels}{(where relevant) a record of the levels of the factors used in fitting.}
   \item{df.residual}{the residual degrees of freedom.}
-
-  \item{model}{if the argument \code{model} is \code{TRUE}, this is the \code{model.frame}.}
-  \item{y}{if the argument \code{y} is \code{TRUE}, this is the response variables used.}
   \item{x}{if the argument \code{x} is \code{TRUE}, this is the design matrix used.}
+  \item{y}{if the argument \code{y} is \code{TRUE}, this is the response variables used.}
+  \item{model}{if the argument \code{model} is \code{TRUE}, this is the \code{model.frame}.}
   \item{qr}{if the argument \code{qr} is \code{TRUE}, this is the QR decomposition of the design matrix.}  
+  \item{show.coef,show.fitted,show.residuals}{arguments supplied in the \code{manyglm} call concerning what it presented in output.}
+  \item{offset}{the \code{offset} data used (where applicable).}
 
-% In addition, non-empty fits will have components \code{qr} and \code{R}, both
-%  being lists with components corresponding to the dependent variables.
-%  Furthermore, non-empty fits will have \code{effects} relating to the final
-%  weighted linear fit.
-
-  Objects of class \code{"glm"} are normally of class \code{c("glm",
-    "lm")}, that is inherit from class \code{"lm"}, and well-designed
-  methods for class \code{"lm"} will be applied to the weighted linear
-  model at the final iteration of IWLS.  However, care is needed, as
-  extractor functions for class \code{"glm"} such as
-  \code{\link{residuals}} and \code{weights} do \bold{not} just pick out
-  the component of the fit with the same name.
+%  Objects of class \code{"glm"} are normally of class \code{c("glm","lm")}, that is inherit from class \code{"lm"}, and well-designed methods for class \code{"lm"} will be applied to the weighted linear model at the final iteration of IWLS.  However, care is needed, as extractor functions for class \code{"glm"} such as \code{\link{residuals}} and \code{weights} do \bold{not} just pick out the component of the fit with the same name.
 
 %  If a \code{manyglm} model with a binomial family was specified by giving a
 %  two-column response, the weights returned by \code{prior.weights} are
@@ -244,8 +222,7 @@ Yi Wang, Ulrike Naumann and David Warton <David.Warton@unsw.edu.au>.
 %\code{\link{negative.binomial}}, \code{\link{quasipoisson}},
 %\code{\link{binomialMany}}, \code{\link{quasibinomialMany}},
 %\code{\link{binstruc}}, 
-\code{\link[mvabund:anova.manyglm]{anova.manyglm}}, \code{\link[mvabund:summary.manyglm]{summary.manyglm}},
-%\code{\link{fitted.values}}, \code{\link{residuals}}.
+\code{\link[mvabund:anova.manyglm]{anova.manyglm}}, \code{\link[mvabund:summary.manyglm]{summary.manyglm}}, \code{\link[mvabund:residuals.manyglm]{residuals.manyglm}}, \code{\link[mvabund:plot.manyglm]{plot.manyglm}}
 }
 \examples{
 data(spider)

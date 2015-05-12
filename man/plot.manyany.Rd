@@ -1,8 +1,9 @@
 \name{plot.manyany}
 \alias{plot.manyany}
-\title{Plot Diagnostics for a manyany Object}
+\alias{plot.glm1path}
+\title{Plot Diagnostics for a manyany or glm1path Object}
 \description{
-  A residual vs fits plot from a manyany object.
+  A residual vs fits plot from a \code{\link{manyany}} or \code{\link{glm1path}} object.
 }
 \usage{
 \method{plot}{manyany}( x, ...)
@@ -14,7 +15,7 @@
 }
 \details{
   \code{plot.manyany} is used to check assumptions that are made
-  when fitting a model via \code{manyany}. As in Wang et al (2012), you should check
+  when fitting a model via \code{\link{manyany}} or \code{\link{glm1path}}. As in Wang et al (2012), you should check
   the residual vs fits plot for no pattern (hence no suggestion of failure of any linearity
   and mean-variance assumptions).
   It is also desirable that residuals follow a straight line of slope one on a 
@@ -24,6 +25,8 @@
   Note that for discrete data, these residuals involve random number generation, and
   will not return identical results on replicate runs - so it is recommended that you
   plot your data a few times to check if any pattern shows up consistently across replicate plots.
+  
+  Note also that for \code{\link{glm1path}} objects, slope coefficients have been shrunk towards zero so it is not unusual to see an increasing slope on the residual plot, with larger residuals coinciding with larger fitted values. This arises a a consequent of shrinkage, check if it goes away upon removing the penaly term (e.g. on refitting using \code{\link{manyglm}}) before ringing any alarm bells.
 
 }
 \references{
@@ -39,7 +42,7 @@ analysis of multivariate abundance data. Methods in Ecology and Evolution 3, 471
 David Warton <David.Warton@unsw.edu.au>.
 }
 \seealso{
-\code{\link{manyany}}
+\code{\link{glm1path}}, \code{\link{manyany}}, \code{\link{manyglm}}
 }
 \examples{
 require(graphics)

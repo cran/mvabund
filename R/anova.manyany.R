@@ -1,4 +1,4 @@
-anova.manyany = function(object, ..., nBoot=99, p.uni="none", block = object1$block, replace=TRUE)
+anova.manyany = function(object, ..., nBoot=99, p.uni="none", block = object1$block, bootID=NULL, replace=TRUE)
 {
 # analysis of variance comparing object1 (null) to object2 (alternative)
 # uses the PIT-trap
@@ -22,7 +22,7 @@ anova.manyany = function(object, ..., nBoot=99, p.uni="none", block = object1$bl
 # ft=manyany("glm",abund,data=X,y~1,family="poisson")
 # ftSoil=manyany("glm",abund,data=X,y~soil.dry,family="poisson")
 # an=anova(ft,ftSoil,p.uni="unadjusted")
-  
+
   object1 = object 
   # get object 2
     dots <- list(...)
@@ -32,7 +32,7 @@ anova.manyany = function(object, ..., nBoot=99, p.uni="none", block = object1$bl
        stop("missing a second manyany object")
     }else {
        if (ndots>1)
-           warning("crrently version only compares two manyany objects")
+           warning("current version only compares two manyany objects")
        for (i in 1:ndots) {
            if (any(class(dots[[i]])=="manyany")){
               object2 <- dots[[i]]
@@ -64,7 +64,7 @@ anova.manyany = function(object, ..., nBoot=99, p.uni="none", block = object1$bl
   qfn = rep(NA,n.vars)
   for(i.var in 1:n.vars)
   {
-    if(object1$family[[i.var]]$family=="negbinomial")
+    if(grepl("egative",object1$family[[i.var]]$family) || object1$family[[i.var]]$family == "negbinomial")
       qfn[i.var] = "qnbinom"
     if(object1$family[[i.var]]$family=="poisson")
       qfn[i.var] = "qpois"
@@ -77,8 +77,19 @@ anova.manyany = function(object, ..., nBoot=99, p.uni="none", block = object1$bl
       qfn[i.var] = "qnorm"  
     if(object1$family[[i.var]]$family=="Tweedie")
       qfn[i.var] = "qtweedie"
+    if(object1$family[[i.var]]$family=="ordinal")
+      qfn[i.var] = "qordinal"
   }
 
+  if(is.null(bootID)==FALSE)
+  {
+    bootID = as.matrix(bootID)
+    if(dim(bootID)[2]!=n.rows)
+      stop("Number of rows of bootID must match number of rows in data")
+    nBoot = dim(bootID)[1] #overwriting nBoot with value implied by user-entered ID matrix
+    block = NULL #overwriting previous value for block
+    print("User-entered bootID matrix will be used to generate bootstrap samples")
+  }  
   if(is.null(block)==FALSE)
   {
     tb=table(block)
@@ -97,27 +108,39 @@ anova.manyany = function(object, ..., nBoot=99, p.uni="none", block = object1$bl
     }
   }
   #get observed test stat
-  ft.1i=eval(object1$call)
-  ft.2i=eval(object2$call)
-  statj = 2 * ( logLik(ft.2i)-logLik(ft.1i) )
+#  ft.1i=eval(object1$call) #this call seems unnecessary
+#  ft.2i=eval(object2$call) #this call seems unnecessary
+  statj = 2 * ( logLik(object2)-logLik(object1) )
   stat = sum(statj)
   
   #initialise parameters for bootstrapping
   yMat = matrix(NA,n.rows,n.vars)
+  if(object1$family[[1]]$family=="ordinal")
+    yMat=data.frame(yMat)
   statj.i = matrix(NA,n.vars,nBoot)
-  dimnames(statj.i)[[1]] = dimnames(object1$residuals)[[2]]
+  if(n.vars>1)
+    dimnames(statj.i)[[1]] = dimnames(object1$residuals)[[2]]
   stat.i=rep(NA,nBoot)
-  boot.Resamp = rep(NA,n.rows)
+  if(is.null(bootID))
+    boot.Resamp = rep(NA,n.rows)
+  object1$call$get.what="none" #to avoid wasting time computing residuals etc when resampling
+  object2$call$get.what="none" #to avoid wasting time computing residuals etc when resampling
+    
+  #now do the bootstrap
   for(iBoot in 1:(nBoot))
   {
-    # generate resampled residuals
-    if(is.null(block))
-      boot.Resamp = sample(1:n.rows,replace=replace)
-    else
-      boot.Resamp[unlistIDs] = unlist(blockIDs[sample(n.levels,replace=replace)]) #unlistIDs is needed to make sure each unlisted blockID ends up in the right place
-      resid.i = as.matrix(object1$residuals[boot.Resamp,])
+    if(is.null(bootID)==FALSE)
+      boot.Resamp = bootID[iBoot,]
+    else      # generate resampled residuals
+    {
+      if(is.null(block))
+        boot.Resamp = sample(1:n.rows,replace=replace)
+      else
+        boot.Resamp[unlistIDs] = unlist(blockIDs[sample(n.levels,replace=replace)]) #unlistIDs is needed to make sure each unlisted blockID ends up in the right place
+    }
+    resid.i = as.matrix(object1$residuals[boot.Resamp,])
     # simulate data to get resampled yMat
-    
+
     for(i.var in 1:n.vars)
     {
       qparams = object1$params[[i.var]]
@@ -125,47 +148,68 @@ anova.manyany = function(object, ..., nBoot=99, p.uni="none", block = object1$bl
       names(qparams)[1]="p"
       yMat[,i.var] = do.call(qfn[i.var], qparams)
     }
-    #save resampled yMat as whatever the original yMat was called in workspace
-    assign(as.character(object1$call[[3]]),yMat) 
-    assign(as.character(object2$call[[3]]),yMat) 
-
+    #save resampled yMat as whatever the original yMat was called in workspace - but without zerotons
+    if(object1$family[[1]]$family=="ordinal")
+      is.zeroton = apply(yMat,2,function(x) length(table(x)))==1
+    else
+      is.zeroton = apply(yMat,2,sum)==0
+    assign(as.character(object1$call[[3]]),yMat[,is.zeroton==FALSE]) 
+    assign(as.character(object2$call[[3]]),yMat[,is.zeroton==FALSE]) 
     #re-fit manyany functions and calculate test stats using the resampled yMat:
-    ft.1i=eval(object1$call)
-    ft.2i=eval(object2$call)
-    statj.i[,iBoot]=2 * ( logLik(ft.2i)-logLik(ft.1i) )
-    stat.i[iBoot] = sum(statj.i[,iBoot])
+    if(sum(is.zeroton==FALSE)>0)
+    {
+      ft.1i=eval(object1$call)
+      ft.2i=eval(object2$call)
+      statj.i[is.zeroton==FALSE,iBoot]=2 * ( logLik(ft.2i)-logLik(ft.1i) )
+      stat.i[iBoot] = sum(statj.i[,iBoot], na.rm=TRUE)      
+    }
+    else
+      stat.i[iBoot] = 0
   }
   p = ( 1 + sum(stat.i>stat-1.e-8) ) / (nBoot + 1)
   pj = ( 1 + apply(statj.i>statj-1.e-8,1,sum) ) / ( nBoot + 1)
 
   class(stat.i) = "numeric"
   if(p.uni=="unadjusted")
-    result = list(stat=stat,p=p,uni.test=statj,uni.p=pj,stat.i=stat.i,statj.i=statj.i,p.uni=p.uni) 
+    result = list(stat=stat,p=p,uni.test=statj,uni.p=pj,stat.i=stat.i,statj.i=statj.i,p.uni=p.uni,nBoot=nBoot) 
   if(p.uni=="none")
-    result = list(stat=stat,p=p,stat.i=stat.i,p.uni=p.uni) 
-  
+    result = list(stat=stat,p=p,stat.i=stat.i,p.uni=p.uni,nBoot=nBoot) 
+
   class(result) = "anova.manyany"
   return(result)  
 }
 
-print.anova.manyany=function(object)
+print.anova.manyany=function(x, ...)
 {
   #get overall results in a table
-  table=matrix(c(object$stat,object$p),1,2)
-  dimnames(table)[[2]]=c("LR","P(>LR)")
+  table=matrix(c(x$stat,x$p),1,2)
+  dimnames(table)[[2]]=c("LR","Pr(>LR)")
   dimnames(table)[[1]]=c("sum-of-LR")
+
+  allargs <- match.call(expand.dots = FALSE)
+  dots <- allargs$...
+  s.legend = TRUE
+  if(length(dots)>1)
+  {
+    if("signif.legend" %in% dots)
+      s.legend = signif.legend
+  }
+  if(x$p.uni=="none")
+    signif.legend = s.legend
+  else
+    signif.legend = FALSE
   
   #print overall results
   cat("\n")
-  printCoefmat(table,has.Pvalue=T,signif.legend=F)
+  printCoefmat(table, tst.ind=1, P.values=TRUE, has.Pvalue=TRUE, signif.legend=signif.legend, eps.Pvalue=1/(x$nBoot+1-1.e-8),...)
   cat("\n")
-  
   #print univariate results in a table, if required
-  if(object$p.uni!="none")
+  if(x$p.uni!="none")
   {
-  tablej=cbind(object$uni.test,object$uni.p)
-  dimnames(tablej)[[2]]=c("LR","P(>LR)")
-  printCoefmat(tablej,has.Pvalue=T)
+    signif.legend = s.legend
+    tablej=cbind(x$uni.test,x$uni.p)
+    dimnames(tablej)[[2]]=c("LR","P(>LR)")
+    printCoefmat(tablej, tst.ind=1, P.values=TRUE, has.Pvalue=TRUE, signif.legend=signif.legend, eps.Pvalue=1/(x$nBoot+1-1.e-8), ...)
   }
 }
 

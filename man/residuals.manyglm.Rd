@@ -1,9 +1,10 @@
 \name{residuals.manyglm}
 \alias{residuals.manyglm}
 \alias{residuals.manyany}
-\title{Residuals for MANYGLM or MANYANY Fits}
+\alias{residuals.glm1path}
+\title{Residuals for MANYGLM, MANYANY, GLM1PATH Fits}
 \description{  
-Obtains Dunn-Smyth residuals from a fitted manyglm or manyany object.
+Obtains Dunn-Smyth residuals from a fitted \code{manyglm}, \code{manyany} or \code{glm1path} object.
 }
 \usage{
 % residuals.manyglm
@@ -14,9 +15,11 @@ Obtains Dunn-Smyth residuals from a fitted manyglm or manyany object.
   \item{\dots}{further arguments passed to or from other methods.}
 }
 \details{
-residuals.manyglm computes Randomised Quantile or ``Dunn-Smyth" residuals (Dunn
-& Smyth 1996) for a manyglm object. If the fitted model is correct then Dunn-Smyth residuals
+\code{residuals.manyglm} computes Randomised Quantile or ``Dunn-Smyth" residuals (Dunn
+& Smyth 1996) for a \code{\link{manyglm}} object. If the fitted model is correct then Dunn-Smyth residuals
 are standard normal in distribution.
+
+Similar functions have been written to compute Dunn-Smyth residuals from \code{manyany} and \code{glm1path} objects.
 
 Note that for discrete data, Dunn-Smyth residuals involve random number generation, and 
 will not return identical results on replicate runs. Hence it is worth calling this function
@@ -33,7 +36,7 @@ Graphical Statistics 5, 236-244.
 }
 \author{David Warton <David.Warton@unsw.edu.au>.}
 \seealso{
-\code{\link{manyglm}}.
+\code{\link{manyglm}}, \code{\link{manyany}}, \code{\link{glm1path}}, \code{\link[mvabund:plot.manyglm]{plot.manyglm}}.
 }
 \examples{
 data(spider)

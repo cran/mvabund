@@ -6,9 +6,10 @@ Fits for Abundance Data}
 \description{Compute an analysis of deviance table for one or more multivariate
 generalized linear model fits.}
 \usage{
-\method{anova}{manyglm}(object, \dots, resamp="pit.trap", test="LR", 
-        p.uni="none", nBoot=1000, cor.type=object$cor.type, 
-	show.time="total", show.warning=FALSE, rep.seed=FALSE, bootID=NULL) 
+ %%%%%%%%% %%%%%%%%% %%%%%%%%% %%%%%%%%% %%%%%%%%% %%%%%%%%% %%%%%%%%% %%%%%%%%% %%%%%%%%%
+\method{anova}{manyglm}(object, \dots, resamp="pit.trap", test="LR", p.uni="none",
+    nBoot=999, cor.type=object$cor.type, block=NULL, show.time="total",
+    show.warning=FALSE, rep.seed=FALSE, bootID=NULL) 
 \method{print}{anova.manyglm}(x, \dots) 
 }
 \arguments{
@@ -28,6 +29,7 @@ step-down resampling procedure.
 }
 \item{nBoot}{the number of Bootstrap iterations, default is \code{nBoot=999}.}
 \item{cor.type}{structure imposed on the estimated correlation matrix under the fitted model. Can be "I"(default), "shrink", or "R". See Details.}
+\item{block}{a factor specifying the sampling level to be resampled. Default is resampling rows.}
 \item{show.time}{Whether to display timing information for the resampling procedure: "none" shows none, "all" shows all timing information and "total" shows only the overall time taken for the tests. }
 \item{show.warning}{logical. Whether to display warning messages in the operation procedure.}
 \item{rep.seed}{logical. Whether to fix random seed in resampling data. Useful for simulation or diagnostic purposes.}
@@ -92,6 +94,7 @@ Rather than stopping after testing for multivariate effects, it is often of inte
 \item{shrink.parameter}{a list of shrink parameters from all \code{manyglm} objects in the anova test.}
 \item{n.bootsdone}{the number of bootstrapping iterations that were done, i.e. had no error.}
 \item{table}{the table with Residual Degrees of Freedom, Degrees of Freedom, the Test Statistics and the P values.}
+\item{block}{any \code{block} argument specified as an inpout argument.}
 
 If \code{p.uni="adjusted"} or \code{"unadjusted"} the output list also contains\cr
 \item{uni.test}{a table showing the test statistics of the univariate tests.}
@@ -140,8 +143,8 @@ block <- Tasmania$block
 tasm.cop.nb <- manyglm(tasm.cop ~ block*treatment, family="negative.binomial")
 
 ## Testing hypotheses about the treatment effect and treatment-by-block interactions, 
-## using the default settings of parametric resampling and deviance as test statistics: 
-anova(tasm.cop.nb, nBoot=200, test="wald")
+## using a Wald statistic and 199 resamples (better to ramp up to 999 for a paper):
+anova(tasm.cop.nb, nBoot=199, test="wald")
 
 }
 \keyword{models}

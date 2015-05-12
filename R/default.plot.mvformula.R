@@ -20,13 +20,13 @@ default.plot.mvformula <- function(	x,
   				data=parent.frame(), 
 				var.subset=NA, 
 				xvar.select=TRUE,
-  			n.xvars=NA,
+				n.xvars=NA,
 #				n.xvars=if(any(is.na(xvar.subset))) min(3, sum(!is.interaction)) else length(xvar.subset),
 				xvar.subset=NA, 
 				scale.lab="ss", 	
 				t.lab="t", 
-				mfrow=NULL, 
-#mfrow=c(min(5,n.vars), min(3, n.xvars[xvar.select])), 
+#				mfrow=NULL, 
+        mfrow=c(min(5,n.vars), min(3, n.xvars[xvar.select])), 
         mfcol=NULL, 
 				shift=TRUE, 
 				border="black",
@@ -485,11 +485,13 @@ if(write.plot=="show" & is.null(dev)) {
 if (all(par("mar")== c(5.1, 4.1, 4.1, 2.1)) & (rows*columns>1) )  {
 	if (overall.main=="") side3 <- 1.7 else side3 <- 1
 #	par(mar=c(3,4,side3,1)+0.1)
-	par(mar=c(1,1,side3,1)+0.1)
+	par(mar=c(1.5,1.75,side3,1)+0.1)
 }
 
-#Set outer margin of the image (in text lines)
-par(oma=c(1,1,2,1))
+#Set outer margin of the image (in text lines), and margin line on which labels are drawn.
+#DW change, 4/5/15
+#par(oma=c(1,1,2,1))
+par(oma=c(2,2,2,1),mgp=c(1.75,0.5,0))
 
 
 ######### BEGIN plot #########
@@ -601,7 +603,6 @@ if(any(scale.lab == "ss")){
 
         ylimleft <- mnAll[wh.min]-mnAll[wh.min]/10
         ylimright <- mxAll[wh.max]+mxAll[wh.max]/10
-
 	if(is.null(yaxvalues[[wh.max]])) {
 		if(write.plot=="show" & is.null(dev)) {
 			do.call(dev.name, args=list(height=height,width=width))
@@ -611,9 +612,10 @@ if(any(scale.lab == "ss")){
 	
 #		dev.set(which = dev.cur())
 cat("\n \tPIPING TO 1st PLOT FORMULA FEATURE \n")
+#DW changes, 4/5/15:making this initial plot invisible. Still shows as a blank page though!? Need to remove...
 #		do.call( "plotFormulafeature", c(list(mvabund.formula[[wh.max]],data=data, axes=axes, type=type[1],ylim=c(0,mxAll[wh.max]+mxAll[wh.max]/10), xvar.subset=1,ask=FALSE), dots ))
-		do.call( "plotFormulafeature", c(list(mvabund.formula[[wh.max]],data=data, axes=axes, type=type[1],ylim=c(ylimleft,ylimright), xvar.subset=1), dots ))
-		mtext(overall.main, outer = TRUE, cex = 0.9*par("cex.main"), col=par("col.main"), line = 1) 
+		do.call( "plotFormulafeature", c(list(mvabund.formula[[wh.max]],data=data, axes=axes, type="n",xaxt="n",yaxt="n",bty="n",ylim=c(ylimleft,ylimright), xvar.subset=1), xlab="",ylab="", dots ))
+#		mtext(overall.main, outer = TRUE, cex = 0.9*par("cex.main"), col=par("col.main"), line = 1) 
 
 		yaxTic <- axTicks(2)
 		yaxLab <- as.character(yaxTic)
@@ -702,8 +704,8 @@ for (yi in 1:winylevel) {
 
 cat("\n \tPIPING TO 2nd PLOT FORMULA FEATURE \n")
 			do.call( "plotFormulafeature", c(list(mvabund.formula[[yj]], data=data,	ylab=ylabj, xlab=xlabyj, ask=aske, yaxis.ticks=yaxvalues[[yj]],	yaxis.labs=yaxislabs[[yj]], fg=fg, cex.xaxis=par("cex.axis"), cex.yaxis=par("cex.axis"), axes=axes , col=col, pch=pch, type=type, las=las, main= main[yj], ylim=ylimVal, border=border, xvar.subset=colsj, cex.lab=par("cex.lab"),all.labels= if(mfr) all.labels else TRUE), dots ))
-	
-			if (yj==rowsj[1] & overall.main!=""  & par("oma")[3]>=1) {
+
+      if (yj==rowsj[1] & overall.main!=""  & par("oma")[3]>=1) {
 				mtext(overall.main, outer = TRUE, cex = 0.9*par("cex.main"), col=par("col.main"), line = 1) 
 			}
 		}

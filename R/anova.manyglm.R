@@ -1,10 +1,10 @@
 ###############################################################################
 # R user interface to anova test for comparing multivariate linear models 
-# Author: Yi Wang (yi dot wang at computer dot org)
-# 11-Nov-2011
+# Author: Yi Wang (yi dot wang at computer dot org) and David Warton
+# Last modified: 24-Mar-2015
 ###############################################################################
 
-anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none", nBoot=1000, cor.type=object$cor.type, show.time="total", show.warning=FALSE, rep.seed=FALSE, bootID=NULL)
+anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none", nBoot=999, cor.type=object$cor.type, block = NULL, show.time="total", show.warning=FALSE, rep.seed=FALSE, bootID=NULL)
 {
     if (cor.type!="I" & test=="LR") {
         warning("The likelihood ratio test can only be used if correlation matrix of the abundances is is assumed to be the Identity matrix. The Wald Test will be used.")
@@ -144,10 +144,40 @@ anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none
        }
     }
 
+#DW additions
+    if(is.null(block)==FALSE)
+    {
+      tb=table(block)
+      nLevels = length(tb)
+      if(any(tb!=nRows/nLevels))
+      {   
+        print(tb) 
+        stop("Sorry, block needs to be a balanced factor - same number of rows for each level")
+      }
+      else
+      {
+        blockIDs = vector("list",nLevels)
+        for(i.level in 1:nLevels)
+          blockIDs[[i.level]] = which(block==names(tb)[i.level])
+        unlistIDs = unlist(blockIDs) #needed to match each resampled observation with its correct location
+      }
+      #then each iteration...
+      if(is.null(bootID)) #generate a bootID matrix if required
+        samp = matrix(sample(nLevels,nLevels*nBoot,replace=TRUE),ncol=nLevels)
+      else
+        samp=bootID
+      bootID = matrix(NA,nBoot,nRows)
+      for(iBoot in 1:nBoot)
+        bootID[iBoot,unlistIDs] = unlist(blockIDs[samp[iBoot,]]) #unlistIDs is needed to make sure each unlisted blockID ends up in the right place
+      bootID = bootID-1 #to fit the format in C, 0 to nRows.
+      cat(paste("Using block resampling...","\n"))
+#      print(bootID)
+    }
+
     # construct for param list     
     modelParam <- list(tol=object$tol, regression=familynum, maxiter=object$maxiter, maxiter2=object$maxiter2, warning=warn, estimation=methodnum, stablizer=0, n=object$K)
     # note that nboot excludes the original data set
-    testParams <- list(tol=object$tol, nboot=nBoot-1, cor_type=corrnum, test_type=testnum, resamp=resampnum, reprand=rep.seed, punit=pu, showtime=st, warning=warn)
+    testParams <- list(tol=object$tol, nboot=nBoot, cor_type=corrnum, test_type=testnum, resamp=resampnum, reprand=rep.seed, punit=pu, showtime=st, warning=warn)
     if(is.null(object$offset)) O <- matrix(0, nrow=nRows, ncol=nVars)
     else O <- as.matrix(object$offset)
     # ANOVA
@@ -216,8 +246,8 @@ anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none
     }   
     else {
         targs <- match.call(expand.dots = FALSE)
-        if (targs[[1]] == "example")
-            modelnamelist <- paste("Model ", format(1:nModels))
+        if (targs[[1]] == "example" || any(class(object) == "traitglm"))
+            modelnamelist <- paste("Model", format(1:nModels))
         else    
             modelnamelist <- as.character(c(targs[[2]], targs[[3]]))
 
@@ -336,6 +366,7 @@ anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none
     if(p.uni=="none") #hack fix because univariate P's were all coming out as 1/B for "none" (!?)
       anova$uni.p[is.numeric(anova$uni.p)] <- NA
 
+    anova$block = block
     class(anova) <- "anova.manyglm"
     return(anova)
 }

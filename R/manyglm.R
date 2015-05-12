@@ -77,10 +77,10 @@ offset <- as.vector(model.offset(mf))
 	}     
 
        if (all(is.wholenumber(Y)) & (length(Y[Y>1]>0))) 
-           stop("Count data are fitted to the binomial regression. Conisder a transformation first.")
+           warning("Count data are fitted to the binomial regression. Conisder a transformation first.")
        
        if ( (length(Y[Y<0])>0) | (length(Y[Y>1]>0)) )
-           stop("Data exceeds the range [0, 1].")     
+           warning("Data exceeds the range [0, 1].")     
     }   
 
     ##################### BEGIN Estimation ###################
@@ -187,7 +187,6 @@ else {
     z$maxiter <- maxiter
     z$maxiter2 <- maxiter2
     z$prior.weight <- NULL
-    z$AIC <- z$aic
     z$AICsum <- sum(z$aic)
     z$family    <- familyname
     z$K         <- K

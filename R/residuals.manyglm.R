@@ -30,6 +30,7 @@ residuals.manyglm<- function(object, ...)
   if(object$family=="gaussian")
   {
     pfn = "pnorm"
+    df.residual = n.rows - dim(coef(object))[1]
     sigma2 = apply( (object$y-object$fitted)^2, 2, sum ) / df.residual
     for(i.var in 1:n.vars)
       params[[i.var]] = list(q=object$y[,i.var], mu=object$fitted[,i.var], sd=sqrt(sigma2[i.var]))
@@ -46,7 +47,7 @@ residuals.manyglm<- function(object, ...)
 
     qupper = do.call(pfn, params[[i.var]])
     qlower = do.call(pfn, param.minus)
-    resids[,i.var] = u * pmax( tol, qupper ) + (1-u) * pmin( 1-tol, qlower )
+    resids[,i.var] = u * pmax( tol^3, qupper ) + (1-u) * pmin( 1-tol^3, qlower )
     #pmax and pmin used to avoid any values identically 0 or 1
   } 
   return( qnorm(resids) )

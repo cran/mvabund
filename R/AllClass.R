@@ -6,8 +6,10 @@ setClass("formulaUnimva" )
 setClass("mvformula")
 
 # Model classes
+setClass("glm1path" ) 
 setClass("manylm")
 setClass("manyglm")
+setClass("traitglm" ) 
 
 # summary classes
 setClass("summary.manylm")

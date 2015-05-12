@@ -4,8 +4,9 @@
 \title{Analysis of Deviance for Many Univariate Models Fitted to Multivariate Abundance Data}
 \description{Compute an analysis of deviance table for many univariate model fits. Slowly!}
 \usage{
-\method{anova}{manyany}(object, \dots, nBoot=99, p.uni="none", block = object1$block, replace=TRUE) 
-\method{print}{anova.manyany}(object) 
+\method{anova}{manyany}(object, \dots, nBoot=99, p.uni="none", block = object1$block,
+       bootID=NULL, replace=TRUE) 
+\method{print}{anova.manyany}(x, ...) 
 }
 \arguments{
 \item{object}{of class \code{manyany} under the null hypothesis, typically the result of a call to \code{\link{manyany}}.}
@@ -18,8 +19,11 @@ for each response variable. If the \code{manyany} object is compositional (\code
 }
 \item{block}{a factor specifying the sampling level to be resampled. Default is resampling rows (if
 composition=TRUE in the manyany command, this means resampling rows of data as originally sent to manyany).}
+\item{bootID}{A user-entered matrix of indices for which observations to use in which resample. Bootstrap
+resamples in rows, observations in columns. When specified, overwrites \code{nBoot} and \code{block}. Default is NULL.}
 \item{replace}{whether to sample with or without replacement, as in the \code{\link{sample}} function.
 \code{= FALSE} for PIT-permutation, \code{ = TRUE} for PIT-trap.}
+\item{x}{\code{anova.manyany} object to be printed.}
 }
 
 \details{
@@ -112,9 +116,8 @@ data(tikus)
 coral <- as.matrix(tikus$abund[1:20,])
 sumSpp = apply(coral>0,2,sum)
 
-coral <- coral[,sumSpp>6] #cutting to just species with seven(!) or more presences to 
-##avoid errors and cut computation time.  Worth rerunning with less (e.g. 4 or more 
-##presences) if curious and patient.
+coral <- coral[,sumSpp>6] ## cutting to just species with seven(!) or more presences to cut
+## computation time.  Maybe rerun with less (e.g. 4 or more presences) if curious and patient.
 coralX <- tikus$x[1:20,]
 
 require(tweedie)
@@ -125,14 +128,10 @@ family=tweedie(var.power=1.5, link.power=0), var.power=1.5, composition=TRUE)
 
 ftRep <- manyany("glm",coral, coral ~ rep, data=coralX, 
 family=tweedie(var.power=1.5, link.power=0), var.power=1.5, composition=TRUE)
-anova(ftRep,ftTimeRep,nBoot=9) #this takes several seconds to run even for just 9 resamples
-## This should be rerun for nBoot=999, which would take closer to an hour...
-## Results though are worth the effort, they suggest no evidence that composition changed!
-## (Although there was a very strong signal of a change in total abundance)
-## (And the Tweedie model has some issues for this dataset, as seen in a plot of the fit)
+anova(ftRep,ftTimeRep,nBoot=9) #this takes a few seconds to run even for just 9 resamples
+## This should be rerun for nBoot=999, which would take maybe five minutes...
 
 }
 \keyword{models}
 \keyword{regression}
 \keyword{multivariate}
-

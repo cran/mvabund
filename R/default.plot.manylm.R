@@ -7,14 +7,13 @@ default.plot.manylm  <- function(x,
 				which = 1:4, 
 				caption = c("Residuals vs Fitted","Normal Q-Q", "Scale-Location", "Cook's distance"), 
 				overlay=TRUE,
-    				n.vars=12, 
+    				n.vars=Inf, 
 				var.subset=NULL, 
 				panel = if (add.smooth) panel.smooth else points,
     				sub.caption = NULL, 
 				main = "", 
 				ask, 
 				...,
-    				col=palette(rainbow(n.vars+1))[2:(n.vars+1)],
     				id.n = if (overlay) 0 else 3, 
 				labels.id =  rownames(as.matrix(residuals(x))),
 	    			cex.id = 0.75, 
@@ -198,7 +197,12 @@ default.plot.manylm  <- function(x,
 
     	var.names <- colnames(r)
     	if(is.null(var.names)) var.names <- as.character(1:n.vars)
-    
+
+      if( "col" %in% names(dots) )
+        col <- dots$col
+      else
+        col = rainbow(n.vars+1)[2:(n.vars+1)]
+
     	#################### BEGIN get window dimensions  ##########################
   
     	if(!is.null(mfcol)) {
@@ -208,8 +212,6 @@ default.plot.manylm  <- function(x,
         # Get all the graphical parameters.
         opp <- par("col.main","mfrow","mfcol","oma")
 
-        palet <- palette() # Rset the palette which is by default changed by
- 
         if (length(mfrow)==1){
         	# i.e. mfrow is an integer either the default or a passed value,
         	# ie calc nrows & ncols
@@ -336,8 +338,6 @@ default.plot.manylm  <- function(x,
     	# at the beginning.
     	if(write.plot=="show") on.exit( par(opp), add=TRUE )
 
-    	on.exit(palet, add=TRUE )
-
     	########################### END get window dimensions  #####################
 
 
@@ -377,8 +377,8 @@ default.plot.manylm  <- function(x,
 #                  s <- s[- which.na.pass] }
             if (show[4]) {          
                 # the non-weighed residuals are used!
-                cook <- cooks.distance(x, sd = s, res = r.orig)
-		# for lm: the cooks distance is calculated for var.subset
+                cook <- cooks.distance.manylm(x, sd = s, res = r.orig)
+                # for lm: the cooks distance is calculated for var.subset
                	# because of s and r from varsubset
                	# for glm: the cooks distance is calculated for all variables,
                	# select var.subset afterwards
@@ -505,7 +505,7 @@ default.plot.manylm  <- function(x,
                    if (id.n > 0) 
                       # for compatibility with R 2.2.1
                       ylim <- ylim + c(-0.08, 0.08) * diff(ylim)
-                      do.call( "plot", c(list( t(yh), t(r), xlab = l.fit, ylab = "Residuals", main = main, ylim = ylim, xlim=xlim, type = "n", asp=asp ), dots))
+                      do.call( "plot", c(list( t(yh), t(r), xlab = l.fit, ylab = "Residuals", main = main, ylim = ylim, xlim=xlim, type = "n"), dots))
           
 		# Use vector built of transposed x bzw y in order to plot
             	# in the right colors.

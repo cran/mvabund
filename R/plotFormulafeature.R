@@ -191,12 +191,12 @@ if (response) {
 cat("plot 1\n")			
 				do.call(funname, c(list(x.data, y, ylab = "", xlab = "", col=dcol,
 						border=bordcol) , main=main, axes =axes,las=las, fg=fg, dots))
-				title(xlab=xl, ylab=yl,line=2, cex.lab=1.2)
+				title(xlab=xl, ylab=yl, cex.lab=1.2)
 			} else { 
 cat("plot 2\n")
 				do.call(funname, c(list(x.data, y, ylab = "", xlab = "", col=dcoli),
 						main=main, axes =axes,las=las, fg=fg, dots))
-				title(xlab=xl, ylab=yl, line=2, cex.lab=1.2)
+				title(xlab=xl, ylab=yl, cex.lab=1.2)
 			}
 
 			if (!missing(axes) ) {

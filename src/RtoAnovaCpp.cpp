@@ -78,8 +78,8 @@ RcppExport SEXP RtoAnovaCpp(SEXP params, SEXP Ysexp, SEXP Xsexp,
     }
 
     // do stuff	
-    clock_t clk_start, clk_end;
-    clk_start = clock();
+//    clock_t clk_start, clk_end;
+//    clk_start = clock();
 
 // initialize anova class
     AnovaTest anova(&mm, Y, X, isXvarIn);

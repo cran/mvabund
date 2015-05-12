@@ -3,7 +3,7 @@
 # Plot for evaluation of goodness of fit for lm.mvabund objects                #
 ################################################################################
 
-default.plot.manyglm  <- function(x, which = 1, res.type="pit.norm", caption = c("Residuals vs Fitted","Normal Q-Q", "Scale-Location", "Cook's distance"), overlay=TRUE, n.vars=Inf, var.subset=NULL, panel = if (add.smooth) panel.smooth else points, sub.caption = NULL, main = "", ask, ..., col=palette(rainbow(n.vars+1))[2:(n.vars+1)], id.n = if (overlay) 0 else 3, labels.id=rownames(x$Pearson.residuals), cex.id = 0.75, qqline = TRUE, add.smooth = if(!is.null(getOption("add.smooth"))){ getOption("add.smooth") } else TRUE, label.pos = c(4, 2), cex.caption=1.5, asp = 1, legend.pos= if(length(col)==1) "none" else "nextplot",	mfrow= if(overlay) {length(which)+(legend.pos=="nextplot")} else if(write.plot=="show") c(min(n.vars,3),length(which)) else length(which), mfcol=NULL, write.plot="show", filename="plot.mvabund", keep.window= if(is.null(c(mfrow,mfcol))) TRUE else FALSE, legend=FALSE) 
+default.plot.manyglm  <- function(x, which = 1, res.type="pit.norm", caption = c("Residuals vs Fitted","Normal Q-Q", "Scale-Location", "Cook's distance"), overlay=TRUE, n.vars=Inf, var.subset=NULL, panel = if (add.smooth) panel.smooth else points, sub.caption = NULL, main = "", ask, ..., id.n = if (overlay) 0 else 3, labels.id=rownames(x$Pearson.residuals), cex.id = 0.75, qqline = TRUE, add.smooth = if(!is.null(getOption("add.smooth"))){ getOption("add.smooth") } else TRUE, label.pos = c(4, 2), cex.caption=1.5, asp = 1, legend.pos= "nextplot",	mfrow= if(overlay) {length(which)+(legend.pos=="nextplot")} else if(write.plot=="show") c(min(n.vars,3),length(which)) else length(which), mfcol=NULL, write.plot="show", filename="plot.mvabund", keep.window= if(is.null(c(mfrow,mfcol))) TRUE else FALSE, legend=FALSE) 
 {        
     allargs <- match.call(expand.dots = FALSE)
     dots <- allargs$...
@@ -34,22 +34,21 @@ default.plot.manyglm  <- function(x, which = 1, res.type="pit.norm", caption = c
 	   png(paste(filename,".png", sep=""))
     	on.exit( dev.off() )
    }
-   na.action <- x$na.action
-   na.action.type  <- attr(na.action, "class")
-   if(!is.null(na.action))  message("Due to NA values the case(s) ", na.action, " were discarded.")
 
-   if (length(dots)>0) {  
-	# in the plot function.
+   if (length(dots)>0)
+   {  
+    	# in the plot function.
     	deactive <- c("xlab", "ylab", "ylim", "sub", "type") 
-	deactivate <- (1:length(dots))[names(dots) %in% deactive ]
-    
-	for (i in length(deactivate):1) 
+    	deactivate <- (1:length(dots))[names(dots) %in% deactive ]
+  
+	    for (i in length(deactivate):1) 
    	    dots[ deactivate[i] ]<-NULL #fixed up [[]], due to compile error (v2.10).
 
-	dots <- lapply( dots, eval, parent.frame() )
-	if( "col.main" %in% names(dots) ) colmain <- dots$col.main
-	else colmain <- par("col.main")
-   } else colmain <- par("col.main")
+    	dots <- lapply( dots, eval, parent.frame() )
+	    if( "col.main" %in% names(dots) ) colmain <- dots$col.main
+	    else colmain <- par("col.main")
+   }
+   else colmain <- par("col.main")
 
    if (!inherits(x, c("manylm", "manyglm"))) warning("use 'plot.manylm' only with \"manylm\" or \"manyglm\" objects")
         
@@ -64,43 +63,29 @@ default.plot.manyglm  <- function(x, which = 1, res.type="pit.norm", caption = c
    else empty <- TRUE
 
 #   if(empty && show[4]) {
-   if(show[4]) {
+   if(show[4])
+   {
      	if (length(which)==1) stop("Plot no. 4 cannot be drawn, as Cooks distance cannot be calculated for an empty model")
-        else {
-           warning("Plot no. 4 cannot be drawn, as Cooks distance cannot be calculated for an empty model")
-	   show[4] <- FALSE
-	   which   <- which[-which[which==4]]
-	}
-    }
+      else
+      {
+        warning("Plot no. 4 cannot be drawn, as Cooks distance cannot be calculated for an empty model")
+	      show[4] <- FALSE
+	      which   <- which[-which[which==4]]
+    	}
+   }
 
-    if (substr(res.type,1,3)=="pit") {
+   if (substr(res.type,1,3)=="pit")
+   {
         r <- as.matrix(x$PIT.residuals) 
         if (res.type=="pit.norm") r <- residuals(x)
-    }
-    else r <- as.matrix(x$Pearson.residuals) # residuals(x)
-    yh <- as.matrix(x$linear.predictor)
+   }
+   else r <- as.matrix(x$Pearson.residuals) # residuals(x)
+   
+   yh <- as.matrix(x$linear.predictor)
 
 #    yh <- as.matrix(x$fitted.values)
 #    w <- x$sqrt.weight * x$sqrt.weight
-    w <- NULL
-
-    if(any(na.action.type == "exclude")) {
-      	r <- r[- na.action, ]
-       	if (!is.null(w)) {
-            if(isGlm & is.matrix(w)) w <- w[- na.action, ]  
-	    else w <- w[- na.action]
-       	}
-       	yh <- yh[- na.action, ]
-    }
-
-    if(any(na.action.type == "pass") | is.null(na.action.type)) {
-      	which.na.pass <- which(is.na(r[1,]))      	
-	if (length(which.na.pass)>0){
-	   yh <- yh[, - which.na.pass] # !!! needs to be checked, maybe this line must be deleted !!!
-           r <- r[ , - which.na.pass]   # the whole column with NA values in y will be NA in residuals
-	   if(isGlm & is.matrix(w)) w <- w[,-  which.na.pass]
-        } 
-    }   
+   w <- NULL
 
     # Change logical var.subset to numerical var.subset, if necessary. Note that NA values are logical as well, but should be excluded here.
     if(!is.null(var.subset) & !is.numeric(var.subset))
@@ -133,16 +118,12 @@ default.plot.manyglm  <- function(x, which = 1, res.type="pit.norm", caption = c
           n.vars <- p
        }      
        y <- as.matrix(x$y)
-       if(any(na.action.type == "pass") | is.null(na.action.type)) {
-           if(length(which.na.pass)>0)  y <- y[, - which.na.pass]
-       }
        if (!is.null(w)) 
           sum.y <- t(y[wind,,drop=FALSE]) %*% matrix(1,ncol=1,nrow=n)
        else sum.y <- t(y) %*% matrix(1,ncol=1,nrow=n)
         
        # Find abundance ranks OF MVABUND.OBJECT.1.
        var.subset <- order(sum.y, decreasing = TRUE)
-       var.subset <- var.subset[1:n.vars]
        typeofvarsubset <- " \n(the variables with highest total abundance)"   
     }       
     else {  # if var.subset is specified
@@ -161,18 +142,28 @@ default.plot.manyglm  <- function(x, which = 1, res.type="pit.norm", caption = c
    r <- r[,var.subset, drop=FALSE]
    yh <- yh[,var.subset, drop=FALSE]
    w <- w[,var.subset, drop=FALSE]
-
    ######### END edit var.subset, n.vars and r & fitted values  ###########
 
    var.names <- colnames(r)
    if(is.null(var.names)) var.names <- as.character(1:n.vars)
     
-   ################# BEGIN get window dimensions  #########################
-
+   ### SET COLORS AND GET SOME GRAPHICS PARAMETERS
+   # Upon exiting the function, reset all graphical parameters to its value
+   # at the beginning.
    if(!is.null(mfcol)) mfrow <- mfcol      
    # Get all the graphical parameters.
    opp <- par("col.main","mfrow","mfcol","oma")
-   palet <- palette() # Rset the palette which is by default changed by
+   if( "col" %in% names(dots) )
+   {
+     col <- dots$col[var.subset]
+     dots$col=NULL
+   } 
+   else
+     col = rainbow(n.vars+1)[2:(n.vars+1)]
+   if (write.plot=="show")
+     on.exit( par(opp), add=TRUE ) 
+
+   ################# BEGIN get window dimensions  #########################
 
    if (length(mfrow)==1){
       # i.e. mfrow is an integer either the default or a passed value,
@@ -277,15 +268,10 @@ default.plot.manyglm  <- function(x, which = 1, res.type="pit.norm", caption = c
     if(all(opp$mfrow == c(row,columns))) opp$mfrow <- opp$mfcol <- NULL
     if(keep.window & write.plot=="show") opp$mfrow <- opp$mfcol <- opp$oma <- NULL
     	
-    # Upon exiting the function, reset all graphical parameters to its value
-    # at the beginning.
-    if (write.plot=="show") on.exit( par(opp), add=TRUE ) 
-       on.exit(palet, add=TRUE )
-
     ##################### END get window dimensions  ##################
 
     ####################### BEGIN selection of colors ##################
-    lcols <- length(col)        
+    lcols <- length(col) 
     if (lcols==p & lcols != n.vars) { 
 	# Adjust the colors to the subset
      	col <- col[var.subset]
@@ -436,8 +422,9 @@ default.plot.manyglm  <- function(x, which = 1, res.type="pit.norm", caption = c
           
           rtmp <- c(r)
           r0 <- rtmp[!yh.is.zero]
-          ylim <- range(r0, na.rm = TRUE)
-
+#          ylim <- range(r0, na.rm = TRUE)
+          ylim <- range(max(abs(r0))*c(-1,1), na.rm = TRUE) #DW, 10/02/15: to make ylims symmetric about zero
+          
           colortmp <- rep(color, each=n)
           color0 <- colortmp[!yh.is.zero]
             
@@ -705,8 +692,7 @@ default.plot.manyglm  <- function(x, which = 1, res.type="pit.norm", caption = c
     
     message("Only the variables ", paste(colnames(r), collapse = ", "), " were included in the plot", tmp, ".")
   }
-
-  return(invisible())
+return(invisible())
 
 }
  
