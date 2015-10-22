@@ -131,18 +131,27 @@ anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none
 
     if (!is.null(bootID)) {
        nBoot<-dim(bootID)[1]
-       if (is.integer(bootID)) {
-           cat(paste("Using bootID matrix from input.","\n"))
-           if (max(bootID)==nRows) # to fit the format in C i.e. (0, nObs-1)
-               bootID <- matrix(as.integer(bootID-1), nrow=nBoot, ncol=nRows)
-           if (max(bootID)>nRows)
-              cat(paste("Invalid bootID -- sample id larger than no. of observations. Calculate bootID matrix on the fly.","\n"))
+       if (max(bootID)>nRows) {
+          bootID <- NULL
+          cat(paste("Invalid bootID -- sample id larger than no. of observations. Generate bootID matrix on the fly.","\n"))
        }
        else {
-           bootID <- NULL
-       cat(paste("Invalid bootID -- sample id should be integer numbers up to the no. of observations. Calculate bootID matrix on the fly.","\n"))
-       }
-    }
+          if (resamp == "score") {
+             cat(paste("Using <double> bootID from input for score resampling.","\n"))
+          }
+          else { # all other methods resample the matrix index 
+             if (is.integer(bootID)) {
+                 cat(paste("Using <int> bootID matrix from input.","\n"))
+                 if (max(bootID)==nRows) # to fit the format in C i.e. (0, nObs-1)
+                     bootID <- matrix(as.integer(bootID-1), nrow=nBoot, ncol=nRows)
+             }
+             else {
+                 bootID <- NULL
+                 cat(paste("Invalid bootID -- sample id for methods other than 'score' resampling should be integer numbers up to the no. of observations. Generate bootID matrix on the fly.","\n")) 
+            }
+         }       
+      }
+   }
 
 #DW additions
     if(is.null(block)==FALSE)
@@ -212,7 +221,6 @@ anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none
        }
 
        resdf <- c(resdf, object$df.residual)
-#browser()       
        # get the shrinkage estimates
        tX <- matrix(1, nrow=nRows, ncol=1)
        if (corrnum==2 | resampnum==5){ # shrinkage or montecarlo bootstrap
@@ -313,10 +321,11 @@ anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none
         ord <- (nModels-1):1
     }
 
-# browser()
     ######## call resampTest Rcpp #########   
-    val <- .Call("RtoGlmAnova", modelParam, testParams, Y, X, O,
-                 XvarIn, bootID, shrink.param, PACKAGE="mvabund")
+#        val <- .Call("RtoGlmAnova", modelParam, testParams, Y, X, O,
+ #                XvarIn, bootID, shrink.param, PACKAGE="mvabund")
+
+    val <- RtoGlmAnova(modelParam, testParams, Y, X, O, XvarIn, bootID, shrink.param)
 
     # prepare output summary
     table <- data.frame(resdf, c(NA, val$dfDiff[ord]), 

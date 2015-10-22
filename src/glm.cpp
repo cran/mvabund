@@ -17,6 +17,7 @@ glm::glm(const reg_Method *mm)
 { 
      maxth = 100;
      n=mmRef->n;
+     speclink = mmRef->speclink;
      maxiter = mmRef->maxiter;
      maxiter2 = mmRef->maxiter2;
      // Error terms
@@ -26,6 +27,8 @@ glm::glm(const reg_Method *mm)
      mintol = 1e-6; 
      if (mmRef->model==BIN) maxtol=n-mintol; 
      else maxtol = 1/mintol;
+
+
 }
 
 PoissonGlm::PoissonGlm(const reg_Method *mm):glm(mm){
@@ -146,7 +149,8 @@ void glm::initialGlm(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B)
 //  It seems to work for poisson and negative.binomial as well
     double LinAdjust, ScaleAdjust;
     double eij;
-    if (mmRef->model==BIN) {
+    // cLogLog initialization is the same as binomial
+    if ( mmRef->model==BIN ) {
         LinAdjust=0.5;
         ScaleAdjust=0.5;
     }
@@ -514,12 +518,12 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B)
         // Get initial theta estimates
         iterconv[j]=0.0;  
         if (mmRef->estiMethod==CHI2) {
-           th = getDisper(j, 0.0); 
+           th = 1.0; // initial phi value
            while ( iterconv[j]<maxiter ) {
                iterconv[j]++;
                dev_th_b_old = dev[j];
+               th = th/getDisper(j, th); // Note: getDisper returns phi=1/theta!
                betaEst(j, 1.0, &tol, th);  // 1-step beta
-               th = th*getDisper(j, th); // 1-step theta 
                tol = ABS((dev[j]-dev_th_b_old)/(ABS(dev[j])+0.1));
                if (tol<eps) break;
          }  }
@@ -618,11 +622,11 @@ int NBinGlm::nbinfit(gsl_matrix *Y, gsl_matrix *X, gsl_matrix *O, gsl_matrix *B)
    return SUCCESS;    
 }
 
-
+// old based on the phi-1/theta on log scale in <Hilbe2008>
 double PoissonGlm::getDisper( unsigned int id, double th )const
 {
     unsigned int i, df, nNonZero=0;
-    double ss2, yij, mij, chi2=0;
+    double ss2, yij, mij, chi2=0, var=1.0;
 
     gsl_vector_view yj = gsl_matrix_column (Yref, id);
     gsl_vector_view mj = gsl_matrix_column (Mu, id);
@@ -630,10 +634,12 @@ double PoissonGlm::getDisper( unsigned int id, double th )const
         yij = gsl_vector_get (&yj.vector, i);
         mij = gsl_vector_get (&mj.vector, i);
         ss2 = (yij-mij)*(yij-mij); // ss = (y-mu)^2
-        if ( mij<mintol ) mij = 1;
+        if ( mij<mintol ) mij = mintol; //mij = 1;
         else  nNonZero++;      
-        if ( varfunc(mij, th)>eps )
-            chi2 = chi2 + ss2/varfunc(mij, th); // dist dependant
+        if ( var > eps ) {
+            var =  varfunc(mij, th);
+            chi2 = chi2 + ss2/var; // dist dependant
+        }
     }
     if (nNonZero > nParams) 
         df = nNonZero - nParams; 

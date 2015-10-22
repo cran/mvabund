@@ -4,8 +4,9 @@
 \title{Analysis of Deviance for Many Univariate Models Fitted to Multivariate Abundance Data}
 \description{Compute an analysis of deviance table for many univariate model fits. Slowly!}
 \usage{
-\method{anova}{manyany}(object, \dots, nBoot=99, p.uni="none", block = object1$block,
+\method{anova}{manyany}(object, \dots, nBoot=99, p.uni="none", block=object1$block, nCores=1,
        bootID=NULL, replace=TRUE) 
+
 \method{print}{anova.manyany}(x, ...) 
 }
 \arguments{
@@ -19,6 +20,7 @@ for each response variable. If the \code{manyany} object is compositional (\code
 }
 \item{block}{a factor specifying the sampling level to be resampled. Default is resampling rows (if
 composition=TRUE in the manyany command, this means resampling rows of data as originally sent to manyany).}
+\item{nCores}{Number of cores to use for computations (for parallel computing).}
 \item{bootID}{A user-entered matrix of indices for which observations to use in which resample. Bootstrap
 resamples in rows, observations in columns. When specified, overwrites \code{nBoot} and \code{block}. Default is NULL.}
 \item{replace}{whether to sample with or without replacement, as in the \code{\link{sample}} function.

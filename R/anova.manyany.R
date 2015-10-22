@@ -1,4 +1,4 @@
-anova.manyany = function(object, ..., nBoot=99, p.uni="none", block = object1$block, bootID=NULL, replace=TRUE)
+anova.manyany = function(object, ..., nBoot=99, p.uni="none", block = object1$block, nCores = 1, bootID=NULL, replace=TRUE)
 {
 # analysis of variance comparing object1 (null) to object2 (alternative)
 # uses the PIT-trap
@@ -85,11 +85,13 @@ anova.manyany = function(object, ..., nBoot=99, p.uni="none", block = object1$bl
   {
     bootID = as.matrix(bootID)
     if(dim(bootID)[2]!=n.rows)
-      stop("Number of rows of bootID must match number of rows in data")
+      stop("Number of columns of bootID must match number of rows in data")
     nBoot = dim(bootID)[1] #overwriting nBoot with value implied by user-entered ID matrix
     block = NULL #overwriting previous value for block
     print("User-entered bootID matrix will be used to generate bootstrap samples")
   }  
+  n.levels  = n.rows; unlistIDs = NULL #objects needed for block resampling otherwise ignorable 
+  blockIDs = NULL
   if(is.null(block)==FALSE)
   {
     tb=table(block)
@@ -113,59 +115,46 @@ anova.manyany = function(object, ..., nBoot=99, p.uni="none", block = object1$bl
   statj = 2 * ( logLik(object2)-logLik(object1) )
   stat = sum(statj)
   
-  #initialise parameters for bootstrapping
-  yMat = matrix(NA,n.rows,n.vars)
-  if(object1$family[[1]]$family=="ordinal")
-    yMat=data.frame(yMat)
-  statj.i = matrix(NA,n.vars,nBoot)
+
+  if(nCores>1)
+  {
+    nBooti = ceiling(nBoot/nCores)
+
+    # construct a list which says which rows of bootID to use in which cluster: only needed when bootID provided
+    bootRows = vector(length=nCores,mode="list")
+    for(iCore in 1:nCores)
+      bootRows[[iCore]] = 1:nBooti + nBooti*(iCore-1)
+    bootRows[[nCores]]  = pmin( bootRows[[nCores]], nBoot )
+
+    # set up clusters, pass through arguments
+    cl=makeCluster(nCores)
+    argList = list(bootID=bootID, block=block, blockIDs = blockIDs, n.rows=n.rows, n.vars=n.vars, replace=replace, unlistIDs=unlistIDs, n.levels=n.levels, object1=object1, object2=object2, qfn=qfn)
+    clusterExport(cl,"argList", envir=environment())
+    #clusterExport(cl,c("nBooti","bootID","block","n.rows","n.vars","replace","unlistIDs","n.levels","object1","object2","qfn"), envir=environment())
+    out=parLapply(cl,bootRows,bootAnova)
+    #why not clusterapply??
+    stopCluster(cl)
+
+    # store results in vectors/matrices not lists
+    stat.i  = rep(NA,nBooti*nCores)
+    statj.i = matrix(NA,n.vars,nBooti*nCores)
+    for(i.core in 1:nCores)
+    {
+      stat.i[(i.core-1)*nBooti+1:nBooti]     = out[[i.core]]$stati.i
+      statj.i[,(i.core-1)*nBooti+1:nBooti] = out[[i.core]]$statj.ii
+    }  
+    stat.i = stat.i[1:nBoot]
+    statj.i = statj.i[,1:nBoot]
+  }
+  else
+  {
+    out = bootAnova(bootRows=1:nBoot,bootID=bootID,block=block, blockIDs=blockIDs, n.rows=n.rows,n.vars=n.vars,replace=replace,unlistIDs=unlistIDs,n.levels=n.levels,object1=object1,object2=object2,qfn=qfn,nCores=1)
+    stat.i=out$stati.i
+    statj.i = out$statj.ii
+  }
   if(n.vars>1)
     dimnames(statj.i)[[1]] = dimnames(object1$residuals)[[2]]
-  stat.i=rep(NA,nBoot)
-  if(is.null(bootID))
-    boot.Resamp = rep(NA,n.rows)
-  object1$call$get.what="none" #to avoid wasting time computing residuals etc when resampling
-  object2$call$get.what="none" #to avoid wasting time computing residuals etc when resampling
-    
-  #now do the bootstrap
-  for(iBoot in 1:(nBoot))
-  {
-    if(is.null(bootID)==FALSE)
-      boot.Resamp = bootID[iBoot,]
-    else      # generate resampled residuals
-    {
-      if(is.null(block))
-        boot.Resamp = sample(1:n.rows,replace=replace)
-      else
-        boot.Resamp[unlistIDs] = unlist(blockIDs[sample(n.levels,replace=replace)]) #unlistIDs is needed to make sure each unlisted blockID ends up in the right place
-    }
-    resid.i = as.matrix(object1$residuals[boot.Resamp,])
-    # simulate data to get resampled yMat
 
-    for(i.var in 1:n.vars)
-    {
-      qparams = object1$params[[i.var]]
-      qparams[[1]]=resid.i[,i.var]
-      names(qparams)[1]="p"
-      yMat[,i.var] = do.call(qfn[i.var], qparams)
-    }
-    #save resampled yMat as whatever the original yMat was called in workspace - but without zerotons
-    if(object1$family[[1]]$family=="ordinal")
-      is.zeroton = apply(yMat,2,function(x) length(table(x)))==1
-    else
-      is.zeroton = apply(yMat,2,sum)==0
-    assign(as.character(object1$call[[3]]),yMat[,is.zeroton==FALSE]) 
-    assign(as.character(object2$call[[3]]),yMat[,is.zeroton==FALSE]) 
-    #re-fit manyany functions and calculate test stats using the resampled yMat:
-    if(sum(is.zeroton==FALSE)>0)
-    {
-      ft.1i=eval(object1$call)
-      ft.2i=eval(object2$call)
-      statj.i[is.zeroton==FALSE,iBoot]=2 * ( logLik(ft.2i)-logLik(ft.1i) )
-      stat.i[iBoot] = sum(statj.i[,iBoot], na.rm=TRUE)      
-    }
-    else
-      stat.i[iBoot] = 0
-  }
   p = ( 1 + sum(stat.i>stat-1.e-8) ) / (nBoot + 1)
   pj = ( 1 + apply(statj.i>statj-1.e-8,1,sum) ) / ( nBoot + 1)
 
@@ -213,3 +202,78 @@ print.anova.manyany=function(x, ...)
   }
 }
 
+bootAnova = function(bootRows,...)
+{
+  nBooti = length(bootRows)
+  dots = list(...)
+  if ( any(names(dots)=="nCores") ) # if nCores=1, take ... and call it argList, to match parLapply call
+  {
+    if(dots$nCores==1)
+      argList=list(...)
+  }
+  #initialise parameters for bootstrapping
+
+  require(mvabund)
+  yMat = matrix(NA,argList$n.rows,argList$n.vars)
+  if(argList$object1$family[[1]]$family=="ordinal")
+    yMat=data.frame(yMat)
+  argList$object1$call$get.what="none" #to avoid wasting time computing residuals etc when resampling
+  argList$object2$call$get.what="none" #to avoid wasting time computing residuals etc when resampling
+  
+  stati.i  = rep(NA,nBooti)
+  statj.ii = matrix(NA,argList$n.vars,nBooti)
+  
+  if(is.null(argList$bootID))
+    boot.Resamp = rep(NA,argList$n.rows)
+
+  # need to find data frame and call it what it the same as in the original call for analysis
+  whichData = which(names(argList$object2$call)=="data")
+  assign(as.character(argList$object2$call[[whichData]]),argList$object2$model) 
+    
+  #now do the bootstrap
+  for(iBoot in 1:length(bootRows))
+  {
+    # first get ID entries for this resample
+    if(is.null(argList$bootID)==FALSE)
+      boot.Resamp = argList$bootID[bootRows[iBoot],]
+    else      
+    {
+      if(is.null(argList$block))
+        boot.Resamp = sample(1:argList$n.rows,replace=argList$replace)
+      else
+        boot.Resamp[argList$unlistIDs] = unlist(argList$blockIDs[sample(argList$n.levels,replace=argList$replace)]) #unlistIDs is needed to make sure each unlisted blockID ends up in the right place
+    }
+
+    # resample PIT residuals
+    resid.i = as.matrix(argList$object1$residuals[boot.Resamp,])
+  
+    # now use PIT-transform to get resampled yMat
+    for(i.var in 1:argList$n.vars)
+    {
+      qparams = argList$object1$params[[i.var]]
+      qparams[[1]]=resid.i[,i.var]
+      names(qparams)[1]="p"
+      yMat[,i.var] = do.call(argList$qfn[i.var], qparams)
+    }
+    
+    #save resampled yMat as whatever the original yMat was called in workspace - but without zerotons
+    if(argList$object1$family[[1]]$family=="ordinal")
+      is.zeroton = apply(yMat,2,function(x) length(table(x)))==1
+    else
+      is.zeroton = apply(yMat,2,sum)==0
+    assign(as.character(argList$object1$call[[3]]),yMat[,is.zeroton==FALSE]) 
+    assign(as.character(argList$object2$call[[3]]),yMat[,is.zeroton==FALSE]) 
+
+    #re-fit manyany functions and calculate test stats using the resampled yMat:
+    if(sum(is.zeroton==FALSE)>0)
+    {
+      ft.1i=eval(argList$object1$call)
+      ft.2i=eval(argList$object2$call)
+      statj.ii[is.zeroton==FALSE,iBoot]=2 * ( logLik(ft.2i)-logLik(ft.1i) )
+      stati.i[iBoot] = sum(statj.ii[,iBoot], na.rm=TRUE)      
+    }
+    else
+      stati.i[iBoot] = 0
+  }
+  return(list(stati.i=stati.i,statj.ii=statj.ii))
+} 

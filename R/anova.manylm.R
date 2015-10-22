@@ -93,15 +93,49 @@ anova.manylm <- function(object, ..., resamp="perm.resid", test="F", p.uni="none
    }
 
     if (!is.null(bootID)) {
-        nBoot<-dim(bootID)[2]
-	if (is.integer(bootID)) {
-	   cat(paste("Input bootID matrix being used for testing.","\n"))
-	}
-	else {
-	   bootID <- NULL
-	   cat(paste("Invalid bootID. Calculate bootID matrix on the fly.","\n"))
-	}
+       # input bootID to resamp methods other than scoreboot must be integers
+       nBoot<-dim(bootID)[2]
+       if (resamp == "score") {
+	   cat(paste("Input <double> bootID for score resampling.","\n"))
+       }
+       else {
+           if (is.integer(bootID)) {
+               bootID <- bootID - 1 # index in C starting with 0
+	       cat(paste("Input <int> bootID for resampling observations.","\n"))
+           }
+           else {
+	       bootID <- NULL
+               cat(paste("Invalid bootID. Generate bootID on the fly.","\n"))
+           }
+       }
     }
+
+    if (!is.null(bootID)) {
+       nBoot<-dim(bootID)[1]
+       if (max(bootID)>nRows) {
+          bootID <- NULL
+          cat(paste("Invalid bootID -- sample id larger than no. of observations. Generate bootID matrix on the fly.","\n"))
+       }
+       else {
+          if (resamp == "score") {
+             cat(paste("Using <double> bootID from input for score resampling.","\n"))
+          }
+          else { # all other methods resample the matrix index 
+             if (is.integer(bootID)) {
+                 cat(paste("Using <int> bootID matrix from input.","\n"))
+                 if (max(bootID)==nRows) # to fit the format in C i.e. (0, nObs-1)
+                     bootID <- matrix(as.integer(bootID-1), nrow=nBoot, ncol=nRows)
+             }
+             else {
+                 bootID <- NULL
+                 cat(paste("Invalid bootID -- sample id for methods other than 'score' resampling should be integer numbers up to the no. of observations. Generate bootID matrix on the fly.","\n"))
+            }
+         }
+      }
+   }
+
+
+
 
     if (studentize) st <- 1
     else st <- 0
@@ -155,7 +189,7 @@ anova.manylm <- function(object, ..., resamp="perm.resid", test="F", p.uni="none
         topnote <- paste("Model:", deparse(object$call) )
     }
     else {
-        targs <- match.call(call = sys.call(which = 1), expand.dots = FALSE)
+        targs <- match.call(expand.dots = FALSE)
      #   print(targs[[1]])
         if ( targs[[1]] == "example" )
             modelnamelist <- paste("Model ", format(1:nModels))
@@ -213,7 +247,8 @@ anova.manylm <- function(object, ..., resamp="perm.resid", test="F", p.uni="none
     }
 
     ######## call resampTest Rcpp #########
-    val <- .Call("RtoAnovaCpp", params, Y, X, XvarIn, bootID, PACKAGE="mvabund")
+    # preprocess bootID for differnt resampling methods
+    val <- RtoAnovaCpp(params, Y, X, XvarIn, bootID)
 
     if (calc.rss) {
         RSS <- matrix(unlist(resdev),nrow=nModels,ncol=nVars,byrow=TRUE)

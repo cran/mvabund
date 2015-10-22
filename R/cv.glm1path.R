@@ -31,17 +31,19 @@ cv.glm1path = function(object, block = NULL, best="min", plot=TRUE, prop.test=0.
   else
     n.levels = n.rows
   
+  n.test = floor(n.levels*prop.test)
   for(i.split in 1:n.split)
   {
       if(is.null(seed)==FALSE) #set seed if it has been given
         set.seed(seed[i.split])
-      is.test = sample(1:n.levels, n.levels*prop.test)
+      is.test = sample(1:n.levels, n.test)
       if(is.null(block) == FALSE)
         is.test    = unlist(blockIDs[is.test]) # if block sampling, turn into a vector of row IDs
       y.test     = object$y[is.test]
       
       out       = glm1path(object$y[-is.test], object$X[-is.test,], lambdas=object$lambdas, family=object$family, penalty=object$penalty, ...)
-      ll.train[,i.split] = out$logL
+      n.lambdai = length(out$logL) #in case it stops before if finishes the full range of lambdas
+      ll.train[1:n.lambdai,i.split] = out$logL
 
 #WOULD BE BETTER TO USE EVAL: like in anova.manyany
 #      assign(as.character(object1$call[[3]]),yMat[,is.zeroton==FALSE]) 
@@ -52,20 +54,19 @@ cv.glm1path = function(object, block = NULL, best="min", plot=TRUE, prop.test=0.
       # get test likelihood
 # If I write a predict function, the following can be done generically and can apply across manyglm, manyany, etc...
       mu.test      = object$glm1.best$family$linkinv(object$X[is.test,] %*% out$all.coefficients)
-      y.test       = object$y[is.test]
       weights.test = object$glm1.best$weights[is.test]
       if( object$glm1.best$family$family=="binomial" || object$glm1.best$family$family=="poisson" || pmatch("Negative Binomial",object$glm1.best$family$family,nomatch=0)==1 )
         dev = NA #to save a little computation time, don't get dev when it is not needed by the aic function.
       else
-        dev = object$glm1.best$family$dev(object$y[is.test], mu.test, object$glm1.best$weights) #only actually needed by gaussian, gamma, inverse.gaussian
-      for(i.lambda in 1:n.lambda)
+        dev = object$glm1.best$family$dev(object$y[is.test], mu.test, weights.test) #only actually needed by gaussian, gamma, inverse.gaussian
+      for(i.lambda in 1:n.lambdai)
         ll.test[i.lambda,i.split]  = -object$glm1.best$family$aic(y.test, 1, mu.test[,i.lambda], weights.test, dev)/2
 
 #      ll.test[abs(ll.test[,i.split])<100*tol[1],i.split]=min(ll.test[,i.split],na.rm=T) #what is this line about???
-      df.cv[,i.split] = apply(abs(out$all.coefficients)>tol[1],2,sum)
-      beta.cv[,,i.split] = out$all.coefficients
-      phi.cv[,i.split] <- out$phis
-      counter.cv[,i.split] = out$counter
+      df.cv[1:n.lambdai,i.split] = apply(abs(out$all.coefficients)>tol[1],2,sum)
+      beta.cv[,1:n.lambdai,i.split] = out$all.coefficients
+      phi.cv[1:n.lambdai,i.split] <- out$phis
+      counter.cv[1:n.lambdai,i.split] = out$counter
 
       if(show.progress)
       {
@@ -77,13 +78,13 @@ cv.glm1path = function(object, block = NULL, best="min", plot=TRUE, prop.test=0.
   ll.cv = apply(ll.test,1,mean)
 
 ## Find which model minimises predictive logL
-  ll.min = max(ll.cv)
+  ll.min = max(ll.cv, na.rm=TRUE)
   id.min = which(ll.cv==ll.min)[1]
 
 ## Find se hence best model by 1 se rule (if it can be computed from replicate test/training splits)
   if(n.split>1)
   {
-    ll.se = apply(ll.test,1,sd) * sqrt( length(is.test) / n.levels ) #jackknife-style estimator
+    ll.se = apply(ll.test,1,sd) * sqrt( n.test / n.levels ) #jackknife-style estimator
     llminusSE = ll.min - ll.se[id.min]
   }
   else
@@ -91,7 +92,7 @@ cv.glm1path = function(object, block = NULL, best="min", plot=TRUE, prop.test=0.
     ll.se = NULL 
     llminusSE = ll.min
   }
-  lam.1se = max( object$lambdas[ll.cv>llminusSE] )
+  lam.1se = max( object$lambdas[ll.cv>llminusSE], na.rm=TRUE )
   id.1se = which(object$lambdas == lam.1se)[1]
 
   # choose which criterion to use for "best" model: best ll or 1se rule
@@ -114,15 +115,17 @@ cv.glm1path = function(object, block = NULL, best="min", plot=TRUE, prop.test=0.
 
   if(plot==TRUE)
   {
-    lls = object$ll.cv
-    ses = object$se
+    lls = object$ll.cv[is.na(object$ll.cv)==FALSE]
+    ses = object$se[is.na(object$ll.cv)==FALSE]
+    dfs = object$df[is.na(object$ll.cv)==FALSE]
+    n.lambdai = length(lls)
     y.lab = "log-likelihood (per test observation)"
 
-    plot(object$df,lls,type="l",ylim=range(c(lls-ses,lls+ses)),xlab="Number of terms in model (df)",ylab=y.lab)
-    polygon( c(object$df,object$df[n.lambda:1]) , c(lls+ses,lls[n.lambda:1]-ses[n.lambda:1]), col="lightgrey", border="lightgrey" )
-    lines(object$df,lls,type="l")
-    points( object$df[id.min], ll.min,         col="red",  pch=19 )
-    points( object$df[id.1se],  ll.cv[id.1se], col="blue", pch=19 )
+    plot(dfs,lls,type="l",ylim=range(c(lls-ses,lls+ses)),xlab="Number of terms in model (df)",ylab=y.lab)
+    polygon( c(dfs,dfs[n.lambdai:1]) , c(lls+ses,lls[n.lambdai:1]-ses[n.lambdai:1]), col="lightgrey", border="lightgrey" )
+    lines(dfs,lls,type="l")
+    points( dfs[id.min], lls[id.min],         col="red",  pch=19 )
+    points( dfs[id.1se],  lls[id.1se], col="blue", pch=19 )
     legend("bottomleft",c("maximum predictive likelihood","best within 1 se of max"),col=c("red","blue"),pch=19)
   }
   return( object )

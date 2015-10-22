@@ -25,8 +25,7 @@ default.plot.mvformula <- function(	x,
 				xvar.subset=NA, 
 				scale.lab="ss", 	
 				t.lab="t", 
-#				mfrow=NULL, 
-        mfrow=c(min(5,n.vars), min(3, n.xvars[xvar.select])), 
+				mfrow=NULL, 
         mfcol=NULL, 
 				shift=TRUE, 
 				border="black",
@@ -263,7 +262,19 @@ main<- main[var.subset]
 mvabund.formulaUni <- formulaUnimva( mvabund.formula, var.subset=var.subset, split.x=TRUE, intercept=0 )
 
 ######### BEGIN edit xvar.subset, n.xvars etc #########
-if(xvar.select & pExpl>1)
+
+#DW changes, 30/10/14.  17/8: moved this outside of variable selection loop
+#only define default n.xvars here, once is.interaction has been defined 
+if(is.na(n.xvars))
+{
+  if(any(is.na(xvar.subset)))
+    n.xvars = min(3, sum(!is.interaction))
+  else
+    n.xvars = length(xvar.subset)
+}
+
+
+if(xvar.select & pExpl>1) #begin varaible selection (if required)
 {
 	if(is.list(pch))
   {
@@ -287,17 +298,14 @@ if(xvar.select & pExpl>1)
 		col<- col2
 	}
 
-	#DW changes, 30/10/14
-  #only define default n.xvars here, once is.interaction has been defined 
-	if(is.na(n.xvars))
-     n.xvars=if(any(is.na(xvar.subset))) min(3, sum(!is.interaction)) else length(xvar.subset)
   if(miss.xvarsubset)
   {
-	   # Find the n.xvars independent variables with the highest average R^2.
-	   if(is.null(n.xvars) || is.na(n.xvars))
-	      stop("a proper sQuote(n.xvars) has to be passed if there is no proper sQuote(xvar.subset)")
+	  # DW change, 17/8/15: changed to a warning if no n.xvars passed. 
+    if(any(names(dots)==n.xvars)==FALSE)
+        warning(paste("No sQuote(n.xvars) passed so subset selection will be for",n.xvars,"variables"))
 	
-     xvar.subset <- best.r.sq(formula= mvabund.formula, # mvabund.formulaUni,
+	   # Find the n.xvars independent variables with the highest average R^2.
+	   xvar.subset <- best.r.sq(formula= mvabund.formula, # mvabund.formulaUni,
 				var.subset=var.subset, n.xvars= min(n.xvars, pExpl))
      xvar.subset=xvar.subset$xs #to keep the indices only
 
@@ -405,17 +413,22 @@ else
 if ((dim(expl.data)[1])!=N ) {stop ("You have not given independent data with appropriate dimension.")}
 
 ######### BEGIN establish row and column sizes #########
-if (all(is.null(c(mfcol, mfrow)))) {
-	perwindow <-par("mfrow")
-	mfr <- TRUE
-} else if (is.null(mfcol)) {
-	perwindow <- mfrow
+
+
+if (is.null(mfcol))
+{
+  #DW changes, 17-8-15: define mfrow here now that n.xvars is defined, and make it length one if one variable to plot
+  if(length(n.xvars[xvar.subset])==1)
+    mfrow=n.vars
+  else
+    mfrow=c(min(5,n.vars), min(3, n.xvars[xvar.select]))
+  # end change
+  perwindow <- mfrow
 	mfr <- TRUE
 } else {
 	perwindow <- mfcol
 	mfr <- FALSE
 }
-	
 
 if(length(perwindow)==1) {
 

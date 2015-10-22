@@ -14,22 +14,36 @@ if ( is.character(family) ) {
     if (substr(family,1,1) == "g") {
        familynum <- 0 # gaussian
        familyname <- "gaussian"
+       linkfun <- 0 # not meaningful
     }   
     else if (substr(family,1,1) == "p") {
        familynum <- 1   #poisson
        familyname <- "poisson"
+       linkfun <- 0 # not meaningful      
     }   
     else if (substr(family,1,1) == "n") {
        familynum <- 2  #neg bin
        familyname <- "negative.binomial"
+       linkfun <- 0 # not meaningful      
     }   
     else if (substr(family,1,1) == "b") {
-       familynum <- 3  #logistic/binomial
-       familyname <- "binomial"
+       familynum <- 3  #logistic/binomial       
+       familyname <- "binomial(link=logit)"
+       link = "logit"  #by default
+       linkfun <- 0    #logit link
+    }   
+    else if (substr(family,1,1) == "c") {
+       familynum <- 3  #binomial(cloglog)
+       familyname <- "binomial(link=cloglog)"
+       link = "cloglog"
+       linkfun <- 1 
+       K = 1 # response must be binary 
     }   
     else stop (paste("'family'", family, "not recognized"))
 }
-else stop ("Please specify a family function with a character string. manyglm supports the following members of the exponential family: 'gaussian', 'poisson', 'binomial', 'negative.binomial' distributions.") 
+else stop ("Please specify a family function with a character string. manyglm supports the following members of the exponential family: 'gaussian', 'poisson', 'binomial', 'cloglog', 'negative.binomial', distributions.") 
+
+#stop ("Current manyglm only supports the following link function for binary binomial regression: 'logit', 'cloglog'.") 
 
 ret.x <- x
 ret.y <- y
@@ -39,49 +53,54 @@ mf <- match.call(expand.dots = FALSE)
 m  <- match(c("formula", "data", "subset", "na.action", "offset"), names(mf), 0)
 mf <- mf[c(1, m)]
 
-mf$drop.unused.levels <- TRUE
+mf$drop.unused.levels <- FALSE
 mf[[1]] <- as.name("model.frame")
 data <- mf <- eval(mf, parent.frame())    # Obtain the model.frame. 
 mt <-  attr(mf, "terms")  # Obtain the model terms.
 offset <- as.vector(model.offset(mf))
 
-    abundances <- as.matrix(model.response(mf, "numeric"))
-    if (any(is.na(abundances)) & is.null(na.action))
-       stop("There are NA values in the response. An 'na.action' is necessary.")
-    if(any(is.na(abundances)) & any(as.character(na.action)=="na.pass")) 
-       stop("There are NA values in the response. 'na.action=na.pass' cannot be used.")
+abundances <- as.matrix(model.response(mf, "numeric"))
+if (any(is.na(abundances)) & is.null(na.action))
+   stop("There are NA values in the response. An 'na.action' is necessary.")
+if(any(is.na(abundances)) & any(as.character(na.action)=="na.pass")) 
+   stop("There are NA values in the response. 'na.action=na.pass' cannot be used.")
 
-    N <- NROW(abundances)     # eg number of sites
-    p <- NCOL(abundances)     # number of organism types
-    labAbund<-colnames(abundances)
-    if (p==0) stop("A model without response cannot be fitted.")    
-    else if (p==1 & is.null(labAbund)) 
-        labAbund <- deparse(attr( mt,"variables")[[2]], width.cutoff = 500) 
-    else if (p>1 & is.null(labAbund)) 
-        labAbund <- paste(deparse(attr( mt,"variables")[[2]],width.cutoff = 500), 1:p,sep = "") 
-   labObs <- rownames(abundances)	
+N <- NROW(abundances)     # eg number of sites
+p <- NCOL(abundances)     # number of organism types
+labAbund<-colnames(abundances)
+if (p==0) stop("A model without response cannot be fitted.")    
+else if (p==1 & is.null(labAbund)) 
+    labAbund <- deparse(attr( mt,"variables")[[2]], width.cutoff = 500) 
+else if (p>1 & is.null(labAbund)) 
+    labAbund <- paste(deparse(attr( mt,"variables")[[2]],width.cutoff = 500), 1:p,sep = "") 
+labObs <- rownames(abundances)	
 
-    Y <- abundances
+Y <- abundances
 
-    if (any(!is.wholenumber(Y))) 
-        warning(paste("Non-integer data are fitted to the", familyname, "model."))
+if (any(!is.wholenumber(Y))) 
+    warning(paste("Non-integer data are fitted to the", familyname, "model."))
 
-    if ( familyname == "binomial" ) { # binomial distribution
-       if(!is.null(labAbund) & all(substr(labAbund, 1,4)%in%c("succ", "fail")))
-       {
-          p <- p/2 
-	  labAbund <- labAbund[substr(labAbund, 1,4) == "succ"] 	  
-	  if(length(labAbund)!=p)
-	     stop("for each variable of the response a column of successes and ",             "a column of failures \nmust be provided ", 
-	     "(marked by 'succ' and 'fail', see 'binstruc')")
-	}     
 
-       if (all(is.wholenumber(Y)) & (length(Y[Y>1]>0))) 
-           warning("Count data are fitted to the binomial regression. Conisder a transformation first.")
-       
-       if ( (length(Y[Y<0])>0) | (length(Y[Y>1]>0)) )
-           warning("Data exceeds the range [0, 1].")     
-    }   
+if ( familynum==3 || familynum==4 ) { 
+    if(!is.null(labAbund) & all(substr(labAbund, 1,4)%in%c("succ", "fail")))
+    {
+       p <- p/2 
+       labAbund <- labAbund[substr(labAbund, 1,4) == "succ"] 	  
+       if(length(labAbund)!=p)
+          stop( "for each variable of the response a column of successes and ",
+                "a column of failures \nmust be provided ", 
+                "(marked by 'succ' and 'fail', see 'binstruc')")
+    }     
+    if (all(is.wholenumber(Y)) & (length(Y[Y>1]>0))) 
+        warning("Count data are fitted to the binomial regression. Conisder a transformation first.")
+    if ( (length(Y[Y<0])>0) | (length(Y[Y>1]>0)) ) 
+    {   
+        if (familynum==3)
+            warning("Data exceeds the range [0, 1].")     
+        if (familynum==4)
+            stop("Data exceeds the allowed range [0, 1].")
+    }
+}  
 
     ##################### BEGIN Estimation ###################
     # Obtain the Designmatrix.
@@ -130,11 +149,13 @@ else {
     else warn <- 0
 
     ######### call Glm Fit Rcpp #########
-    modelParam <- list(tol=tol, regression=familynum, estimation=methodnum, stablizer=FALSE, n=K, maxiter=maxiter, maxiter2=maxiter2, warning=warn)
+    
+    modelParam <- list(tol=tol, regression=familynum, link=linkfun, estimation=methodnum, stablizer=FALSE, n=K, maxiter=maxiter, maxiter2=maxiter2, warning=warn)
     if(is.null(offset)) O <- matrix(0, nrow=N, ncol=p)   
     else if (NCOL(offset)==1) O <- matrix(rep(offset), nrow=N, ncol=p)
     else O <- as.matrix(offset)
-    z <- .Call("RtoGlm", modelParam, Y, X, O, PACKAGE="mvabund")
+#    z <- .Call("RtoGlm", modelParam, Y, X, O, PACKAGE="mvabund")
+    z <- RtoGlm(modelParam, Y, X, O)
 
     if(any(z$var.est==0)) #DW change, 30/10/14
     {

@@ -21,7 +21,7 @@ void matrix_filesize(FILE *f, unsigned int * row, unsigned int * col)
 {
 	char line[MAX_LINE_LENGTH];
 
-	fgets(line, MAX_LINE_LENGTH-1, f);
+	// fgets(line, MAX_LINE_LENGTH-1, f);
 	*row = 1;
 	strtok(line, " \t");
 	*col = 1;
