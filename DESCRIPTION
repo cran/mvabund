@@ -1,8 +1,8 @@
 Package: mvabund
 Title: Statistical Methods for Analysing Multivariate Abundance Data
-Version: 3.11.4
-Date: 2015-09-04
-Author: Yi Wang, Ulrike Naumann, Stephen Wright and David Warton
+Version: 3.11.5
+Date: 2015-11-23
+Author: Yi Wang, Ulrike Naumann, Stephen Wright, Dirk Eddelbuettel and David Warton
 Maintainer: David Warton <David.Warton@unsw.edu.au>
 Description: A set of tools for displaying, modeling and analysing
         multivariate abundance data in community ecology. See
@@ -15,6 +15,6 @@ Imports: Rcpp, MASS, methods, stats, tweedie, statmod, parallel
 LinkingTo: Rcpp, RcppGSL
 License: LGPL (>= 2.1)
 NeedsCompilation: yes
-Packaged: 2015-10-22 02:26:55 UTC; z3103495
+Packaged: 2015-11-23 23:20:54 UTC; David Warton
 Repository: CRAN
-Date/Publication: 2015-10-22 08:24:29
+Date/Publication: 2015-11-24 07:46:48
