@@ -67,10 +67,11 @@ anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none
     }
 
     # the following values need to be converted to integer types  
-    if (substr(object$family,1,1) == "p") familynum <- 1 
-    else if (substr(object$family,1,1) == "n") familynum <- 2
-    else if (substr(object$family,1,1)=="b") familynum <- 3
-  
+    if (object$family == "poisson") { familynum <- 1; linkfun = 0 } 
+    else if (object$family == "negative.binomial") { familynum <- 2; linkfun = 0 }
+    else if (object$family == "binomial(link=logit)") { familynum <- 3; linkfun = 0 }
+    else if (object$family == "binomial(link=cloglog)") { familynum <- 3; linkfun = 1}
+    else stop("'family' not recognised. See ?manyglm for currently available options.") 
 
     if (object$theta.method == "ML") methodnum <- 0
     else if (object$theta.method == "Chi2") methodnum <- 1 
@@ -184,7 +185,7 @@ anova.manyglm <- function(object, ..., resamp="pit.trap", test="LR", p.uni="none
     }
 
     # construct for param list     
-    modelParam <- list(tol=object$tol, regression=familynum, maxiter=object$maxiter, maxiter2=object$maxiter2, warning=warn, estimation=methodnum, stablizer=0, n=object$K)
+    modelParam <- list(tol=object$tol, regression=familynum, link=linkfun, maxiter=object$maxiter, maxiter2=object$maxiter2, warning=warn, estimation=methodnum, stablizer=FALSE, n=object$K)
     # note that nboot excludes the original data set
     testParams <- list(tol=object$tol, nboot=nBoot, cor_type=corrnum, test_type=testnum, resamp=resampnum, reprand=rep.seed, punit=pu, showtime=st, warning=warn)
     if(is.null(object$offset)) O <- matrix(0, nrow=nRows, ncol=nVars)
