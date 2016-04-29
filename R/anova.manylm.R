@@ -9,7 +9,7 @@ anova.manylm <- function(object, ..., resamp="perm.resid", test="F", p.uni="none
     if(!any(class(object)=="manylm"))
        stop("The function 'anova.manylm' can only be used for a manylm object.")
 
-    nBoot=nBoot+1 #this function has been coded differently so need to crop one off.
+#    nBoot=nBoot+1 #this function has been coded differently so need to crop one off.
 
     #check if any non manylm object in ...
     objects <- list(object, ...)

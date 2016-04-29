@@ -89,6 +89,19 @@ Summary::Summary(mv_Method *mm, gsl_matrix *Y, gsl_matrix *X):mmRef(mm), Yref(Y)
     // initialize resampling indices 
     bootID = NULL;
 
+    // Initialize GSL rnd environment variables
+    const gsl_rng_type *T;
+    gsl_rng_env_setup();
+    T = gsl_rng_default;    
+    // an mt19937 generator with a seed of 0
+    rnd = gsl_rng_alloc(T);
+    if (mmRef->reprand!=TRUE){
+       struct timeval tv;  // seed generation based on time
+       gettimeofday(&tv, 0);
+       unsigned long mySeed=tv.tv_sec + tv.tv_usec;
+       gsl_rng_set(rnd, mySeed);  // reset seed
+    }
+
     gsl_vector_free(ref);
 //    printf("Summary test initialized.\n");
 }
@@ -124,6 +137,8 @@ void Summary::releaseSummary()
     for (i=0; i<nParam+1; i++)
         gsl_permutation_free(sortid[i]);
     free(sortid);
+
+    gsl_rng_free(rnd); 
 
 //    printf("Summary test released.\n");
 
@@ -243,8 +258,6 @@ int Summary::resampTest(void)
     bY = gsl_matrix_alloc(nRows, nVars);
     bX = gsl_matrix_alloc(nRows, nParam);
 
-    gsl_rng *rnd=gsl_rng_alloc(gsl_rng_mt19937);
-
     // initialize permid
     unsigned int *permid=NULL;
     if ( bootID == NULL ) {
@@ -328,8 +341,8 @@ int Summary::resampTest(void)
     } 
    else if ( mmRef->resamp == PERMUTE ) { 
        gsl_matrix_add_constant (Punitstat, 1.0); 
-       nSamp = 1;
-       for (i=0; i<maxiter-1; i++) { //999
+       nSamp = 0;
+       for (i=0; i<maxiter; i++) { //999
           if (bootID == NULL ) 
              gsl_ran_shuffle(rnd, permid, nRows, sizeof(unsigned int));
           // get bootr by permuting resi:Y-fit
@@ -363,7 +376,7 @@ int Summary::resampTest(void)
    for (i=0; i<nParam+1; i++) {
 //      printf("Pmultstat[%d]=%.3f\n", i, Pmultstat[i]);
 //      printf("nSamp=%d\n", nSamp);
-      Pmultstat[i] = (double) Pmultstat[i]/nSamp;
+      Pmultstat[i] = (double) (Pmultstat[i]+1)/(nSamp+1);  // adjusted with +1
       pj = gsl_matrix_ptr (Punitstat, i, 0);
       if ( mmRef->punit == FREESTEP ) {
          for (j=1; j<nVars; j++) {
@@ -380,15 +393,13 @@ int Summary::resampTest(void)
 	  }
       }
       for (j=0; j<nVars; j++)
-         *(pj+j) = (double)*(pj+j)/nSamp;
+         *(pj+j) = (double)(*(pj+j)+1)/(nSamp+1); //adjusted with +1
    }
 
    // free memory
    gsl_matrix_free(bX);
    gsl_matrix_free(bY);
-   gsl_rng_free(rnd);
-   if (permid!=NULL)
-      free(permid);
+   if (permid!=NULL) free(permid);
 
    return 0;
 

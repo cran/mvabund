@@ -10,4 +10,3 @@ Yi Wang, Ulrike Naumann, Stephen Wright, Dirk Eddelbuettel and David Warton
 ### License
 
 LGPL (>= 2.1)
-
