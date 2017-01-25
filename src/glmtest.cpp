@@ -42,8 +42,8 @@ GlmTest::GlmTest(const mv_Method *tm):tm(tm)
     }
 
     if ( tm->resamp==PERMUTE ) {
-        permid = (unsigned int *)malloc(tm->nRows*sizeof(unsigned int));
-	for (unsigned int i=0; i<tm->nRows; i++) permid[i]=i;
+        permid = (size_t *)malloc(tm->nRows*sizeof(size_t));
+	for (size_t i=0; i<tm->nRows; i++) permid[i]=i;
     }	
     else permid=NULL;
 
@@ -672,17 +672,21 @@ int GlmTest::resampSmryCase(glm *model, gsl_matrix *bT, GrpMat *GrpXs, gsl_matri
 
     unsigned int j, k, id;
     gsl_vector_view yj, oj, xj;
-    gsl_matrix *tXX = NULL;
     unsigned int nRows=tm->nRows, nParam=tm->nParam;
+    gsl_matrix  *tXX = gsl_matrix_alloc(nParam, nParam);
     
-    if (bootID == NULL) {
-       tXX = gsl_matrix_alloc(nParam, nParam);
-       while (isValid==TRUE) { // if all isSingular==TRUE
-           for (j=0; j<nRows; j++) {
-               // resample Y, X, offsets accordingly
-               if (tm->reprand==TRUE)
-                   id = (unsigned int) gsl_rng_uniform_int(rnd, nRows);
-               else id = (unsigned int) nRows * Rf_runif(0, 1);
+    while (isValid==TRUE) { 
+    // if all isSingular==TRUE
+         for (j=0; j<nRows; j++) {
+          // resample Y, X, offsets accordingly
+               if (bootID != NULL) 
+                  id = (unsigned int) gsl_matrix_get(bootID, i, j);
+               else {
+                   if (tm->reprand==TRUE) 
+                       id = (unsigned int) gsl_rng_uniform_int(rnd, nRows);
+                    else 
+                       id = (unsigned int) nRows * Rf_runif(0, 1);
+                }
                xj = gsl_matrix_row(model->Xref, id);
                gsl_matrix_set_row(GrpXs[0].matrix, j, &xj.vector);
                yj = gsl_matrix_row(model->Yref, id);
@@ -694,32 +698,16 @@ int GlmTest::resampSmryCase(glm *model, gsl_matrix *bT, GrpMat *GrpXs, gsl_matri
            gsl_blas_dsyrk(CblasLower,CblasTrans,1.0,GrpXs[0].matrix,0.0,tXX);
            status=gsl_linalg_cholesky_decomp(tXX); 
            if (status!=GSL_EDOM) break;
-          //  if (calcDet(tXX)>eps) break; 
        }
-       for (k=2; k<nParam+2; k++) 
-           subX2(GrpXs[0].matrix, k-2, GrpXs[k].matrix);
-    }
-    else {
-       for (j=0; j<nRows; j++) {
-           id = (unsigned int) gsl_matrix_get(bootID, i, j);
-           // resample Y and X and offset
-           yj=gsl_matrix_row(model->Yref, id);
-           gsl_matrix_set_row (bT, j, &yj.vector);
-           oj = gsl_matrix_row(model->Eta, id);
-           gsl_matrix_set_row(bO, j, &oj.vector);
-           xj = gsl_matrix_row(model->Xref, id);
-           gsl_matrix_set_row(GrpXs[0].matrix, j, &xj.vector);
-       }   
-       for (k=2; k<nParam+2; k++) 
-           subX2(GrpXs[0].matrix, k-2, GrpXs[k].matrix);
-   }
 
+   for (k=2; k<nParam+2; k++) 
+        subX2(GrpXs[0].matrix, k-2, GrpXs[k].matrix);
+   
    gsl_matrix_free(tXX);
 
    return SUCCESS;
 }
 
-//int GlmTest::resampAnovaCase(glm *model, gsl_matrix *Onull, gsl_matrix *bT, gsl_matrix *bX, gsl_matrix *bO, gsl_matrix *bOnull, unsigned int i)
 int GlmTest::resampAnovaCase(glm *model, gsl_matrix *bT, gsl_matrix *bX, gsl_matrix *bO, unsigned int i)
 {
     gsl_set_error_handler_off();
@@ -731,38 +719,30 @@ int GlmTest::resampAnovaCase(glm *model, gsl_matrix *bT, gsl_matrix *bX, gsl_mat
     gsl_matrix *tXX = gsl_matrix_alloc(nP, nP);
     unsigned int nRows=tm->nRows;
 
-    if (bootID == NULL) {
-       while (isValid==TRUE) {
-            for (j=0; j<nRows; j++) {   
+    while (isValid==TRUE) {
+        for (j=0; j<nRows; j++) {   
+            if (bootID != NULL) 
+                id = (unsigned int) gsl_matrix_get(bootID, i, j);
+            else {
                 if (tm->reprand==TRUE)
                    id=(unsigned int)gsl_rng_uniform_int(rnd, nRows);
-                else id=(unsigned int) nRows*Rf_runif(0, 1);
-                // resample Y and X and offset
-                yj=gsl_matrix_row(model->Yref, id);
-                xj = gsl_matrix_row(model->Xref, id);
-                oj = gsl_matrix_row(model->Eta, id);
-                gsl_matrix_set_row (bT, j, &yj.vector);
-                gsl_matrix_set_row(bX, j, &xj.vector);
-                gsl_matrix_set_row(bO, j, &oj.vector);
-             }
-             gsl_matrix_set_identity(tXX);
-             gsl_blas_dsyrk(CblasLower,CblasTrans,1.0,bX,0.0,tXX);
-             status=gsl_linalg_cholesky_decomp(tXX); 
-             if (status!=GSL_EDOM) break;
-       } 
-   }   		    	
-   else {
-       for (j=0; j<nRows; j++) {   
-          id = (unsigned int) gsl_matrix_get(bootID, i, j);
-          // resample Y and X and offset
-          yj=gsl_matrix_row(model->Yref, id);
-          xj = gsl_matrix_row(model->Xref, id);
-          oj = gsl_matrix_row(model->Oref, id);
-          gsl_matrix_set_row (bT, j, &yj.vector);
-          gsl_matrix_set_row(bX, j, &xj.vector);
-          gsl_matrix_set_row(bO, j, &oj.vector);
+                else 
+                   id=(unsigned int) nRows*Rf_runif(0, 1);
+            }
+           // resample Y and X and offset
+           yj=gsl_matrix_row(model->Yref, id);
+           xj = gsl_matrix_row(model->Xref, id);
+           oj = gsl_matrix_row(model->Eta, id);
+           // oj = gsl_matrix_row(model->Oref, id);
+           gsl_matrix_set_row (bT, j, &yj.vector);
+           gsl_matrix_set_row(bX, j, &xj.vector);
+           gsl_matrix_set_row(bO, j, &oj.vector);
        }
-   }
+       gsl_matrix_set_identity(tXX);
+       gsl_blas_dsyrk(CblasLower,CblasTrans,1.0,bX,0.0,tXX);
+       status=gsl_linalg_cholesky_decomp(tXX); 
+       if (status!=GSL_EDOM) break;
+   }   		    	
 
    gsl_matrix_free(tXX);
 
@@ -776,6 +756,10 @@ int GlmTest::resampNonCase(glm *model, gsl_matrix *bT, unsigned int i)
    double bt, score, yij, mij;
    gsl_vector_view yj;
    unsigned int nRows=tm->nRows, nVars=tm->nVars;
+   // to store Rf_unif
+//   gsl_vector *tmp = gsl_vector_alloc(nRows); 
+//   gsl_permutation *vperm = gsl_permutation_alloc(nRows); 
+   double *tmp = (double *)malloc(nRows*sizeof(double));
 
    // note that residuals have got means subtracted
    switch (tm->resamp) {
@@ -810,11 +794,18 @@ int GlmTest::resampNonCase(glm *model, gsl_matrix *bT, unsigned int i)
         }   }	    
 	break;
    case PERMUTE: 
-        if (bootID==NULL) 
-            gsl_ran_shuffle(rnd,permid,nRows,sizeof(unsigned int));
+        if (bootID==NULL) { 
+           if (tm->reprand == TRUE)                
+               gsl_ran_shuffle(rnd,permid,nRows,sizeof(size_t));           
+           else { // Permutation with the randomness set in R
+               for (j=0; j<nRows; j++) tmp[j] = Rf_runif(0, 1);
+               gsl_sort_index(permid, tmp, 1, nRows);
+           }    
+        }
         for (j=0; j<nRows; j++) {
-            if (bootID==NULL) id = permid[j];
+            if ( bootID == NULL ) id = permid[j];
             else id = (unsigned int) gsl_matrix_get(bootID, i, j);
+
 	    // bY = mu + bootr * sqrt(var)
 	    for (k=0; k<nVars; k++) {
                 bt=gsl_matrix_get(model->Mu,j,k)+sqrt(gsl_matrix_get(model->Var,j,k))*gsl_matrix_get(model->Res, id, k);
@@ -824,11 +815,18 @@ int GlmTest::resampNonCase(glm *model, gsl_matrix *bT, unsigned int i)
         }   }
         break;
    case FREEPERM:
-         if (bootID==NULL) 
-             gsl_ran_shuffle(rnd,permid,nRows,sizeof(unsigned int));
+         if (bootID==NULL){ 
+             if (tm->reprand == TRUE)                
+                gsl_ran_shuffle(rnd,permid,nRows,sizeof(size_t));           
+             else { // Permutation with the randomness set in R
+                for (j=0; j<nRows; j++) tmp[j] = Rf_runif(0, 1);
+                gsl_sort_index(permid, tmp, 1, nRows);
+             }    
+         }
          for (j=0; j<nRows; j++) {
-              if (bootID==NULL)  id = permid[j];
+              if ( bootID == NULL ) id = permid[j];
               else id = (unsigned int) gsl_matrix_get(bootID, i, j);
+
               yj=gsl_matrix_row(model->Yref, id);
               gsl_matrix_set_row (bT, j, &yj.vector);
  	 }
@@ -853,6 +851,9 @@ int GlmTest::resampNonCase(glm *model, gsl_matrix *bT, unsigned int i)
        break;
     default: GSL_ERROR("The resampling method is not supported", GSL_ERANGE); break;
     }
+    
+    free(tmp);
+
     return SUCCESS;
 } 
 
@@ -917,6 +918,8 @@ void GlmTest::displayAnova(void)
        unsigned int i, j;
        const char *testname[3] // string array, only pointers stored
                ={ "sqrt(WALD)", "SCORE", "LR" }; // 2, 3, 4
+
+     displaymatrix(bootID, "bootID");
 
        printf("\n ========================= \n");
        printf("\nAnova Table (resampling under ");
