@@ -85,3 +85,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+
+static const R_CallMethodDef CallEntries[] = {
+    {"mvabund_RtoAnovaCpp", (DL_FUNC) &mvabund_RtoAnovaCpp, 5},
+    {"mvabund_RtoGlmAnova", (DL_FUNC) &mvabund_RtoGlmAnova, 8},
+    {"mvabund_RtoGlm", (DL_FUNC) &mvabund_RtoGlm, 4},
+    {"mvabund_RtoGlmSmry", (DL_FUNC) &mvabund_RtoGlmSmry, 7},
+    {"mvabund_RtoSmryCpp", (DL_FUNC) &mvabund_RtoSmryCpp, 4},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_mvabund(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
+}

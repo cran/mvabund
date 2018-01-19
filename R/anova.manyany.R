@@ -24,7 +24,7 @@ anova.manyany = function(object, ..., nBoot=99, p.uni="none", block = object1$bl
        if (!fndObj2) stop("cannot find object 2")
     }
 
-  if(any(names(object1$call)=="composition"))
+    if(any(names(object1$call)=="composition"))
   {
     if(object1$call$composition==TRUE) #recode so that it fits compositional models as univariate, to save time and fuss/bother.
     {
@@ -39,7 +39,19 @@ anova.manyany = function(object, ..., nBoot=99, p.uni="none", block = object1$bl
       assign(as.character(object2$call[[3]]),object2$model$y) 
     }
   }
-  n.rows = dim(object1$resid)[1]
+  
+
+    #DW, 18/1/18: check for same composition arguments in each call
+    if(all(names(object1$call)!="composition"))
+      object1$call$composition = FALSE
+    if(all(names(object2$call)!="composition"))
+      object2$call$composition = FALSE
+
+    if(object1$call$composition!=object2$call$composition)
+      stop("Sorry, either both manyany objects will need to be compositional, or neither")
+    
+    
+    n.rows = dim(object1$resid)[1]
   n.vars = dim(object1$resid)[2]
   
   qfn = rep(NA,n.vars)
@@ -137,8 +149,11 @@ anova.manyany = function(object, ..., nBoot=99, p.uni="none", block = object1$bl
     dimnames(statj.i)[[1]] = dimnames(object1$residuals)[[2]]
 
   p = ( 1 + sum(stat.i>stat-1.e-8) ) / (nBoot + 1)
-  pj = ( 1 + apply(statj.i>statj-1.e-8,1,sum) ) / ( nBoot + 1)
-
+  if(length(statj)>1)
+    pj = ( 1 + apply(statj.i>statj-1.e-8,1,sum) ) / ( nBoot + 1)
+  else
+    pj = ( 1 + sum(statj.i>statj-1.e-8) ) / ( nBoot + 1)
+  
   class(stat.i) = "numeric"
   if(p.uni=="unadjusted")
     result = list(stat=stat,p=p,uni.test=statj,uni.p=pj,stat.i=stat.i,statj.i=statj.i,p.uni=p.uni,nBoot=nBoot) 
