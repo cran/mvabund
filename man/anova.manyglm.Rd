@@ -8,8 +8,10 @@ generalized linear model fits.}
 \usage{
  %%%%%%%%% %%%%%%%%% %%%%%%%%% %%%%%%%%% %%%%%%%%% %%%%%%%%% %%%%%%%%% %%%%%%%%% %%%%%%%%%
 \method{anova}{manyglm}(object, \dots, resamp="pit.trap", test="LR", p.uni="none",
-    nBoot=999, cor.type=object$cor.type, block=NULL, show.time="total",
-    show.warning=FALSE, rep.seed=FALSE, bootID=NULL) 
+    nBoot=999, cor.type=object$cor.type,
+    pairwise.comp = NULL,
+    block=NULL, show.time="total",
+    show.warning=FALSE, rep.seed=FALSE, bootID=NULL, keep.boot=FALSE) 
 \method{print}{anova.manyglm}(x, \dots) 
 }
 \arguments{
@@ -17,7 +19,7 @@ generalized linear model fits.}
 }
 \item{\dots}{for the \code{anova.manyglm} method, these are optional further objects of class \code{manyglm}, which are usually a result of a call to \code{\link{manyglm}}
 for the \code{print.anova.manyglm} method these are optional further arguments passed to or from other methods. See \code{\link{print.summary.glm}} for more details.}        
-\item{resamp}{the method of resampling used. Can be one of "perm.resid", "montecarlo" or "pit.trap" (default). See Details.}
+\item{resamp}{the method of resampling used. Can be one of "case", "perm.resid", "montecarlo" or "pit.trap" (default). See Details.}
 \item{test}{the test to be used. If \code{cor.type="I"}, this can be one of "wald" for a Wald-Test or "score" for a Score-Test or "LR" for a Likelihood-Ratio-Test, otherwise only "wald" and "score" is allowed. The default value is "LR".
 }
 \item{p.uni}{whether to calculate univariate test statistics and their P-values, and if so, what type. This can be one of the following options. \cr
@@ -29,11 +31,18 @@ step-down resampling procedure.
 }
 \item{nBoot}{the number of Bootstrap iterations, default is \code{nBoot=999}.}
 \item{cor.type}{structure imposed on the estimated correlation matrix under the fitted model. Can be "I"(default), "shrink", or "R". See Details.}
+
+\item{pairwise.comp}{
+    A character or factor vector specifying the levels for which a pairwise comparison will be carried out, adjusting for multiple comparisons via a free stepdown resampling procedure.
+    Alternatively, a onesided formula specifying an interaction between factor levels.
+}
+
 \item{block}{a factor specifying the sampling level to be resampled. Default is resampling rows.}
 \item{show.time}{Whether to display timing information for the resampling procedure: "none" shows none, "all" shows all timing information and "total" shows only the overall time taken for the tests. }
 \item{show.warning}{logical. Whether to display warning messages in the operation procedure.}
 \item{rep.seed}{logical. Whether to fix random seed in resampling data. Useful for simulation or diagnostic purposes.}
 \item{bootID}{an integer matrix where each row specifies bootstrap id's in each resampling run. When \code{bootID} is supplied, \code{nBoot} is set to the number of rows in \code{bootID}. Default is \code{NULL}.}
+\item{keep.boot}{logical. Whether to return the bootstrapped test statistics.}
 \item{x}{an object of class "anova.manyglm", usually, a result of a call to
 \code{\link[mvabund:anova.manyglm]{anova.manyglm}}.}
 }
@@ -94,10 +103,19 @@ Rather than stopping after testing for multivariate effects, it is often of inte
 \item{n.bootsdone}{the number of bootstrapping iterations that were done, i.e. had no error.}
 \item{table}{the table with Residual Degrees of Freedom, Degrees of Freedom, the Test Statistics and the P values.}
 \item{block}{any \code{block} argument specified as an inpout argument.}
+\item{pairwise.comp}{The \code{pairwise.comp} argument supplied.}
 
 If \code{p.uni="adjusted"} or \code{"unadjusted"} the output list also contains\cr
 \item{uni.test}{a table showing the test statistics of the univariate tests.}
 \item{uni.p}{a table showing the p-values of the univariate tests.}
+
+If \code{keep.boot=TRUE} the output list also contains \cr
+\item{bootStat}{A matrix of boot strapped test statistics, the first column is the multivariate test statistic, the rest of the columns are the univariate statistic.}
+
+
+If \code{!is.null(parwise.comp)} the output list also contains \cr
+\item{pairwise.comp.table}{A data.frame containing the comparisons, the observed test statistcs and the holm free stepdown adjusted p-values.}
+
 }
 
 \section{Warning}{
@@ -125,7 +143,7 @@ Wu, C. F. J. (1986) Jackknife, Bootstrap and Other Resampling Methods in
 Regression Analysis. \emph{The Annals of Statistics} 14:4, 1261-1295.
 }
 \author{
-Yi Wang, Ulrike Naumann and David Warton <David.Warton@unsw.edu.au>.
+Yi Wang, Ulrike Naumann, John Wilshire and David Warton <David.Warton@unsw.edu.au>.
 }
 \seealso{
 \code{\link{manyglm}}, \code{\link[mvabund:summary.manyglm]{summary.manyglm}}.
@@ -147,6 +165,16 @@ tasm.cop.nb <- manyglm(tasm.cop ~ block*treatment, family="negative.binomial")
 ## using a Wald statistic and 199 resamples (better to ramp up to 999 for a paper):
 anova(tasm.cop.nb, nBoot=199, test="wald")
 
+## Performing the Pairwise comparison:
+\dontrun{
+data(solberg)
+abund <- mvabund(solberg$abund)
+treatment <- as.character(solberg$x)
+## pairwise comparison 
+manyglm(abund ~ treatment) -> msolglm
+anova(msolglm, pairwise.comp = treatment, nBoot = 199)
+# Could also run: anova(msolglm, pairwise.comp = ~treatment, nBoot = 199)
+}
 }
 \keyword{models}
 \keyword{regression}
