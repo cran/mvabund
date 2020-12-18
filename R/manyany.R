@@ -103,7 +103,7 @@ manyany = function(fn, yMat, formula, data, family="negative.binomial", composit
     fam.i$family = "ordinal"
     fam = vector(mode="list",length=n.vars)
     family=fam
-    yMat = data.frame(yMat) #converting to data frame so factor input is read as factors
+    yMat = data.frame(yMat, stringsAsFactors=TRUE) #converting to data frame so factor input is read as factors
   }
   
   for(i.var in 1:n.vars)
@@ -132,7 +132,7 @@ manyany = function(fn, yMat, formula, data, family="negative.binomial", composit
       }  
     }
     if(fn=="clm")
-      fam[[i.var]] = fam.i
+      fam[[i.var]] = family[[i.var]] = fam.i
     if(fam[[i.var]]$family=="binomial")
       warning("The binomial option of manyany currently assumes you have binary (presence/absence) response")
   }
