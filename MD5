@@ -1,4 +1,4 @@
-54763338e1b8d29054f65e3cde57c425 *DESCRIPTION
+d065e4c49e2aa1a801a0738e9e653e5c *DESCRIPTION
 2a8e42959b29823fe25e8e61c99dfd77 *NAMESPACE
 6473e13a4e9b7e666c902653208b68ce *R/AllClass.R
 4d2294d47c78b8c3d63f5d31b1e1d969 *R/RcppExports.R
@@ -11,7 +11,7 @@ c31dd2031c42fa6d948c9fddd794b04f *R/anova.manylm.R
 c3eeccf2921ef85986e344292e7651e8 *R/anova.traitglm.R
 21f7cc3a6f5705b797bd5ce09a1d2319 *R/as.data.frame.mvabund.R
 0bef2525e807ea57e1e0e08be1ff2f49 *R/as.matrix.mvabund.R
-1e1dd3e9b631c82c1b461932dfb123aa *R/best.r.sq.R
+d8c7d142ac34993fc9749906696ec68a *R/best.r.sq.R
 48677c2da7d5a009c6095c1526235de4 *R/betaest.R
 3117c4273d72720fa033bc5df249bd78 *R/binstruc.R
 c9a183fe0cfc76ef192e9f8c161df528 *R/block.to.bootID.R
@@ -19,15 +19,15 @@ c9a183fe0cfc76ef192e9f8c161df528 *R/block.to.bootID.R
 1f97c019e975ef768b033e3cd2f2ae02 *R/boxplot.mvformula.R
 0741046da38540245f7708fc524d8247 *R/case.names.manylm.R
 f2097886e299a244cf6332827ee8ba8a *R/cbind.mvabund.R
-2151118c03576ff5573eeb1503312526 *R/coefplot.manyglm.R
+c1886842c18669163ed70ae9c3ea772d *R/coefplot.manyglm.R
 fac57038f0b386324ecdbcff67a7ee59 *R/cooks.distance.manylm.R
 6a7fcb3ae9a978b8523d352104a86ff2 *R/covratio.manylm.R
 2151497a601052b763ebd593ed78f5b9 *R/cv.glm1path.R
 589162fbe58f51ae775b75545d1c07f6 *R/default.boxplot.mvabund.R
 9ed0fe5853e6e16f04b099027d38da98 *R/default.boxplot.mvformula.R
 4705d16ab3e37f2da29c9af8c7c588e7 *R/default.meanvar.plot.R
-58701f295e2d7d3c148bb03fda2380ba *R/default.plot.manyglm.R
-5631d7d3ca4ebad321f1c20eac835b9c *R/default.plot.manylm.R
+def1a890a95e4696623ad75110fca582 *R/default.plot.manyglm.R
+f339cff76137aa5924f89aebae15affb *R/default.plot.manylm.R
 8345deaaddb519b5a9e70ebaca70dd93 *R/default.plot.mvabund.R
 897da06f97267b25dbee9811d342c2bc *R/default.plot.mvformula.R
 cc30ba41887b087036c9e2b7d3ba9105 *R/default.plotMvaFactor.R
@@ -84,7 +84,7 @@ a388019691af031cc298279c756117e8 *R/quasipoisson.R
 2caa5a9897eeaa640c2181a868c80ef6 *R/rbind.mvabund.R
 25a0b88d93aaff3f790a575e0b681078 *R/rcalc.R
 c5d0100d8e23ee1cf8b657d39424ced4 *R/residuals.glm1path.R
-62e29c7bc455421478a1303dc3a73bab *R/residuals.manyglm.R
+e3e05afcf03b42cda0c040351d6a018a *R/residuals.manyglm.R
 77744e61ada7ef50dcd8be9476b6d2bb *R/rstandard.manylm.R
 e4c328091ca37e796a9ace6e6b255093 *R/rstudent.manylm.R
 38ba2aae8076e34039c850b9b956e630 *R/shiftpoints.R
@@ -96,7 +96,7 @@ e2086ebc6613e0aeb185d39b03458f3a *R/unabund.R
 25b9286e7c65a8aaf4e1db0ec286223a *R/variable.names.manyglm.R
 df0b07330e035bde54d2534c1ee06dba *R/weighted.residuals.manylm.R
 c8d178d8aed264201bb9f21dc54c7a91 *R/weights.manyglm.R
-b97661ff251994db681bf91cede83684 *README.md
+b7812e11f94225e0b5ae7791d2a17cf3 *README.md
 e38c90a6daa1e983ae46084128106083 *cleanup
 7bee9126799c11774d7c7b8a8dd0645d *data/Tasmania.RData
 cfffdd29029d20bee60e0641b12330ef *data/antTraits.RData
