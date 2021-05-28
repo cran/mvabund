@@ -1,4 +1,4 @@
-d065e4c49e2aa1a801a0738e9e653e5c *DESCRIPTION
+f15ffa65e7e3edde93327f3e3b44f65c *DESCRIPTION
 2a8e42959b29823fe25e8e61c99dfd77 *NAMESPACE
 6473e13a4e9b7e666c902653208b68ce *R/AllClass.R
 4d2294d47c78b8c3d63f5d31b1e1d969 *R/RcppExports.R
@@ -14,7 +14,7 @@ c3eeccf2921ef85986e344292e7651e8 *R/anova.traitglm.R
 d8c7d142ac34993fc9749906696ec68a *R/best.r.sq.R
 48677c2da7d5a009c6095c1526235de4 *R/betaest.R
 3117c4273d72720fa033bc5df249bd78 *R/binstruc.R
-c9a183fe0cfc76ef192e9f8c161df528 *R/block.to.bootID.R
+fba57694945680626fd179e375828419 *R/block.to.bootID.R
 05bd81fb32b64278e163e772eb019cd4 *R/boxplot.mvabund.R
 1f97c019e975ef768b033e3cd2f2ae02 *R/boxplot.mvformula.R
 0741046da38540245f7708fc524d8247 *R/case.names.manylm.R
@@ -31,7 +31,7 @@ f339cff76137aa5924f89aebae15affb *R/default.plot.manylm.R
 8345deaaddb519b5a9e70ebaca70dd93 *R/default.plot.mvabund.R
 897da06f97267b25dbee9811d342c2bc *R/default.plot.mvformula.R
 cc30ba41887b087036c9e2b7d3ba9105 *R/default.plotMvaFactor.R
-19626bf83118d51d3afb3f3d4a5324de *R/default.print.anova.manyglm.R
+9b175352cb564fd89e3ec2e018c95c38 *R/default.print.anova.manyglm.R
 154d7b792e88cd09f778c3ceba1a0cbf *R/default.print.summary.manyglm.R
 02be47c25b037f2d877c0067dd474ee3 *R/deviance.manylm.R
 ecbbecd9ecd65cfc95d941ed0c39f040 *R/dfbeta.manylm.R
@@ -52,7 +52,7 @@ da88535e737cfc679a1c310ce507d78f *R/influence.manylm.R
 d41af3daa4939fb8e8c44650fbcd8230 *R/logLik.manylm.R
 b7b127a34be6551f854d1931eac09cf1 *R/make.vslink.R
 7b631df13d0bdbd2b5aa92b84777b877 *R/manyany.R
-f32eacb5c93385173d4247f9f072d84d *R/manyglm.R
+edb594522e0ba45c1a42ef6ccc9ebca7 *R/manyglm.R
 e9130df9f4a648ee7ccc94617e260d6a *R/manylm.R
 833c38515c4aed2edb450ac7614a3aaf *R/manylm.influence.R
 f251b933bd80ba1c07c04aa4f47fc7ad *R/manylm.influence.measures.R
@@ -71,7 +71,7 @@ e88a7a7814979a05097448a6f96fcf3e *R/plotFormulafeature.R
 f3bf157019c2b9a44a77c6c9942e7fde *R/predict.manylm.R
 3b6685f764add7b8515ce8cbe1eca7b0 *R/predict.traitglm.R
 131c27d1a869d6a3d8ce5b99629b6e6b *R/print.anova.manyglm.R
-a6970ccfd09c2f03eaf6d417ee1b8f6b *R/print.anova.manylm.R
+10ba57e6832a97940cf3a17f0d6fd351 *R/print.anova.manylm.R
 d8859b1de3e37d5b9de4f8a7b1fa7a72 *R/print.infl.mvabund.R
 106c2491cf8046905a38908c040112cb *R/print.manyglm.R
 a3b3a5882c4178e687957b1dab53f544 *R/print.mvformula.R
@@ -88,15 +88,15 @@ e3e05afcf03b42cda0c040351d6a018a *R/residuals.manyglm.R
 77744e61ada7ef50dcd8be9476b6d2bb *R/rstandard.manylm.R
 e4c328091ca37e796a9ace6e6b255093 *R/rstudent.manylm.R
 38ba2aae8076e34039c850b9b956e630 *R/shiftpoints.R
-10d1d749f7a7c9815a040d25511f1ac0 *R/summary.manyglm.R
-160dc9273db666d27cdc2247e433d964 *R/summary.manylm.R
+012499921acdd80cd59bd9f94191c9f7 *R/summary.manyglm.R
+495cd0824af1a4535e5ce9a68bed45ab *R/summary.manylm.R
 ff1e974777d37bbe40d8c425a9a8e4c9 *R/traitglm.R
 d468f1a6a13d93b2ab322039e994b95c *R/transAxis.SW.R
 e2086ebc6613e0aeb185d39b03458f3a *R/unabund.R
 25b9286e7c65a8aaf4e1db0ec286223a *R/variable.names.manyglm.R
 df0b07330e035bde54d2534c1ee06dba *R/weighted.residuals.manylm.R
 c8d178d8aed264201bb9f21dc54c7a91 *R/weights.manyglm.R
-b7812e11f94225e0b5ae7791d2a17cf3 *README.md
+f6a5eb01f3d270cbe42a9e5f98cb3dcb *README.md
 e38c90a6daa1e983ae46084128106083 *cleanup
 7bee9126799c11774d7c7b8a8dd0645d *data/Tasmania.RData
 cfffdd29029d20bee60e0641b12330ef *data/antTraits.RData
@@ -140,8 +140,8 @@ a2e0f41f03a2d9bd6d4904a8409857e5 *man/ridgeParamEst.Rd
 7c85d262257bb8400209db8403d2296a *man/shiftpoints.Rd
 8a3e78c53ca60f15700c9e3d969da3f6 *man/solberg.Rd
 5a73d42461addc79142564ce1e36c4a4 *man/spider.Rd
-d815e1efa67f5e265f4469de0f402a19 *man/summary.manyglm.Rd
-d18bb3cfad4dfe7c5b061aa9891a2cd1 *man/summary.manylm.Rd
+c18f81051fd44ac1c454fc615c524e74 *man/summary.manyglm.Rd
+af61d0966a29f7089481caa4183b2b6f *man/summary.manylm.Rd
 f499ddf5372961a2fc3106426cf83c28 *man/tikus.Rd
 c5d01de024ff2325224c0a98176eb029 *man/traitglm.Rd
 c78c73c8aa69d5d9d0b6bf151371827d *man/unabund.Rd
@@ -149,7 +149,7 @@ c78c73c8aa69d5d9d0b6bf151371827d *man/unabund.Rd
 1b5594cfb880daae02d73a642b1e73fe *src/Makevars.win
 4233903c0dfb6d2bad3b7816a9cb7652 *src/RcppExports.cpp
 9780e397c0fe94e98b51b26d10d7b7e1 *src/Rinterface.cpp
-c30b60602f292a91872810f021c06875 *src/anova.cpp
+eb8acc2c8feaad61543cda5154570be6 *src/anova.cpp
 c50a8ba2b2ed2dd0e72d6de46e23d3da *src/calctest.cpp
 4679f8071e1f49cee737cb99d08e4c48 *src/glm.cpp
 bf16b5851834e7c4533b1630ef8acb34 *src/glmtest.cpp
@@ -167,6 +167,6 @@ a1844c7b8a3b2f5af3336b00c3c0f20c *tests/testthat/block_anova_resampling.rds
 bfea8621691f61ce34f6c492e740ddc0 *tests/testthat/poisson_spider_summary.rds
 f7b8bb26920c7b179dfdfe51befca072 *tests/testthat/spider_coefs.rds
 53c6eaab977ff1c2a8ee834240691cd5 *tests/testthat/test-anova-block.R
-f25940dec0321fbf4529f4fe14e34443 *tests/testthat/test-manyglm.R
-771c31e931fe2d050d94d7ab4dd15026 *tests/testthat/test-summary-manyglm.R
+bf749122687e9649b6ca94b71bde4dee *tests/testthat/test-manyglm.R
+23c90cf054fe70c0ddc3b8ac148bb55f *tests/testthat/test-summary-manyglm.R
 3282d9c2de2cfe1e0cbcb96381c89d0a *tests/testthat/utils.R
