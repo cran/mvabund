@@ -1,7 +1,7 @@
 Package: mvabund
 Title: Statistical Methods for Analysing Multivariate Abundance Data
-Version: 4.1.12
-Date: 2021-05-28
+Version: 4.2.1
+Date: 2022-02-10
 Authors@R: c(person("Yi", "Wang", role = "aut"),
             person("Ulrike", "Naumann", role = "aut"),
             person("Dirk", "Eddelbuettel", role = "aut"),
@@ -19,7 +19,7 @@ Description: A set of tools for displaying, modeling and analysing
         The package is implemented with the Gnu Scientific Library
         (<http://www.gnu.org/software/gsl/>) and 'Rcpp'
         (<http://dirk.eddelbuettel.com/code/rcpp.html>) 'R' / 'C++' classes.
-Depends: R (>= 3.0.0)
+Depends: R (>= 3.5.0)
 Encoding: UTF-8
 Imports: Rcpp, MASS, methods, stats, tweedie, statmod, parallel
 LinkingTo: Rcpp, RcppGSL
@@ -27,7 +27,7 @@ License: LGPL (>= 2.1)
 NeedsCompilation: yes
 RoxygenNote: 6.0.1
 Suggests: testthat
-Packaged: 2021-05-28 07:06:51 UTC; David Warton
+Packaged: 2022-02-11 08:03:38 UTC; z3103495
 Author: Yi Wang [aut],
   Ulrike Naumann [aut],
   Dirk Eddelbuettel [aut],
@@ -40,4 +40,4 @@ Author: Yi Wang [aut],
   Stephen Wright [ctb]
 Maintainer: David Warton <David.Warton@unsw.edu.au>
 Repository: CRAN
-Date/Publication: 2021-05-28 08:50:05 UTC
+Date/Publication: 2022-02-16 13:40:08 UTC
