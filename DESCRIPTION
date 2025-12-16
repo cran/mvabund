@@ -1,7 +1,7 @@
 Package: mvabund
 Title: Statistical Methods for Analysing Multivariate Abundance Data
-Version: 4.2.1
-Date: 2022-02-10
+Version: 4.2.8
+Date: 2025-12-15
 Authors@R: c(person("Yi", "Wang", role = "aut"),
             person("Ulrike", "Naumann", role = "aut"),
             person("Dirk", "Eddelbuettel", role = "aut"),
@@ -21,13 +21,15 @@ Description: A set of tools for displaying, modeling and analysing
         (<http://dirk.eddelbuettel.com/code/rcpp.html>) 'R' / 'C++' classes.
 Depends: R (>= 3.5.0)
 Encoding: UTF-8
-Imports: Rcpp, MASS, methods, stats, tweedie, statmod, parallel
+Imports: Rcpp, MASS, methods, mgcv, stats, tweedie, statmod, parallel
 LinkingTo: Rcpp, RcppGSL
 License: LGPL (>= 2.1)
 NeedsCompilation: yes
-RoxygenNote: 6.0.1
-Suggests: testthat
-Packaged: 2022-02-11 08:03:38 UTC; z3103495
+Suggests: ecostats, knitr, rmarkdown, skimr, testthat
+VignetteBuilder: knitr
+LazyData: true
+RoxygenNote: 7.3.2
+Packaged: 2025-12-16 03:09:20 UTC; z3103495
 Author: Yi Wang [aut],
   Ulrike Naumann [aut],
   Dirk Eddelbuettel [aut],
@@ -40,4 +42,4 @@ Author: Yi Wang [aut],
   Stephen Wright [ctb]
 Maintainer: David Warton <David.Warton@unsw.edu.au>
 Repository: CRAN
-Date/Publication: 2022-02-16 13:40:08 UTC
+Date/Publication: 2025-12-16 09:30:07 UTC

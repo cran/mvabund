@@ -21,12 +21,15 @@ get_polys = function( X, X.des.train=NULL)
     var.type = X.des.train$var.type
   for (i in 1:n.params)
   {
-    
+    #turn character variables into factors
+    if(is.character(X[,i]))
+      X[,i] = factor(X[,i])
+
     # test if binary quantitative, if so, change to a factor to avoid poly error.  But only if training data
     if(is.null(X.des.train$var.type) & is.factor(X[,i])==FALSE)
     {
       testBinary = try(duplicated(X[,i],nmax=2), silent=TRUE)
-      if(class(testBinary)=="logical")
+      if(inherits(testBinary,"logical"))
       {
         X[,i] = factor(X[,i])
         warning(paste0("Binary variable '", names(X)[i], "' found and changed to a factor"))
